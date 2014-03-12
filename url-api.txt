@@ -1,0 +1,125 @@
+Captain Teach URL API version 0
+
+Classes
+
+  POST /class/list
+
+    On Success:
+      Responds with a list of class records
+
+  POST /class/new
+  
+    Body:
+      name - the human readable name for the new class
+
+    On Success:
+      Creates a record with the class name and assigns to it a unique id.
+      Responds with a unique class_id for the new class
+
+  POST /class/delete
+
+    Body:
+      class_id - the class id to be deleted
+
+    On Success:
+      Deletes the class with the specified id.
+
+Students
+
+  POST /student/new
+
+    Body:
+      inst_id - Uniquely identifying ID for their institution
+      ??????? - Is it enough to have them be uniquely identified by their
+      	      	institution? It seems at this point you could pull
+		whatever information is necessary from the institution and
+		avoid confidentiality issues associated with storing their
+		information on CT.
+    
+    On Success:
+      Creates a record for a new student and responds with a unique
+      captain teach student_id.
+
+  POST /student/register
+
+    Body:
+      class_id - The class to register the student with
+
+    On Success:
+      Creates an association between the student and the specified class.
+
+Assignments
+
+  POST /assignment/new 
+  
+    Body:
+      class_id - the class_id to add this new assignment to
+      name - the human readable name for this assignment
+      url - the url to the assignments review process description
+
+    On Success: 
+      Creates a record with the body information and assigns to it a unique id.
+      Responds with a unique assignment_id for the new assignment.
+
+  POST /assignment/list
+
+    Body:
+      class_id - the class id to look up
+
+    On Success:
+      Responds with a list containing a record for each assignment associated
+      with the specified classid
+
+  POST /assignment/delete
+  
+    Body:
+      assignment_id - the id of the assignment to be deleted
+
+    On Success:
+      Deletes the specified assignment.
+
+  POST /assignment/submit
+
+    Body:
+      student_id - the student who is making the submission
+      assignment_id - the id of the assignment being submitted
+      submission_step - the submission step that is being submitted
+      submission_url - the url containing the actual submission
+
+    On Success:
+      Create a submission record associating with the student_id, assignment_id,
+      submission_step, and submission_url. If this submission_step is a review
+      step, this will also create a review record that is pending review.
+
+Reviews
+
+  POST /review
+
+    Body:
+      student_id - The student who is reviewing
+      assignment_id - The assignment to review
+      submission_step - the submission step that is being reviewed
+      review_step - The review step that is to be completed
+      		    This would distinguish which review they are currently on
+		    If they are to review 2 students they would have 2 review
+		    steps.
+
+    On Success:
+      Responds with the review rubric specified by the assignment description
+      for this submission_step. In addition to this, the response includes the
+      url to get to the submission.
+
+  POST /review/submit
+
+    Body:
+      student_id - The student who did the review
+      assignment_id - the assignment that was reviewed
+      submission_step - the submission step that was reviewed
+      review_step - The review step that was reviewed
+      url - the url to the completed rubric for this review
+
+    On Success:
+      Update the associated review record to be complete. In addition to this
+      update the reviewing students assignment record to indicate their where
+      they are in the assignment. This will enable them to move to the next
+      review_step or submission_step.

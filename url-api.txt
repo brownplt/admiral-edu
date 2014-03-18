@@ -1,125 +1,194 @@
-Captain Teach URL API version 0
+Captain Teach URL API version 0.1
+
+Types:
+
+  Class_Record:
+      { "id" : Unique_Id, "name" : String }
+
+  Student_Record:
+      { "id" : Unique_Id, "display-name" : String }
+
+  Assignment_Record:
+      { "id" : Unique_Id,
+        "name" : String,
+        "class_id" : Unique_Id, 
+	"description" : AssignmentDescription }
+
+  Rubric
+
+  Review
+    { "url" : URL,
+      "rubric" : Rubric }
+	
 
 Classes
 
   POST /class/list
+  Retrieves a list of class records
 
     On Success:
-      Responds with a list of class records
+      { "response" : 
+        { "classes" : [Class_Record, ...] }}
 
   POST /class/new
+  Creates a record with the class name and assigns to it a unique id.
   
-    Body:
-      name - the human readable name for the new class
+    Body: Class_Record
 
     On Success:
-      Creates a record with the class name and assigns to it a unique id.
-      Responds with a unique class_id for the new class
+      { "response" : { "message" : "Class created." } }
 
   POST /class/delete
+  Deletes the specified class
 
-    Body:
-      class_id - the class id to be deleted
+    Body: { "class_id" : Unique_Id }
 
     On Success:
-      Deletes the class with the specified id.
+      { "response" : { "message" : "Class deleted." } }
+
+  POST /class/students
+  Requests a list of students registered in the specified class.
+
+    Body: { "class_id" : Unique_Id }
+
+    On Success:
+      { "response" : { "class" : Class_Record,
+      		       "students" : [Student_Record, ...] }}
 
 Students
 
   POST /student/new
+  Creates a new student record.
 
-    Body:
-      inst_id - Uniquely identifying ID for their institution
-      ??????? - Is it enough to have them be uniquely identified by their
-      	      	institution? It seems at this point you could pull
-		whatever information is necessary from the institution and
-		avoid confidentiality issues associated with storing their
-		information on CT.
+    Body: Student_Record
     
     On Success:
-      Creates a record for a new student and responds with a unique
-      captain teach student_id.
+      { "response" : { "message" : "Student created." } }
 
   POST /student/register
+  Registers a student in the specified class
 
     Body:
-      class_id - The class to register the student with
+      { "student_id" : Unique_Id, "class_id" : Unique_Id }
 
     On Success:
-      Creates an association between the student and the specified class.
+      { "response" : { "message" : "Student registered." } }
+
+  POST /student/classes
+  Returns a list of classes the specified student is registered in
+
+    Body:
+      { "student-id" : Unique_Id }
+
+    On Success:
+      { "response" : { "student" : Student_Record,
+      		       "classes" : [Class_Record, ...] }}
 
 Assignments
 
   POST /assignment/new 
-  
-    Body:
-      class_id - the class_id to add this new assignment to
-      name - the human readable name for this assignment
-      url - the url to the assignments review process description
+  Creates a new assignment  
+
+    Body: Assignment_Record
 
     On Success: 
-      Creates a record with the body information and assigns to it a unique id.
-      Responds with a unique assignment_id for the new assignment.
+      { "response" : { "message" : "Assignment created." } }      
 
   POST /assignment/list
+  Returns a list of assignments for the specified class
 
     Body:
-      class_id - the class id to look up
+      { "class_id" : Unique_Id }
 
     On Success:
-      Responds with a list containing a record for each assignment associated
-      with the specified classid
+      { "response" : 
+        { "class" : Class_Record,
+	  "assignments" : [Assignment_Record, ...] } }
 
   POST /assignment/delete
-  
+  Deletes the specified assignment for the specified class
+
     Body:
-      assignment_id - the id of the assignment to be deleted
+      { "class_id" : Unique_Id, "assignment_id" : Unique_Id }
 
     On Success:
-      Deletes the specified assignment.
+      { "response" : { "message" : "Assignment deleted." }}
 
   POST /assignment/submit
+  Submits the specified step of an assignment for a particular student.
 
     Body:
-      student_id - the student who is making the submission
-      assignment_id - the id of the assignment being submitted
-      submission_step - the submission step that is being submitted
-      submission_url - the url containing the actual submission
+      { "student_id" : Unique_Id,
+        "assignment_id" : Unique_Id,
+	"submission_step" : String,
+	"submission_url" : URL }
 
     On Success:
+      { "response" : { "message" : "Assignment submitted." }}
+
       Create a submission record associating with the student_id, assignment_id,
       submission_step, and submission_url. If this submission_step is a review
       step, this will also create a review record that is pending review.
 
+  POST /assignment/status
+  Returns the current status of a student on a particular assignment.
+
+    Body:
+      { "student_id" : Unique_Id,
+      	"assignment_id" : Unique_Id }
+
+    On Success:
+      { "response" : { "completed_steps" : [String],
+      		       "pending_review" : Bool,
+      		       "next_step" : String }}
+
+      Note: It feels like there should be an elegant way to roll assignment
+      	    submissions and review submissions into a single thing to avoid
+	    the pending_review. The next_step would simply refer to a review
+	    process. Any ideas?
+
 Reviews
 
   POST /review
+  Retrieve a review to be completed by the specified student for the
+  specified assignment at the specified review_step.
 
     Body:
-      student_id - The student who is reviewing
-      assignment_id - The assignment to review
-      submission_step - the submission step that is being reviewed
-      review_step - The review step that is to be completed
-      		    This would distinguish which review they are currently on
-		    If they are to review 2 students they would have 2 review
-		    steps.
+      { "student_id" : Unique_Id,
+        "assignment_id", Unique_id,
+	"review_step", String }
 
     On Success:
-      Responds with the review rubric specified by the assignment description
-      for this submission_step. In addition to this, the response includes the
-      url to get to the submission.
+      { "response" : { "review" : Review } }
+
+  POST /review/status
+  Retrieve the current review status for the specified student and
+  assignment.
+
+    Body:
+      { "student_id" : Unique_Id,
+        "assignment_id", Unique_id }
+
+    On Success:
+      { "response" : { "completed_steps" : [String],
+      		       "pending_submission" : Bool,
+		       "next_step" : String }}
 
   POST /review/submit
+  Submits a review by the specified student for the specified assignment
+  and review step.
 
     Body:
-      student_id - The student who did the review
-      assignment_id - the assignment that was reviewed
-      submission_step - the submission step that was reviewed
-      review_step - The review step that was reviewed
-      url - the url to the completed rubric for this review
+      { "student_id" : Unique_Id,
+        "assignment_id" : Unique_id,
+	"review_step" : String,
+	"rubric" : Rubric }
 
     On Success:
+      { "response" : { "message" : "Review submitted." } }
+
       Update the associated review record to be complete. In addition to this
       update the reviewing students assignment record to indicate their where
       they are in the assignment. This will enable them to move to the next
       review_step or submission_step.
+

@@ -94,6 +94,10 @@
 	     (hasheq `result
 		     (hasheq `message "Not yet implemented"))))
 
+(hash-set! dispatch-table "class/students/"
+	   (lambda (body)
+	     (hasheq `result
+		     (hasheq `message "Not yet implemented"))))
 
 ;; Students API
 
@@ -106,6 +110,12 @@
 	   (lambda (body)
 	     (hasheq `result
 		     (hasheq `message "Not yet implemented"))))
+
+(hash-set! dispatch-table "student/classes/"
+	   (lambda (body)
+	     (hasheq `result
+		     (hasheq `message "Not yet implemented"))))
+
 
 ;; Assignments API
 
@@ -129,9 +139,20 @@
 	     (hasheq `result
 		     (hasheq `message "Not yet implemented"))))
 
+(hash-set! dispatch-table "assignment/status/"
+	   (lambda (body)
+	     (hasheq `result
+		     (hasheq `message "Not yet implemented"))))
+
+
 ;; Reviews API
 
 (hash-set! dispatch-table "review/"
+	   (lambda (body)
+	     (hasheq `result
+		     (hasheq `message "Not yet implemented"))))
+
+(hash-set! dispatch-table "review/status/"
 	   (lambda (body)
 	     (hasheq `result
 		     (hasheq `message "Not yet implemented"))))

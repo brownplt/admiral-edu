@@ -6,9 +6,9 @@
 (struct: finished () #:transparent)
 
 (define-type ServerResponse (U response-fail response-success response-next))
-(struct: response-success () #:transparent)
+(struct: response-success ((feedback : (Option String))) #:transparent)
 (struct: response-fail ((message : String)) #:transparent)
-(struct: response-next ((next-step : Step)) #:transparent)
+(struct: response-next ((feedback : (Option String)) (next-step : Step)) #:transparent)
 
 (define-type Expr (U e-sequence e-submission e-step e-review-task e-finished))
 
@@ -37,7 +37,7 @@
 (struct: (A)some ((thing : A)) #:transparent)
 
 (struct: fail ((message : String)) #:transparent)
-(struct: success () #:transparent)
+(struct: success ((feedback : (Option String))) #:transparent)
   
 (define-type Feedback (U fail success))
 (define-type Form Any)
@@ -63,11 +63,11 @@
         (lambda (resp)
           (match (start-response resp)
             [(response-fail message) (response-fail message)]
-            [(response-success) (response-next
-                                 (match assign-parts
-                                   [(cons h tail) (interp (e-sequence h tail))]
-                                   [empty (interp (e-finished))]))]
-            [(response-next step) (response-next (interp (e-sequence (e-step step) assign-parts)))])))])))
+            [(response-success feedback) 
+             (response-next feedback (match assign-parts
+                                       [(cons h tail) (interp (e-sequence h tail))]
+                                       [empty (interp (e-finished))]))]
+            [(response-next feedback step) (response-next feedback (interp (e-sequence (e-step step) assign-parts)))])))])))
 
 
 
@@ -77,7 +77,7 @@
      (submission-request name form))
   (lambda (resp)
     (match (validator resp)
-      [(success) (response-success)]
+      [(success feedback) (response-success feedback)]
       [(fail message) (response-fail message)]))))
 
 (define: (handle-review-task (target : String) (find-resource : (-> Resource)) (rubric : Rubric) (feedback : (RubricResponse -> Feedback))) : step-spec
@@ -86,11 +86,11 @@
      (review-request (find-resource) rubric))
    (lambda (resp) 
      (match (feedback resp)
-       [(success) (response-success)]
+       [(success feedback) (response-success feedback)]
        [(fail message) (response-fail message)]))))
 
 (define test-submission-validator
-  (lambda (resp) (success)))
+  (lambda (resp) (success (some "Successfully validated."))))
 
 (define impl-submission-validator
   (lambda (resp) (fail "Implementaiton was invalid.")))
@@ -100,17 +100,19 @@
       (e-submission "test-submission" 'test-submission-form test-submission-validator)
       `(,(e-submission "impl-submission" 'impl-submission-form impl-submission-validator))))
 
-(define-type Trace (U trace-request success fail))
+(define-type Trace (U trace-request trace-feedback success fail))
 (struct: trace-request ((request : Request) (next : Trace)) #:transparent)
+(struct: trace-feedback ((feedback : String) (next : Trace)) #:transparent)
 
 (define: (run (step : Step)) : Trace
   (match step
-    [(finished) (success)]
+    [(finished) (success (none))]
     [(step-spec generate-request check-response)
      (let ((request (generate-request))
            (check (check-response 'some_response)))
        (trace-request request
                       (match check        
                         [(response-fail reason) (fail reason)]
-                        [(response-success) (success)]
-                        [(response-next next-spec) (run next-spec)])))]))
+                        [(response-success feedback) (success feedback)]
+                        [(response-next (none) next-spec) (run next-spec)]
+                        [(response-next (some feedback) next-spec) (trace-feedback feedback (run next-spec))])))]))

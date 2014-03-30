@@ -1,63 +1,117 @@
 #lang typed/racket
-(struct: step-spec ((generate-request : (-> subreq))( check-response : (Any -> (U response-not-ok response-ok)))) #:transparent)
 
-(struct: response-not-ok ((reason : String)) #:transparent)
+(define-type Step (U step-spec finished))
+(struct: step-spec ((generate-request : (-> Request)) 
+                    (check-response : (Form -> ServerResponse))) #:transparent)
+(struct: finished () #:transparent)
 
-(struct: response-ok ((maybe-next-step : (U (some step-spec) none))) #:transparent)
+(define-type ServerResponse (U response-fail response-success response-next))
+(struct: response-success () #:transparent)
+(struct: response-fail ((message : String)) #:transparent)
+(struct: response-next ((next-step : Step)) #:transparent)
 
-(define-type Expr (U e-sequence e-submission e-step-spec))
-(struct: e-sequence ((start : Expr) (assign-parts : (Listof Expr))) #:transparent)
-(struct: e-submission ((name : String) (form : Any) (validator : (Any Any -> Boolean))) #:transparent)
-(struct: e-step-spec ((step : step-spec)) #:transparent)
-(struct: subreq ((name : String) (form : Any)) #:transparent)
+(define-type Expr (U e-sequence e-submission e-step e-review-task e-finished))
+
+(struct: e-sequence ((start : Expr) 
+                     (assign-parts : (Listof Expr))) #:transparent)
+
+(struct: e-submission ((name : String) 
+                       (form : Form) 
+                       (validator : (Response -> Feedback))) #:transparent)
+
+(struct: e-step ((step : Step)) #:transparent)
+
+(struct: e-review-task ((target : String) 
+                        (find-resource : (-> Resource))
+                        (rubric : Rubric) 
+                        (feedback : (RubricResponse -> Feedback))) #:transparent)
+
+(struct: e-finished ())
+
+(define-type Request (U submission-request review-request))
+(struct: submission-request ((name : String) (form : Form)) #:transparent)
+(struct: review-request ((resource : Resource) (rubric : Rubric)) #:transparent)
+
+(define-type (Option A) (U (some A) none))
 (struct: none () #:transparent)
 (struct: (A)some ((thing : A)) #:transparent)
 
+(struct: fail ((message : String)) #:transparent)
+(struct: success () #:transparent)
+  
+(define-type Feedback (U fail success))
+(define-type Form Any)
+(define-type Response Any)
+(define-type Resource Any)
+(define-type Rubric Any)
+(define-type RubricResponse Any)
+
 ; interp :: 
-(define: (interp (assign-part : Expr)) : step-spec 
+(define: (interp (assign-part : Expr)) : Step 
   (match assign-part
     [(e-sequence start assign-parts) (handle-sequence start assign-parts) ]
     [(e-submission name form validator) (handle-submission name form validator)]
-    [(e-step-spec spec) spec]))
+    [(e-step spec) spec]
+    [(e-review-task target find-resource rubric feedback) (handle-review-task target find-resource rubric feedback)]))
 
-(define: (handle-sequence (start : Expr) (assign-parts : (Listof Expr))) : step-spec
-  (let [(firststep (interp start))]
-   (step-spec
-    (step-spec-generate-request firststep)
-    (lambda (resp)
-      (define start-resp ((step-spec-check-response firststep) resp))
-      (match start-resp
-        [(response-not-ok _) start-resp]
-        [(response-ok next-step)
-         (match next-step
-           [(none) (response-ok 
-                    (match assign-parts
-                      [(cons h tail) (some (interp (e-sequence h tail)))]
-                      [empty (none)]))]
-           [(some step) (response-ok (some (interp (e-sequence (e-step-spec step) assign-parts))))])])))))
+(define: (handle-sequence (start : Expr) (assign-parts : (Listof Expr))) : Step
+  (let ((firststep (interp start)))
+    (match firststep
+      [(finished) (finished)]
+      [(step-spec request start-response)
+       (step-spec request
+        (lambda (resp)
+          (match (start-response resp)
+            ;; I feel like the failure message shouldn't just be discarded
+            [(response-fail _) (start-response resp)]
+            [(response-success) (response-next
+                                 (match assign-parts
+                                   [(cons h tail) (interp (e-sequence h tail))]
+                                   [empty (interp (e-finished))]))]
+            [(response-next step) (response-next (interp (e-sequence (e-step step) assign-parts)))])))])))
 
 
 
-(define: (handle-submission (name : String) (form : Any) (validator : (Any Any -> Boolean))) : step-spec
+(define: (handle-submission (name : String) (form : Form) (validator : (Response -> Feedback))) : step-spec
   (step-spec
    (lambda ()
-     (subreq name form))
+     (submission-request name form))
   (lambda (resp)
-    (if (validator form resp)
-        (response-ok (none))
-        (response-not-ok "Invalid submission"
-        )))))
+    (match (validator resp)
+      [(success) (response-success)]
+      [(fail message) (response-fail message)]))))
+
+(define: (handle-review-task (target : String) (find-resource : (-> Resource)) (rubric : Rubric) (feedback : (RubricResponse -> Feedback))) : step-spec
+  (step-spec
+   (lambda ()
+     (review-request (find-resource) rubric))
+   (lambda (resp) 
+     (match (feedback resp)
+       [(success) (response-success)]
+       [(fail message) (response-fail message)]))))
 
 (define test-submission-validator
-  (lambda (form resp) #t))
+  (lambda (resp) (success)))
 
 (define impl-submission-validator
-  (lambda (form resp) #t))
+  (lambda (resp) (fail "Implementaiton was invalid.")))
 
 (define assign1
   (e-sequence
       (e-submission "test-submission" 'test-submission-form test-submission-validator)
       `(,(e-submission "impl-submission" 'impl-submission-form impl-submission-validator))))
 
+(define-type Trace (U trace-request success fail))
+(struct: trace-request ((request : Request) (next : Trace)) #:transparent)
 
-  
+(define: (run (step : Step)) : Trace
+  (match step
+    [(finished) (success)]
+    [(step-spec generate-request check-response)
+     (let ((request (generate-request))
+           (check (check-response 'some_response)))
+       (trace-request request
+                      (match check        
+                        [(response-fail reason) (fail reason)]
+                        [(response-success) (success)]
+                        [(response-next next-spec) (run next-spec)])))]))

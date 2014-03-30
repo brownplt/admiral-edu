@@ -62,8 +62,7 @@
        (step-spec request
         (lambda (resp)
           (match (start-response resp)
-            ;; I feel like the failure message shouldn't just be discarded
-            [(response-fail _) (start-response resp)]
+            [(response-fail message) (response-fail message)]
             [(response-success) (response-next
                                  (match assign-parts
                                    [(cons h tail) (interp (e-sequence h tail))]

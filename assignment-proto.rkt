@@ -48,10 +48,12 @@
   (iterator "tstark" 'init 'init)
   #t)
 
-(provide result result-message result-next_step fail fail-message finished)
+(provide result result-message result-next_step fail fail-message finished success)
 (struct result (message next_step) #:transparent)
+(struct success (message) #:transparent)
 (struct fail (message) #:transparent)
 (struct finished (message) #:transparent)
+
 
 ;; Sample assignment iterator
 (define iterator
@@ -70,7 +72,7 @@
    
    ;; Otherwise, if the student is allowed to submit for this particular assignment and step
    ;; try to validate their submission
-   [(can-submit student_id assignment_id step_id) (validate-resource student_id step_id resource)]
+   [(can-submit student_id assignment_id step_id) (process-submission student_id step_id resource)]
    [else (fail "Could not submit on this step")])))
 
 ;; Selects a group for a student. This alternates each time
@@ -84,18 +86,18 @@
     (set-status student_id assignment_id "submit_data_definition")
     (result "Assignment started." "submit_data_definition")))
 
+
+
 ;; For this assignment, we always accept a submission.
 ;; We create a record of the submission, then we determine
 ;; the next step for the student. If this was the final submission,
 ;; we return the finished message. Othewise, we say the submission
 ;; was successful and find the next step.
-(define (validate-resource student step resource)
-  (create-submission student assignment_id step resource)
-  (let ((next-step (determine-next-step student step)))
-    (set-status student assignment_id next-step)
-    (cond 
-      [(string=? step "final_submission") (finished "Final Submission successful.")]
-      [else (result "Submission successful." next-step)])))
+(define (process-submission student step resource)
+  (if (hash-has-key? handlers step)
+      (let ((handler (hash-ref handlers step)))
+        (handler student step resource))
+      (fail (string-append "Invalid step: " step))))
 
 ;; The next step is dependent on which group the student
 ;; is in
@@ -126,22 +128,87 @@
     [(string=? step "review_student_test2") "final_submission"]
     [(string=? step "final_submission") "finished"]))
     
-(provide serv-request serv-request-target serv-request-resource-type)
-(struct serv-request (target resource-type))
+(provide serv-request serv-request-target serv-request-resource)
+(struct serv-request (target resource))
+
+
+(define (always-valid contents) #t)
+
+(define (git-handler root-url filename validator)
+  (lambda (student-id step resource)
+    (let ((result (checkout root-url student-id resource filename)))
+      (match result
+        [(success contents) (let ((validation (validator contents)))
+                              (if validation
+                                  (process-contents contents student-id step)
+                                  (fail "Submission could not be validated.")))]
+        [(fail message) (fail (string-append "Submission failed: " message))]))))
+      
+(define (process-contents contents student-id step)
+  (let ((next-step (determine-next-step student-id step)))
+    (create-submission student-id assignment_id step contents)
+    (set-status student-id assignment_id next-step)
+    (assign-review student-id next-step)
+    (result "Submission received." next-step)))
+
+(define (assign-review student review_step)
+  (cond
+    [(string=? review_step "review_student_test") (choose-student-review student "submit_data_definition" review_step)]
+    [(string=? review_step "review_student_test0") (choose-student-review student "submit_data_definition" review_step)]
+    [(string=? review_step "review_student_test1") (choose-student-review student "submit_data_definition" review_step)]
+    [(string=? review_step "review_student_test2") (choose-student-review student "submit_data_definition" review_step)]
+    [else (void)]))
+
+;; Not concurrently safe
+(define (choose-student-review student step review_step)
+  (let ((reviewee (get-least-reviewed assignment_id step)))
+    (create-review student reviewee assignment_id step review_step)))
+
+(define (checkout root-url student-id hash filename)
+  (if (system (string-append "./checkout.sh " root-url " " student-id " " hash))
+      (let ((contents (get-contents student-id filename)))
+        (system (string-append "rm -rf " student-id))
+        contents)
+      (fail (string-append "Could not locate commit hash: " hash))))
+
+(define (get-contents student-id filename)
+  (let ((path (string-append student-id "/" filename)))
+  (if (file-exists? path)
+      (let* ((input (open-input-file path))
+             (contents (port->string input))
+             (closed (close-input-port input)))
+        (success contents))
+      (fail (string-append "Could not locate file: " filename)))))
+
+(define (rubric-handler student-id step resource)
+  (let ((next-step (determine-next-step student-id step)))
+    (set-status student-id assignment_id next-step)
+    (result "Rubric submitted." next-step)))
 
 ;; Sample request generator
 (define generator 
   (serial-lambda 
-   (step_id)
+   (student_id step_id)
    (cond
-     [(string=? step_id "submit_data_definition") (serv-request "assignment/submit" "url")]
-     [(string=? step_id "review_good_test") (serv-request "assignment/submit" "rubric")]
-     [(string=? step_id "review_bad_test") (serv-request "assignment/submit" "rubric")]
-     [(string=? step_id "review_student_test") (serv-request "assignment/submit" "rubric")]
-     [(string=? step_id "review_student_test0") (serv-request "assignment/submit" "rubric")]
-     [(string=? step_id "review_student_test1") (serv-request "assignment/submit" "rubric")]
-     [(string=? step_id "review_student_test2") (serv-request "assignment/submit" "rubric")]
-     [(string=? step_id "final_submission") (serv-request "assignment/submit" "url")]
+     [(string=? step_id "submit_data_definition") (serv-request "assignment/submit" "Please submit a commit hash.")]
+     [(string=? step_id "review_good_test") (serv-request "assignment/submit" "Some predefined good resource to review.")]
+     [(string=? step_id "review_bad_test") (serv-request "assignment/submit" "Some predefined bad resource to review")]
+     [(string=? step_id "review_student_test") (serv-request "assignment/submit" (get-review-resource student_id assignment_id step_id))]
+     [(string=? step_id "review_student_test0") (serv-request "assignment/submit" (get-review-resource student_id assignment_id step_id))]
+     [(string=? step_id "review_student_test1") (serv-request "assignment/submit" (get-review-resource student_id assignment_id step_id))]
+     [(string=? step_id "review_student_test2") (serv-request "assignment/submit" (get-review-resource student_id assignment_id step_id))]
+     [(string=? step_id "final_submission") (serv-request "assignment/submit" "Please submit a commit hash.")]
      [(string=? step_id "finished") (serv-request "" "")]
      [else 'invalid_step_id])))
-   
+
+
+
+(define handlers
+  (hash  "submit_data_definition" (git-handler "https://github.com/jcollard/" "submission.scala" always-valid)
+        "review_good_test" rubric-handler
+        "review_bad_test" rubric-handler
+        "review_student_test" rubric-handler
+        "review_student_test0" rubric-handler
+        "review_student_test1" rubric-handler
+        "review_student_test2" rubric-handler
+        "final_submission" (git-handler "https://github.com/jcollard/" "submission.scala" always-valid)))

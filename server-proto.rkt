@@ -65,7 +65,7 @@
               ;; ask it what we should do next
               (let* ((gen (cadr (get-assignment assignment-id)))
                      (status (get-status student-id assignment-id))
-                     (req (gen status)))
+                     (req (gen student-id status)))
                 `(html
                   (body
                    (h1 "Assignment Status")
@@ -73,7 +73,7 @@
                    (p ,(string-append "assignment-id: " assignment-id))
                    (p ,(string-append "current-step: " status))
                    (p ,(string-append "request-target: " (serv-request-target req)))
-                   (p ,(string-append "request-resource-type: " (serv-request-resource-type req))))))
+                   (p ,(string-append "request-resource: " (serv-request-resource req))))))
               `(html
                 (body
                  (h1 "Assignment Status")

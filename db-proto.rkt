@@ -18,7 +18,8 @@
   (init-groups-table)
   (init-group-assignment-table)
   (init-assign-status-table)
-  (init-submissions-table))
+  (init-submissions-table)
+  (init-reviews-table))
 
 ;; student table
 (define students "students")
@@ -190,9 +191,10 @@
 ;; Submission table
 (define submissions "submissions")
 (define resource "resource")
+(define times_reviewed "times_reviewed")
 (define (init-submissions-table)
   (query-exec sql-conn (merge "drop table if exists" submissions))
-  (query-exec sql-conn (merge "create table" submissions "(" student_id "varchar(255)," assignment_id "varchar(255)," step_id "varchar(255)," resource "blob)")))
+  (query-exec sql-conn (merge "create table" submissions "(" student_id "varchar(255)," assignment_id "varchar(255)," step_id "varchar(255)," resource "blob," times_reviewed " integer)")))
 
 (provide can-submit)
 (define (can-submit student assignment step)
@@ -203,13 +205,49 @@
 
 (provide create-submission)
 (define (create-submission student assignment step res)
-  (query-exec sql-conn (merge "insert into" submissions "values ($1, $2, $3, $4)") student assignment step (s-exp->fasl(serialize res))))
+  (query-exec sql-conn (merge "insert into" submissions "values ($1, $2, $3, $4, 0)") student assignment step (s-exp->fasl(serialize res))))
 
 (provide get-submission)
 (define (get-submission student assignment step)
   (let* ((q (merge "select" resource "from" submissions "where" student_id "=$1 AND" assignment_id "=$2 AND" step_id "=$3 limit 1"))
          (row (query-row sql-conn q student assignment step)))
     (deserialize (fasl->s-exp (vector-ref row 0)))))
+
+(provide incr-reviews)
+(define (incr-reviews student assignment step)
+  (let* ((q (merge "select" times_reviewed "from" submissions "where" student_id "=$1 AND" assignment_id "=$2 AND" step_id "=$3 limit 1"))
+         (row (query-row sql-conn q student assignment step))
+         (val (+ (vector-ref row 0) 1)))
+    (query-exec sql-conn (merge "update" submissions "set" times_reviewed "=$1 where" student_id "=$2 AND" assignment_id "=$3 AND" step_id "=$4") val student assignment step)))
+
+(provide get-least-reviewed)
+(define (get-least-reviewed assignment step)
+  (write (string-append "get-least-reviewed " assignment " " step))
+  (let* ((q (merge "select" student_id "from" submissions "where" assignment_id "=$1 AND" step_id "=$2 order by" times_reviewed " ASC limit 1"))
+         (row (query-row sql-conn q assignment step))
+         (student (vector-ref row 0)))
+    student))
+
+;; Reviews table
+(define reviews "reviews")
+(define reviewee_id "reviewee_id")
+(define review_step "review_step")
+(define (init-reviews-table)
+  (query-exec sql-conn (merge "drop table if exists" reviews))
+  (query-exec sql-conn (merge "create table" reviews "(" student_id "varchar(255)," reviewee_id "varchar(255)," assignment_id "varchar(255)," step_id "varchar(255)," review_step "varchar(255))")))
+
+(provide get-review-resource)
+(define (get-review-resource student_id assignment_id step_id)
+  (write (string-append "get-review-resource " student_id " " assignment_id " " step_id))
+  (let* ((q "select resource from submissions, reviews where reviews.student_id=$1 AND reviews.assignment_id=$2 AND reviews.review_step=$3 AND reviews.reviewee_id=submissions.student_id AND reviews.assignment_id=submissions.assignment_id AND reviews.step_id=submissions.step_id limit 1")
+         (row (query-row sql-conn q student_id assignment_id step_id)))
+    (deserialize (fasl->s-exp (vector-ref row 0)))))
+
+(provide create-review)
+(define (create-review student reviewee assignment step review-step)
+  (let ((q (merge "insert into" reviews "values ($1, $2, $3, $4, $5)")))
+    (incr-reviews reviewee assignment step)
+    (query-exec sql-conn q student reviewee assignment step review-step)))
 
 ;; Helper functions
 (define (intercalate v ls)

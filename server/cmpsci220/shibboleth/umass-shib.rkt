@@ -1,6 +1,6 @@
 #lang racket
 
-(require "../ct-session.rkt"
+(require "../../ct-session.rkt"
          web-server/http/bindings)
   
 (provide headers->session)  

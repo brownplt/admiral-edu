@@ -5,7 +5,7 @@
          web-server/web-server
          web-server/dispatch)
 
-(require "bogus-session.rkt"
+(require "shibboleth/umass-shib.rkt"
          "../ct-session.rkt"
          "../database/mysql.rkt")
 

@@ -63,4 +63,4 @@
 (create-user "arjunguha")
 (create-user "jcollard")
 (create-role "cmpsci220" "arjunguha" 1)
-(create-role "cmpsci220" "jcollard" 0)
+(create-role "cmpsci220" "jcollard" 1)

@@ -27,3 +27,10 @@
 (define (internal-select-users sql-conn)
   (let ((query (prepare sql-conn (merge "SELECT * FROM" user-table))))
     (query-rows sql-conn query)))
+
+(provide internal-exists-user)
+(define (internal-exists-user sql-conn uid)
+  (let* ((query (merge "SELECT COUNT(" user-table-uid ") FROM" user-table "WHERE" user-table-uid "=?"))
+         (prep (prepare sql-conn query))
+         (result (vector-ref (query-row sql-conn prep uid) 0)))
+    (> result 0)))

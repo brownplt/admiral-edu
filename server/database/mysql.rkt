@@ -4,7 +4,8 @@
          "mysql/common.rkt"
          "mysql/class.rkt" 
          "mysql/user.rkt"
-         "mysql/role.rkt") 
+         "mysql/role.rkt"
+         "mysql/roles.rkt") 
 
 ;; Database Information
 (define username "captain_teach")
@@ -22,7 +23,8 @@
 (define (init-db)
   (init-user-table sql-conn)
   (init-class-table sql-conn)
-  (init-role-table sql-conn))
+  (init-role-table sql-conn)
+  (init-roles-table sql-conn))
 
 ;; User Table
 (provide select-users create-user exists-user)
@@ -36,9 +38,13 @@
 (define (create-class id) (internal-create-class sql-conn id))
 
 ;; Role Table
-(provide select-role create-role select-students-in-class user-record user-record-uid user-record-uid user-record-role select-instructors-in-class select-tas-in-class)
+(provide select-role associate-role select-users-in-class user-record user-record-uid user-record-uid user-record-role)
 (define (select-role class uid) (internal-select-role sql-conn class uid))
-(define (create-role class uid instructor) (internal-create-role sql-conn class uid instructor))
-(define (select-students-in-class class limit page) (internal-select-students-in-class sql-conn class limit page))
-(define (select-instructors-in-class class limit page) (internal-select-instructors-in-class sql-conn class limit page))
-(define (select-tas-in-class class limit page) (internal-select-tas-in-class sql-conn class limit page))
+(define (associate-role class uid instructor) (internal-associate-role sql-conn class uid instructor))
+(define (select-users-in-class class role limit page) (internal-select-users-in-class sql-conn class role limit page))
+
+;; Roles Table
+(provide create-role get-role-record role-record role-record-id role-record-role role-record-can-edit all-roles)
+(define (create-role id role can-edit) (internal-create-role sql-conn id role can-edit))
+(define (get-role-record id) (internal-get-role-record sql-conn id))
+(define (all-roles) (internal-all-roles sql-conn))

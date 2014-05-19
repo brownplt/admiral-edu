@@ -6,7 +6,7 @@
 
 ;; Instructor account
 (define (req->session req)
-  (ct-session "cmpsci220" "arjunguha"))
+  (ct-session "cmpsci220" "jcollard"))
 
 ;; Student account
 ;;(define (req->session req)

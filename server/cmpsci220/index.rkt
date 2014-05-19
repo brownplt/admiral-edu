@@ -3,7 +3,8 @@
 (require web-server/http/bindings)
 
 (require "../ct-session.rkt"
-         "../database/mysql.rkt")
+         "../database/mysql.rkt"
+         "config.rkt")
 
 (provide index)
 (define (index session role [message '()])
@@ -30,7 +31,7 @@
       '((p "Cannot create user without a user id"))
       ((lambda ()
          (if (not (exists-user new-uid)) (create-user new-uid) '())
-         (create-role class new-uid new-role)
+         (associate-role class new-uid new-role)
          `((p , (string-append "Added " new-uid)))))))
        
 (define (body . elements)
@@ -42,10 +43,10 @@
 (define (user-info session role)
   `((h2 "User Information")
     (p ,(string-append "User ID: " (ct-session-uid session)))
-    (p ,(string-append "User Role: " (if (= 1 role) "Instructor" "Student")))))
+    (p ,(string-append "User Role: " (role-record-role role)))))
 
 (define (users session role)
-  (if (not (= 1 role)) '()
+  (if (not (role-record-can-edit role)) '()
       (append        
        add-student-form
        '((h2 "Instructors"))
@@ -56,26 +57,37 @@
        (list-students session))))
 
 (define (list-students session)
-  (let ((student-records (select-students-in-class (ct-session-class session) 200 0)))        
+  (let ((student-records (select-users-in-class (ct-session-class session) student-role 200 0)))        
     (map show-record student-records)))
 
 (define (list-instructors session)
-  (let ((records (select-instructors-in-class (ct-session-class session) 200 0)))        
+  (let ((records (select-users-in-class (ct-session-class session) instructor-role 200 0)))        
     (map show-record records)))
 
 (define (list-tas session)
-  (let ((records (select-tas-in-class (ct-session-class session) 200 0)))        
+  (let ((records (select-users-in-class (ct-session-class session) ta-role 200 0)))        
     (map show-record records)))
 
-(define add-student-form
+(define add-student-form-prime
   `((h3 "Add User")
     (form ((method "post" (action "submit")))
           (p "User ID: " (input ((name "new-uid") (type "text"))))
           (p "Role: " (select ((name "new-role")) 
-                              (option ((value "0")) "Student") 
-                              (option ((value "1")) "Instructor")
-                              (option ((value "2")) "Teaching Assistant")))
+                              (option ((value "0")) "Instructor")
+                              (option ((value "1")) "Teaching Assistant")
+                              (option ((value "2")) "Student")))
           (p (input ((name "submit") (type "submit")))))))
+
+
+(define add-student-form
+  (let* ((role-option (lambda (record) `(option ((value ,(number->string (role-record-id record)))) ,(role-record-role record))))
+         (role-select (append '(select ((name "new-role"))) (map role-option (all-roles)))))
+    `((h3 "Add User")
+      (form ((method "post" (action "submit")))
+            (p "User ID: " (input ((name "new-uid") (type "text"))))
+            (p "Role: " ,role-select)
+            (p (input ((name "submit") (type "submit"))))))))
+
 
 (define (show-record record)
   `(p ,(user-record-uid record)))

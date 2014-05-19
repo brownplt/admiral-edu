@@ -24,6 +24,8 @@
 (provide ct-port)
 (define ct-port 8080)
 
+;; Defines how a session is created
+;; request -> ct-session
 (define (get-session req)
   (req->session req))
 

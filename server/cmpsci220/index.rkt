@@ -78,9 +78,12 @@
                               (option ((value "2")) "Student")))
           (p (input ((name "submit") (type "submit")))))))
 
-
 (define add-student-form
-  (let* ((role-option (lambda (record) `(option ((value ,(number->string (role-record-id record)))) ,(role-record-role record))))
+  (let* 
+      ;; Creates a single <option> field from a role-record
+      ((role-option (lambda (record) 
+                        `(option ((value ,(number->string (role-record-id record)))) ,(role-record-role record))))
+       ;; Creates a <select> field containing one <option> for each role in the database
          (role-select (append '(select ((name "new-role"))) (map role-option (all-roles)))))
     `((h3 "Add User")
       (form ((method "post" (action "submit")))

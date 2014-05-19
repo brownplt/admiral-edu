@@ -13,11 +13,16 @@
 (require "index.rkt"
          "errors.rkt")
 
-(provide start)
-(define-values (start mk-url)
+;; Defines how to process incomming requests are handled
+(provide ct-rules)
+(define-values (ct-rules mk-url)
   (dispatch-rules
    [("") (dispatch index)]
    [("") #:method "post" (post->dispatch post->index)]))
+
+;; Which port to run on
+(provide ct-port)
+(define ct-port 8080)
 
 (define (get-session req)
   (req->session req))
@@ -32,6 +37,8 @@
         #f
         (get-role-record (vector-ref (car result) 0)))))
 
+;; If the session has a valid role, renders the specified page. Otherwise,
+;; this displays an error message
 (define (render session page)
   (let ((valid-role (role session)))
     (response/xexpr
@@ -39,6 +46,8 @@
          (error-not-registered session)
          (page session valid-role)))))
 
+;; If the session is valid, tries to render the specified page. Othewise,
+;; this responds with an invalid session error
 (define (dispatch page)
   (lambda (req)
     (let ((session (get-session req)))
@@ -46,6 +55,8 @@
           (response/xexpr error-invalid-session)
           (render session page)))))
 
+;; If the session has a valid role, renders the specified page with the specified bindings. 
+;; Otherwise, this displays an error message
 (define (post->render session page bindings)
   (let ((valid-role (role session)))
     (response/xexpr
@@ -53,6 +64,8 @@
          (error-not-registered session)
          (page session valid-role bindings)))))
 
+;; If the session is valid, tries to render the specified page with any 
+;; request-bindings. Othewise, this responds with an invalid session error.
 (define (post->dispatch page)
   (lambda (req)
     (let ((session (get-session req))
@@ -61,4 +74,5 @@
           (response/xexpr error-invalid-session)
           (post->render session page bindings)))))
 
+;; Resets the database to a fresh configuration
 (initialize)

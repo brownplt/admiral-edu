@@ -20,12 +20,14 @@
 ;; Initializes the role table.
 (provide init-role-table)
 (define (init-role-table sql-conn)
-  (let ((drop (prepare sql-conn (merge "DROP TABLE IF EXISTS" role-table)))
-        (create (prepare sql-conn (merge "CREATE TABLE" role-table "(" 
+  (let* ((drop-query (merge "DROP TABLE IF EXISTS" role-table))
+         (drop (prepare sql-conn drop-query))
+         (create-query (merge "CREATE TABLE" role-table "(" 
                                          role-table-class-id role-table-class-id-type ","
                                          role-table-user-uid role-table-user-uid-type ","
                                          role-table-role role-table-role-type ","
-                                         "PRIMARY KEY (" role-table-class-id "," role-table-user-uid "))"))))
+                                         "PRIMARY KEY (" role-table-class-id "," role-table-user-uid "))"))
+         (create (prepare sql-conn create-query)))
     (query-exec sql-conn drop)
     (query-exec sql-conn create)))
 

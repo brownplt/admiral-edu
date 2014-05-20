@@ -10,6 +10,9 @@
          "../ct-session.rkt"
          "../database/mysql.rkt")
 
+;; Resets the database to a fresh configuration
+(initialize)
+
 (require "index.rkt"
          "errors.rkt")
 
@@ -76,5 +79,3 @@
           (response/xexpr error-invalid-session)
           (post->render session page bindings)))))
 
-;; Resets the database to a fresh configuration
-(initialize)

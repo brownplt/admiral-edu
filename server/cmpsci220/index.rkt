@@ -48,7 +48,7 @@
 (define (users session role)
   (if (not (role-record-can-edit role)) '()
       (append        
-       add-student-form
+       (add-student-form)
        '((h2 "Instructors"))
        (list-instructors session)
        '((h2 "Teaching Assistants"))
@@ -68,17 +68,7 @@
   (let ((records (select-users-in-class (ct-session-class session) ta-role 200 0)))        
     (map show-record records)))
 
-(define add-student-form-prime
-  `((h3 "Add User")
-    (form ((method "post" (action "submit")))
-          (p "User ID: " (input ((name "new-uid") (type "text"))))
-          (p "Role: " (select ((name "new-role")) 
-                              (option ((value "0")) "Instructor")
-                              (option ((value "1")) "Teaching Assistant")
-                              (option ((value "2")) "Student")))
-          (p (input ((name "submit") (type "submit")))))))
-
-(define add-student-form
+(define (add-student-form)
   (let* 
       ;; Creates a single <option> field from a role-record
       ((role-option (lambda (record) 

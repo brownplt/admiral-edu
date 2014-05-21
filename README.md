@@ -13,6 +13,10 @@
 
 4. Copy the Client secret field into docker/captain-teach.conf to the OIDCClientSecret field.
 
+### Configuring Service
+
+You will need to modify the `initialize` function in `server/config.rkt` to construct your initial class.
+
 ### Launch Docker
 
 You should now be able to run the service in a docker container:

@@ -4,7 +4,7 @@
 
 (require "../ct-session.rkt"
          "../database/mysql.rkt"
-         "config.rkt")
+         "../config.rkt")
 
 (provide index)
 (define (index session role [message '()])

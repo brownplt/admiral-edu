@@ -1,20 +1,19 @@
 #lang racket
-
 (require web-server/servlet
          web-server/servlet-dispatch
          web-server/web-server
          web-server/dispatch)
 
-(require "google-openidc-session.rkt"
+(require "auth/google-openidc.rkt"
          "config.rkt"
-         "../ct-session.rkt"
-         "../database/mysql.rkt")
+         "ct-session.rkt"
+         "database/mysql.rkt")
 
 ;; Resets the database to a fresh configuration
 (initialize)
 
-(require "index.rkt"
-         "errors.rkt")
+(require "pages/index.rkt"
+         "pages/errors.rkt")
 
 ;; Defines how to process incomming requests are handled
 (provide ct-rules)
@@ -26,7 +25,7 @@
 ;; Defines how a session is created
 ;; request -> ct-session
 (define (get-session req)
-  (req->session req))
+  (ct-session class-name (req->uid req)))
 
 ;; Returns #f if the session is not valid
 ;; otherwise returns a role-record
@@ -74,4 +73,3 @@
       (if (eq? session 'invalid-session)
           (response/xexpr error-invalid-session)
           (post->render session page bindings)))))
-

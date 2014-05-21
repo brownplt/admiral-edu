@@ -58,6 +58,7 @@ Since we are leveraging Apache to do authentication for us, we will want to use 
 do this, you will first need to enable the proxy module.
 
     a2enmod proxy
+    a2enmod proxy_http
 
 Once this is enabled, you will want to add the following to your Apache configuration file:
 

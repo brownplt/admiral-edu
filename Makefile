@@ -2,4 +2,7 @@ all:
 	docker build -t admiral-edu .
 
 run: all
-	docker run -i -t --rm -p 8080:8080 admiral-edu 
+	docker run -i -t --rm -p 443:443 admiral-edu 
+
+bash: all
+	docker run -i -t --rm -p 443:443 admiral-edu /bin/bash

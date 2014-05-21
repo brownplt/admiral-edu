@@ -5,7 +5,7 @@
          web-server/web-server
          web-server/dispatch)
 
-(require "bogus-session.rkt"
+(require "google-openidc-session.rkt"
          "config.rkt"
          "../ct-session.rkt"
          "../database/mysql.rkt")

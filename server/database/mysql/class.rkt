@@ -4,27 +4,27 @@
          "common.rkt")
 
 ;; Class Table
-(provide class-table class-table-id class-table-id-type)
-(define class-table "class")
-(define class-table-id "id")
-(define class-table-id-type "varchar(255)")
+(provide table id-column id-type)
+(define table "class")
+(define id-column "id")
+(define id-type "varchar(255)")
 
 ;; Initializes the class table.
-(provide init-class-table)
-(define (init-class-table sql-conn)
-  (let ((drop (prepare sql-conn (merge "DROP TABLE IF EXISTS" class-table)))
-        (create (prepare sql-conn (merge "CREATE TABLE" class-table "(" class-table-id class-table-id-type "unique)"))))
+(provide init)
+(define (init sql-conn)
+  (let ((drop (prepare sql-conn (merge "DROP TABLE IF EXISTS" table)))
+        (create (prepare sql-conn (merge "CREATE TABLE" table "(" id-column id-type "unique)"))))
     (query-exec sql-conn drop)
     (query-exec sql-conn create)))
 
 ;; Retrieve all classes
-(provide internal-select-classes)
-(define (internal-select-classes sql-conn)
-  (let ((query (prepare sql-conn (merge "SELECT * FROM" class-table))))
+(provide select-classes)
+(define (select-classes sql-conn)
+  (let ((query (prepare sql-conn (merge "SELECT * FROM" table))))
     (query-rows sql-conn query)))
 
 ;; Creates a record in the class table
-(provide internal-create-class)
-(define (internal-create-class sql-conn id)
-  (let ((create (prepare sql-conn (merge "INSERT INTO" class-table "values(?)"))))
+(provide create-class)
+(define (create-class sql-conn id)
+  (let ((create (prepare sql-conn (merge "INSERT INTO" table "values(?)"))))
     (query-exec sql-conn create id)))

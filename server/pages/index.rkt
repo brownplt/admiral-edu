@@ -30,7 +30,7 @@
   (if (equal? "" new-uid) 
       '((p "Cannot create user without a user id"))
       ((lambda ()
-         (if (not (exists-user new-uid)) (create-user new-uid) '())
+         (if (not (exists-user? new-uid)) (create-user new-uid) '())
          (associate-role class new-uid new-role)
          `((p , (string-append "Added " new-uid)))))))
        

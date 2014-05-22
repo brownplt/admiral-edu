@@ -4,32 +4,32 @@
          "common.rkt")
 
 ;; The roles table defines roles and their associated permissions
-(provide roles-table roles-table-id roles-table-id-type roles-table-role roles-table-role-type)
+(provide table id id-type role role-type)
 
-(define roles-table "roles")
-(define roles-table-id "id")
-(define roles-table-id-type "TINYINT")
+(define table "roles")
+(define id "id")
+(define id-type "TINYINT")
 
-(define roles-table-role "role")
-(define roles-table-role-type "VARCHAR(255)")
+(define role "role")
+(define role-type "VARCHAR(255)")
 
-(define roles-table-can-edit "can_edit")
-(define roles-table-can-edit-type "BOOLEAN")
+(define can-edit "can_edit")
+(define can-edit-type "BOOLEAN")
 
 (provide init)
 (define (init sql-conn)
-  (let ((drop (prepare sql-conn (merge "DROP TABLE IF EXISTS" roles-table)))
-        (create (prepare sql-conn (merge "CREATE TABLE" roles-table "("
-                                         roles-table-id roles-table-id-type ","
-                                         roles-table-role roles-table-role-type ","
-                                         roles-table-can-edit roles-table-can-edit-type ","
-                                         "PRIMARY KEY (" roles-table-id "))"))))
+  (let ((drop (prepare sql-conn (merge "DROP TABLE IF EXISTS" table)))
+        (create (prepare sql-conn (merge "CREATE TABLE" table "("
+                                         id id-type ","
+                                         role role-type ","
+                                         can-edit can-edit-type ","
+                                         "PRIMARY KEY (" id "))"))))
     (query-exec sql-conn drop)
     (query-exec sql-conn create)))
 
 (provide create-role)
 (define (create-role sql-conn id role can-edit)
-  (let* ((query (merge "INSERT INTO" roles-table "VALUES(?,?,?)"))
+  (let* ((query (merge "INSERT INTO" table "VALUES(?,?,?)"))
         (prep (prepare sql-conn query)))
     (query-exec sql-conn prep id role can-edit)))
 
@@ -37,17 +37,17 @@
 (struct role-record (id role can-edit) #:transparent)
 
 (provide get-role-record)
-(define (get-role-record sql-conn id)
-  (let* ((query (merge "SELECT" roles-table-role "," roles-table-can-edit "FROM" roles-table "WHERE" roles-table-id "=? LIMIT 1"))
+(define (get-role-record sql-conn s-id)
+  (let* ((query (merge "SELECT" role "," can-edit "FROM" table "WHERE" id "=? LIMIT 1"))
          (prep (prepare sql-conn query))
-         (result (query-row sql-conn prep id))
+         (result (query-row sql-conn prep s-id))
          (role (vector-ref result 0))
          (can-edit (not (= 0 (vector-ref result 1)))))
-    (role-record id role can-edit)))
+    (role-record s-id role can-edit)))
 
 (provide all-roles)
 (define (all-roles sql-conn)
-  (let* ((query (merge "SELECT" roles-table-id "," roles-table-role "," roles-table-can-edit "FROM" roles-table))
+  (let* ((query (merge "SELECT" id "," role "," can-edit "FROM" table))
          (prep (prepare sql-conn query))
          (result (query-rows sql-conn prep))
          (to-record (lambda (vec) (role-record (vector-ref vec 0) (vector-ref vec 1) (vector-ref vec 2)))))

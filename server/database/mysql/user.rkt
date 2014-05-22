@@ -3,16 +3,16 @@
          "common.rkt")
 
 ;; User Table
-(provide table uid-column uid-type)
+(provide table uid uid-type)
 (define table "user")
-(define uid-column "uid")
+(define uid "uid")
 (define uid-type "varchar(255)")
 
 ;; Initializes the user table.
 (provide init)
 (define (init sql-conn)
   (let ((drop (prepare sql-conn (merge "DROP TABLE IF EXISTS" table)))
-        (create (prepare sql-conn (merge "CREATE TABLE" table "(" uid-column uid-type "unique)"))))
+        (create (prepare sql-conn (merge "CREATE TABLE" table "(" uid uid-type "unique)"))))
     (query-exec sql-conn drop)
     (query-exec sql-conn create)))
 
@@ -29,8 +29,8 @@
     (query-rows sql-conn query)))
 
 (provide exists-user?)
-(define (exists-user? sql-conn uid)
-  (let* ((query (merge "SELECT COUNT(" uid-column ") FROM" table "WHERE" uid-column "=?"))
+(define (exists-user? sql-conn s-uid)
+  (let* ((query (merge "SELECT COUNT(" uid ") FROM" table "WHERE" uid "=?"))
          (prep (prepare sql-conn query))
-         (result (vector-ref (query-row sql-conn prep uid) 0)))
+         (result (vector-ref (query-row sql-conn prep s-uid) 0)))
     (> result 0)))

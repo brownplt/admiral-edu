@@ -4,16 +4,16 @@
          "common.rkt")
 
 ;; Class Table
-(provide table id-column id-type)
+(provide table id id-type)
 (define table "class")
-(define id-column "id")
+(define id "id")
 (define id-type "varchar(255)")
 
 ;; Initializes the class table.
 (provide init)
 (define (init sql-conn)
   (let ((drop (prepare sql-conn (merge "DROP TABLE IF EXISTS" table)))
-        (create (prepare sql-conn (merge "CREATE TABLE" table "(" id-column id-type "unique)"))))
+        (create (prepare sql-conn (merge "CREATE TABLE" table "(" id id-type "unique)"))))
     (query-exec sql-conn drop)
     (query-exec sql-conn create)))
 

@@ -25,7 +25,7 @@
   (init-db)
   (create-class "cmpsci220")
   (create-user "arjunguha@umass.edu")
-  (create-user "jcollard@umass.ed")
+  (create-user "jcollard@umass.edu")
   (create-role instructor-role "Instructor" 1)
   (create-role ta-role "Teaching Assistant" 1)
   (create-role student-role "Student" 0)

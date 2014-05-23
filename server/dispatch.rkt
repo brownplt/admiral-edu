@@ -4,10 +4,12 @@
          web-server/web-server
          web-server/dispatch)
 
-(require "auth/google-openidc.rkt"
-         "config.rkt"
-         "ct-session.rkt"
-         "database/mysql.rkt")
+(require 
+  "cmpsci220/initialize.rkt"
+  "auth/google-openidc.rkt"
+  "config.rkt"
+  "ct-session.rkt"
+  "database/mysql.rkt")
 
 ;; Resets the database to a fresh configuration
 (initialize)
@@ -32,10 +34,8 @@
 (define (role session)
   (let* ((class (ct-session-class session))
          (uid (ct-session-uid session))
-         (result (select-role class uid)))
-    (if (eq? result '()) 
-        #f
-        (get-role-record (vector-ref (car result) 0)))))
+         (result (role:select class uid)))
+    result))
 
 ;; If the session has a valid role, renders the specified page. Otherwise,
 ;; this displays an error message

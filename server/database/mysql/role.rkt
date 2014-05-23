@@ -52,6 +52,14 @@
               (name (vector-ref result 1))
               (can-edit (= 1 (vector-ref result 2))))
           (roles:role id name can-edit)))))
+
+;; Returns #t if the class, user combination exists and #f otherwise
+(provide exists?)
+(define (exists? class user)
+  (let* ((query (merge "SELECT COUNT(*) FROM" table "WHERE" class-id "=? AND" user-id "=? LIMIT 1"))
+         (prep (prepare sql-conn query))
+         (result (vector-ref (query-row sql-conn prep class user) 0)))
+    (= 1 result)))
     
 ;; Associates a class and user id with the specified role id. Returns #t if successful and #f otherwise.
 (provide associate)

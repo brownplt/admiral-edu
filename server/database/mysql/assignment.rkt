@@ -38,7 +38,8 @@
     [else
      (let* ((query (merge "INSERT INTO" table "VALUES(?,?)"))
             (prep (prepare sql-conn query)))
-       (query-exec sql-conn prep assignment class)) #t]))
+       (query-exec sql-conn prep assignment class) 
+       #t)]))
 
 ;; Checks if a particular assignment, class pair exists
 (provide exists?)
@@ -47,3 +48,18 @@
          (prep (prepare sql-conn query))
          (result (vector-ref (query-row sql-conn query assignment class) 0)))
     (= 1 result)))
+
+(provide all)
+(define (all)
+  (let* ((query (merge "SELECT * FROM" table))
+         (prep (prepare sql-conn query)))
+    (query-rows sql-conn prep)))
+    
+(provide list)
+(define (list class)
+  (cond
+    [(not (class:exists? class)) 'no-such-class]
+    [else
+     (let* ((query (merge "SELECT * FROM" table "WHERE" class-id "=?"))
+            (prep (prepare sql-conn query)))
+       (query-rows sql-conn prep class))]))

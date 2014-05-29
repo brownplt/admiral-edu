@@ -33,3 +33,16 @@
 
 ;; Assignment Table
 (provide assignment:exists? assignment:create assignment:all assignment:list)
+
+;; Submission Table
+(provide submission:table 
+         submission:record submission:record?
+         submission:assignment-id submission:assignment-id-type submission:record-assignment
+         submission:version submission:version-type submission:record-version
+         submission:class-id submission:class-id-type submission:record-class
+         submission:step-id submission:step-id-type submission:record-step
+         submission:user-id submission:user-id-type submission:record-user
+         submission:time-stamp submission:time-stamp-type submission:record-time-stamp
+         submission:create submission:list submission:count)
+         
+         

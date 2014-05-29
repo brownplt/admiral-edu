@@ -5,19 +5,6 @@ WORKDIR /root
 USER root
 RUN apt-get install -y wget
 
-#
-# Install Racket
-#
-
-RUN wget http://mirror.racket-lang.org/installers/6.0.1/racket-6.0.1-x86_64-linux-ubuntu-precise.sh
-
-RUN chmod a+x racket-6.0.1-x86_64-linux-ubuntu-precise.sh
-
-RUN ./racket-6.0.1-x86_64-linux-ubuntu-precise.sh
-
-RUN ln -s /usr/racket/bin/racket /usr/local/bin/racket
-
-RUN adduser --disabled-password --gecos "" admiraledu
 
 #
 # Install MySQL
@@ -67,11 +54,36 @@ ADD docker/captain-teach.conf /etc/apache2/conf-available/captain-teach.conf
 RUN a2enconf captain-teach
 
 #
+# Install Racket
+#
+
+RUN wget http://mirror.racket-lang.org/installers/6.0.1/racket-6.0.1-x86_64-linux-ubuntu-precise.sh
+
+RUN chmod a+x racket-6.0.1-x86_64-linux-ubuntu-precise.sh
+
+RUN ./racket-6.0.1-x86_64-linux-ubuntu-precise.sh
+
+RUN ln -s /usr/racket/bin/racket /usr/local/bin/racket
+RUN ln -s /usr/racket/bin/raco /usr/local/bin/raco
+
+# Install Captain Teach Dependencies
+
+RUN raco planet install gh aws.plt 1 5
+
+
+# Setup Captain Teach Server
+
+RUN adduser --disabled-password --gecos "" admiraledu
+
+#
 # Copy AdmiralEdu to container
 #
 
 
 ADD server /home/admiraledu/server
+
+# Add S3 Captain-Teach credentials
+ADD docker/aws-credentials /home/admiraledu/aws-credentials
 
 #
 # Run AdmiralEdu

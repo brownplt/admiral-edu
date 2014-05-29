@@ -7,25 +7,31 @@
          (prefix-in user: "user.rkt")
          (prefix-in role: "role.rkt"))
 
-;; Assignment Table
-(provide table assignment-id assignment-id-type class-id class-id-type)
+;; Submission Table
+(provide table)
 (define table "submission")
 
+(provide version version-type)
 (define version "version")
 (define version-type "SMALLINT UNSIGNED")
 
+(provide assignment-id assignment-id-type)
 (define assignment-id "assignment_id")
 (define assignment-id-type assignment:assignment-id-type)
 
+(provide class-id class-id-type)
 (define class-id "class_id")
 (define class-id-type class:id-type)
 
+(provide step-id step-id-type)
 (define step-id "step_id")
 (define step-id-type "VARCHAR(255)")
 
+(provide user-id user-id-type)
 (define user-id "user_id")
 (define user-id-type user:uid-type)
 
+(provide time-stamp time-stamp-type)
 (define time-stamp "time_stamp")
 (define time-stamp-type "TIMESTAMP")
 

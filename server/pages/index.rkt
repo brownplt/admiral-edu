@@ -17,10 +17,22 @@
 
 (provide post->index)
 (define (post->index session role binds)
+  (cond
+    [(exists-binding? 'new-uid binds) (new-user session role binds)]
+    [(exists-binding? 'file binds) (upload-file session role binds)]
+    [else (index session role)]))
+  
+
+(define (new-user session role binds)
   (let* ((new-uid (extract-binding/single 'new-uid binds))
          (new-role (extract-binding/single 'new-role binds))
          (output (with-handlers ([exn:fail? could-not-create-user]) (create-new-user (ct-session-class session) new-uid new-role))))
     (index session role output)))
+
+(define (upload-file session role binds)
+  (let ((data (extract-binding/single 'file binds)))
+    (upload-submission (ct-session-class session) (ct-session-uid session) "test-assignment" "test-step" "0" data)
+    (index session role)))
 
 (define (could-not-create-user exn)
   (print exn)
@@ -47,7 +59,8 @@
 
 (define (users session role)
   (if (not (roles:role-can-edit role)) '()
-      (append        
+      (append
+       (upload-form)
        (add-student-form)
        '((h2 "Instructors"))
        (list-instructors session)
@@ -76,11 +89,17 @@
        ;; Creates a <select> field containing one <option> for each role in the database
          (role-select (append '(select ((name "new-role"))) (map role-option (roles:all)))))
     `((h3 "Add User")
-      (form ((method "post" (action "submit")))
+      (form ((method "post") (action ""))
             (p "User ID: " (input ((name "new-uid") (type "text"))))
             (p "Role: " ,role-select)
             (p (input ((name "submit") (type "submit"))))))))
 
+(define (upload-form)
+  `((h3 "Upload File")
+    (form ((method "post") (action "") (enctype "multipart/form-data"))
+          (p "File: " (input ((name "file") (type "file") (id "file"))))
+          (p (input ((name "submit") (type "submit")))))))
+      
 
 (define (show-record record)
   `(p ,(role:user-uid record)))

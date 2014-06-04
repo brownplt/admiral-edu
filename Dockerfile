@@ -66,14 +66,22 @@ RUN ./racket-6.0.1-x86_64-linux-ubuntu-precise.sh
 RUN ln -s /usr/racket/bin/racket /usr/local/bin/racket
 RUN ln -s /usr/racket/bin/raco /usr/local/bin/raco
 
-# Install Captain Teach Dependencies
-
-RUN raco planet install gh aws.plt 1 5
-
 
 # Setup Captain Teach Server
 
 RUN adduser --disabled-password --gecos "" admiraledu
+
+# Install Captain Teach Dependencies
+
+RUN su admiraledu -c 'cd ~/; raco planet install gh aws.plt 1 5'
+
+
+# Add S3 Captain-Teach credentials
+ADD docker/aws-credentials /home/admiraledu/aws-credentials
+
+RUN mkdir -p /home/admiraledu/files
+RUN chown admiraledu /home/admiraledu/files
+RUN chgrp admiraledu /home/admiraledu/files
 
 #
 # Copy AdmiralEdu to container
@@ -82,12 +90,10 @@ RUN adduser --disabled-password --gecos "" admiraledu
 
 ADD server /home/admiraledu/server
 
-# Add S3 Captain-Teach credentials
-ADD docker/aws-credentials /home/admiraledu/aws-credentials
 
 #
 # Run AdmiralEdu
 #
 
 #WORKDIR /home/admiraledu
-CMD service apache2 start; service mysql start; su admiraledu -c 'racket ~/server/captain-teach.rkt'
+CMD service apache2 start; service mysql start; su admiraledu -c 'cd ~/; racket server/captain-teach.rkt'

@@ -19,4 +19,5 @@
   (roles:create ta-role "Teaching Assistant" 1)
   (roles:create student-role "Student" 0)
   (role:associate "cmpsci220" "arjunguha@umass.edu" instructor-role)
-  (role:associate "cmpsci220" "jcollard@umass.edu" ta-role))
+  (role:associate "cmpsci220" "jcollard@umass.edu" ta-role)
+  (assignment:create "clock" "cmpsci220"))

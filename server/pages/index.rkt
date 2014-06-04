@@ -30,8 +30,10 @@
     (index session role output)))
 
 (define (upload-file session role binds)
-  (let ((data (extract-binding/single 'file binds)))
-    (upload-submission (ct-session-class session) (ct-session-uid session) "test-assignment" "test-step" "0" data)
+  (let ((data (extract-binding/single 'file binds))
+        (assignment (extract-binding/single 'assignment binds))
+        (step (extract-binding/single 'step binds)))
+    (upload-submission (ct-session-class session) (ct-session-uid session) assignment step data)
     (index session role)))
 
 (define (could-not-create-user exn)
@@ -97,6 +99,10 @@
 (define (upload-form)
   `((h3 "Upload File")
     (form ((method "post") (action "") (enctype "multipart/form-data"))
+          (p "Assignment: " (select ((name "assignment")) (option ((value "clock")) "clock")))
+          (p "Step: " (select ((name "step")) 
+                              (option ((value "tests")) "tests")
+                              (option ((value "implementation")) "implementation")))
           (p "File: " (input ((name "file") (type "file") (id "file"))))
           (p (input ((name "submit") (type "submit")))))))
       

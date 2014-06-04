@@ -2,7 +2,6 @@
 
 (require "database/mysql.rkt")
 (require "storage/s3.rkt")
-(require racket/system)
 
 (provide ct-port)
 (define ct-port 8080)

@@ -1,6 +1,8 @@
 #lang racket
 
 (require (planet gh/aws:1:5))
+(require "../database/mysql.rkt")
+
 (read-keys "/home/admiraledu/aws-credentials")
 (ensure-have-keys)
 (define bucket-name "cmpsci220-f14")
@@ -38,14 +40,16 @@
     (helper (reverse root) path-list)))
 
 (provide upload-submission)
-(define (upload-submission class user assignment step version data)
-  (let* ((path (create-directory class user assignment step version))
+(define (upload-submission class user assignment step data)
+  (let* ((version (number->string (submission:count assignment class step user)))
+         (path (create-directory class user assignment step version))
          (out (open-output-file (string-append path "/submission.tar") #:exists 'replace)))
     (display data out)
     (close-output-port out)
     (unarchive path)
     (delete-file (string-append path "/submission.tar"))
     (push-contents path)
+    (submission:create assignment class step user)
     (delete-directory/files path)))
 
 (define (push-contents path)

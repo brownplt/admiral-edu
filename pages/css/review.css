@@ -1,0 +1,19 @@
+.comment {
+		width: 8px;
+		background: imgs/comment.png;
+}
+
+.editor {
+		height: 100px;
+		margin-top: 10px;
+		margin-left: 10px;
+		margin-right: 10px;
+
+}
+
+.editor-box {
+		border: 3px solid;
+		border-color: #eee;
+		height: 60px;
+		border-radius: 5px;
+}

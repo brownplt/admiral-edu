@@ -1,0 +1,47 @@
+<html>
+  <head>
+    <title>Code Mirror Playground</title>
+    <script src="lib/codemirror.js"></script>
+    <link rel="stylesheet" href="lib/codemirror.css">
+    <script src="mode/scheme/scheme.js"></script>
+    <script src="mode/markdown/markdown.js"></script>
+
+  </head>
+
+  <body>
+    <script>
+    var widgets = {};
+
+    var myCodeMirror = CodeMirror(document.body, {
+        value: "#lang racket\n\n(require \"database/mysql.rkt\")\n(require \"storage/local.rkt\")\n\n(provide ct-port)\n(define ct-port 8080)\n\n(provide class-name)\n(define class-name \"cmpsci220\")\n\n(provide upload-submission)\n\n\n;; Define Roles\n(provide instructor-role ta-role student-role)\n(define instructor-role 0)\n(define ta-role 1)\n(define student-role 2)",
+        mode: "scheme",
+        readOnly: "nocursor",
+        lineNumbers: true
+      });
+
+      function handleClick(instance, line, gutter, clickEvent){
+
+	  if(!(instance in widgets)){
+	      var editor = document.createElement('div');
+	      editor.id = "editor";
+	      editor.style.border = "1px solid";
+	      editor.style.height = "50px";
+	      editor.style.width = "300px";
+	      var editMirror = CodeMirror(editor, {mode: "markdown"});
+	      editMirror.setSize("100%", 50);
+	      var widget = instance.addLineWidget(line, editor);
+	      widgets[instance] = widget;
+	  }else {
+	      var widget = widgets[instance];
+	      widget.clear();
+	      delete widgets[instance];
+	  }
+
+     }
+
+      myCodeMirror.on("gutterClick", handleClick);
+
+    </script>
+  </body>
+
+</html>

@@ -1,27 +1,19 @@
-declare function CodeMirror(element, options);
+//declare function CodeMirror(element, options);
+
+declare module CodeMirror {
+		function fromTextArea(element, options);
+}
 
 module CaptainTeach {
 			 
 		export	class CodeMirrorBuilder {
 
-				_value: string;
 				_mode: string;
 				_readOnly: bool;
 				
 				constructor(){
-						this._value = "";
 						this._mode = "markdown";
 						this._readOnly = false;
-				}
-				
-				append(value : string){
-						this._value += value;
-						return this;
-				}
-
-				value(value : string){
-						this._value = value;
-						return this;
 				}
 				
 				mode(mode : string){
@@ -35,11 +27,10 @@ module CaptainTeach {
 				}
 				
 				build(attach){
-						var cm: any = CodeMirror(attach, {
+						var cm: any = CodeMirror.fromTextArea(attach, {
 								lineNumbers: true,
 								lineWrapping: true,
 								gutters: ["comments"],
-								value: this._value,
 								mode: this._mode,
 								readOnly: this._readOnly});
 						return cm;

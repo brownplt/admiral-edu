@@ -4,14 +4,12 @@ module CaptainTeach {
 
 		class ReviewFile {
     
-				content: string;
 				comments: {[key: number]: string; };
 				// Line Number -> Line Widget
 				editors: {[key: number]: any;};
 				instance: any; // CodeMirror Instance
     
-				constructor(content: string) {
-            this.content = content;
+				constructor() {
 						this.comments = <any>{};
 						this.editors = <any>{};
 						this.instance = null;
@@ -33,7 +31,6 @@ module CaptainTeach {
 								throw "Cannot attach multiple CodeMirrors";
 						}
 
-						cm.value(this.content);
 						this.instance = cm.build(attach);
 						this.instance.on("gutterClick", this.handleClick(this));
 
@@ -99,27 +96,14 @@ module CaptainTeach {
 				}
     }
 
-		var testSource = 
-				"import cmpsci220.testing._\n" +
-				"import cmpsci220.support._\n" +
-				"import scala.util.Random\n" +
-				"// We start off defining a sealed trait called JoinList\n" +
-				"sealed trait JoinList[E]\n\n" +
-				"// A JoinList can be empty\n" +
-				"case class EmptyJoinList[E]() extends JoinList[E]\n\n" +
-				"// It can contain a single element\n" +
-				"\case class One[E](elt : E) extends JoinList[E]";
-
 		window.onload = function() {
 																								
 				var builder : CodeMirrorBuilder = new CodeMirrorBuilder();
 				builder.mode("text/x-scala").readOnly(true);
 
-				var review : ReviewFile = new ReviewFile(testSource);
-				review.setComment(7, "You might want to reconsider this definition.");
+				var review : ReviewFile = new ReviewFile();
 				var file = document.getElementById('file');
 				var cm = review.attach(file, builder);
 				cm.className += " file";
-				alert("Loaded");
 		}
 }

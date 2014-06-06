@@ -1,19 +1,11 @@
+
 var CaptainTeach;
 (function (CaptainTeach) {
     var CodeMirrorBuilder = (function () {
         function CodeMirrorBuilder() {
-            this._value = "";
             this._mode = "markdown";
             this._readOnly = false;
         }
-        CodeMirrorBuilder.prototype.append = function (value) {
-            this._value += value;
-            return this;
-        };
-        CodeMirrorBuilder.prototype.value = function (value) {
-            this._value = value;
-            return this;
-        };
         CodeMirrorBuilder.prototype.mode = function (mode) {
             this._mode = mode;
             return this;
@@ -23,13 +15,12 @@ var CaptainTeach;
             return this;
         };
         CodeMirrorBuilder.prototype.build = function (attach) {
-            var cm = CodeMirror(attach, {
+            var cm = CodeMirror.fromTextArea(attach, {
                 lineNumbers: true,
                 lineWrapping: true,
                 gutters: [
                     "comments"
                 ],
-                value: this._value,
                 mode: this._mode,
                 readOnly: this._readOnly
             });
@@ -43,8 +34,7 @@ var CaptainTeach;
 var CaptainTeach;
 (function (CaptainTeach) {
     var ReviewFile = (function () {
-        function ReviewFile(content) {
-            this.content = content;
+        function ReviewFile() {
             this.comments = {
             };
             this.editors = {
@@ -63,7 +53,6 @@ var CaptainTeach;
             if(this.instance != null) {
                 throw "Cannot attach multiple CodeMirrors";
             }
-            cm.value(this.content);
             this.instance = cm.build(attach);
             this.instance.on("gutterClick", this.handleClick(this));
             for(var l in this.comments) {
@@ -125,16 +114,13 @@ var CaptainTeach;
         };
         return ReviewFile;
     })();    
-    var testSource = "import cmpsci220.testing._\n" + "import cmpsci220.support._\n" + "import scala.util.Random\n" + "// We start off defining a sealed trait called JoinList\n" + "sealed trait JoinList[E]\n\n" + "// A JoinList can be empty\n" + "case class EmptyJoinList[E]() extends JoinList[E]\n\n" + "// It can contain a single element\n" + "\case class One[E](elt : E) extends JoinList[E]";
     window.onload = function () {
         var builder = new CaptainTeach.CodeMirrorBuilder();
         builder.mode("text/x-scala").readOnly(true);
-        var review = new ReviewFile(testSource);
-        review.setComment(7, "You might want to reconsider this definition.");
+        var review = new ReviewFile();
         var file = document.getElementById('file');
         var cm = review.attach(file, builder);
         cm.className += " file";
-        alert("Loaded");
     };
 })(CaptainTeach || (CaptainTeach = {}));
 

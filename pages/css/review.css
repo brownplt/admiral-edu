@@ -12,17 +12,24 @@ body {
 		margin: 0 0 20 0;
 }
 
-.likert ul {
-	display: flex;
-	justify-content: space-between;
+.scale {
+    text-align: justify;
 	padding: 5 5 5 5;
 	margin: 0 5 0 5;
+    font-weight: bold;
+    font-size: 14px;
 }
 
-.likert li {
-		list-style: none;
-		font-size: 14px;
-		font-weight: bold;
+.scale-item {
+    vertical-align: top;
+    display: inline-block;
+}
+
+.stretch {
+    width: 100%;
+    display: inline-block;
+    font-size:0;
+    line-height:0;
 }
 
 .rubric-item p {

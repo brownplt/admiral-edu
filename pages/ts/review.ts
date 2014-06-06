@@ -40,7 +40,7 @@ module CaptainTeach {
 								this.createEditor(line);
 						}
 
-						this.instance.setSize("100%", "100%");
+						this.instance.setSize("100%", "calc(100% - 31px)");
 						return this.instance;
 				}
 

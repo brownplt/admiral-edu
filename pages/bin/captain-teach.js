@@ -24,14 +24,14 @@ var CaptainTeach;
         };
         CodeMirrorBuilder.prototype.build = function (attach) {
             var cm = CodeMirror(attach, {
+                lineNumbers: true,
+                lineWrapping: true,
                 gutters: [
-                    "Codemirror-linenumbers", 
-                    "comment"
+                    "comments"
                 ],
                 value: this._value,
                 mode: this._mode,
-                readOnly: this._readOnly,
-                lineNumbers: true
+                readOnly: this._readOnly
             });
             return cm;
         };

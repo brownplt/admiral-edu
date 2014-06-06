@@ -14,11 +14,57 @@
   
   
   <body>
-    
-    <div id="file"></div>
-    <div id="file-browser"></div>
-    <div id="rubric"></div>
+		<div class="container">
+			<iframe src="file-container.html" scrolling="no" class="file-frame"></iframe>
+		</div>
+			<div id="rubric" class="rubric"> 
 
+				<div class="rubric-item instruction">
+					<p>When reviewing a file, you can leave feedback at a 
+						 specific location by clicking on a line number. </p>
+				</div>
+
+				<div class="rubric-item likert question">
+					<p>This code correctly implements the desired behavior.</p>
+					<ul>
+						<li>Disagree</li>
+						<li><input type="radio" name="behavior" value="0"></li>
+						<li><input type="radio" name="behavior" value="1"></li>
+						<li><input type="radio" name="behavior" value="2"></li>
+						<li><input type="radio" name="behavior" value="3"></li>
+						<li><input type="radio" name="behavior" value="4"></li>
+						<li><input type="radio" name="behavior" value="5"></li>
+						<li><input type="radio" name="behavior" value="6"></li>
+						<li><input type="radio" name="behavior" value="7"></li>
+						<li><input type="radio" name="behavior" value="8"></li>
+						<li>Agree</li>
+					</ul>
+				</div>
+
+				<div class="rubric-item likert question">
+					<p>This code is structured well.</p>
+					<ul>
+						<li>Disagree</li>
+						<li><input type="radio" name="structure" value="0"></li>
+						<li><input type="radio" name="structure" value="1"></li>
+						<li><input type="radio" name="structure" value="2"></li>
+						<li><input type="radio" name="structure" value="3"></li>
+						<li><input type="radio" name="structure" value="4"></li>
+						<li><input type="radio" name="structure" value="5"></li>
+						<li><input type="radio" name="structure" value="6"></li>
+						<li><input type="radio" name="structure" value="7"></li>
+						<li><input type="radio" name="structure" value="8"></li>
+						<li>Agree</li>
+					</ul>
+				</div>
+
+				<div class="rubric-item free-response question">
+					<p>Additional Comments</p>
+					<textarea name="feedback"></textarea>
+				</div>
+
+
+			</div>
   </body>
 
 </html>

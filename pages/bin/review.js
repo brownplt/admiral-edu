@@ -24,14 +24,14 @@ var CaptainTeach;
         };
         CodeMirrorBuilder.prototype.build = function (attach) {
             var cm = CodeMirror(attach, {
+                lineNumbers: true,
+                lineWrapping: true,
                 gutters: [
-                    "Codemirror-linenumbers", 
-                    "comment"
+                    "comments"
                 ],
                 value: this._value,
                 mode: this._mode,
-                readOnly: this._readOnly,
-                lineNumbers: true
+                readOnly: this._readOnly
             });
             return cm;
         };
@@ -70,20 +70,22 @@ var CaptainTeach;
                 var line = parseInt(l);
                 this.createEditor(line);
             }
+            this.instance.setSize("100%", "100%");
+            return this.instance;
         };
         ReviewFile.prototype.handleClick = function (_this) {
             return function (instance, line, gutter, clickeEvent) {
                 _this.toggleEditor(line);
             }
         };
-        ReviewFile.prototype.handleChange = function (line, _this) {
-            return function (instance, changeObj) {
-                var value = instance.getValue();
+        ReviewFile.prototype.handleChange = function (line, _this, comment) {
+            return function (e) {
+                var value = comment.value;
                 if(value == "") {
                     delete _this.comments[line];
-                    _this.instance.setGutterMarker(line, "comment", null);
+                    _this.instance.setGutterMarker(line, "comments", null);
                 } else {
-                    _this.instance.setGutterMarker(line, "comment", _this.makeMarker());
+                    _this.instance.setGutterMarker(line, "comments", _this.makeMarker());
                     _this.comments[line] = value;
                 }
             }
@@ -109,25 +111,16 @@ var CaptainTeach;
             if(line.toString() in this.editors) {
                 return this.editors[line];
             }
-            var wrapper = document.createElement('div');
-            wrapper.className = "editor";
-            var editor = document.createElement('div');
-            editor.className = "editor-box";
-            var editMirror = CodeMirror(editor, {
-                value: line.toString() in this.comments ? this.comments[line] : "",
-                mode: "markdown"
-            });
-            editMirror.setSize("100%", 50);
-            editMirror.on("change", this.handleChange(line, this));
-            this.handleChange(line, this)(editMirror, null);
-            this.editors[line] = this.instance.addLineWidget(line, wrapper);
-            wrapper.appendChild(editor);
-            editMirror.refresh();
+            var editor = document.createElement('textarea');
+            editor.className = "comment-box";
+            editor.innerHTML = line.toString() in this.comments ? this.comments[line] : "";
+            editor.onchange = this.handleChange(line, this, editor);
+            editor.onchange(null);
+            this.editors[line] = this.instance.addLineWidget(line, editor);
         };
         ReviewFile.prototype.makeMarker = function () {
             var marker = document.createElement("div");
-            marker.style.color = "#822";
-            marker.innerHTML = "*";
+            marker.className = "comment-marker";
             return marker;
         };
         return ReviewFile;
@@ -137,10 +130,10 @@ var CaptainTeach;
         var builder = new CaptainTeach.CodeMirrorBuilder();
         builder.mode("text/x-scala").readOnly(true);
         var review = new ReviewFile(testSource);
-        review.setComment(0, "Import");
-        review.setComment(7, "Comment");
+        review.setComment(7, "You might want to reconsider this definition.");
         var file = document.getElementById('file');
-        review.attach(file, builder);
+        var cm = review.attach(file, builder);
+        cm.className += " file";
         alert("Loaded");
     };
 })(CaptainTeach || (CaptainTeach = {}));

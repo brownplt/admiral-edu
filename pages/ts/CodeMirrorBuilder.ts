@@ -36,11 +36,12 @@ module CaptainTeach {
 				
 				build(attach){
 						var cm: any = CodeMirror(attach, {
-								gutters: ["Codemirror-linenumbers", "comment"],
+								lineNumbers: true,
+								lineWrapping: true,
+								gutters: ["comments"],
 								value: this._value,
 								mode: this._mode,
-								readOnly: this._readOnly,
-								lineNumbers: true });
+								readOnly: this._readOnly});
 						return cm;
 				}
     

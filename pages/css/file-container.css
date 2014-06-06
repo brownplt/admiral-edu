@@ -1,0 +1,55 @@
+body {
+		margin: 0 0 2 0;
+		font-family: times;
+}
+
+.comment-marker {
+		width: 8px;
+		height: 8px;
+		margin-top: 3px;
+		background-image: url('../imgs/comment.png');
+}
+
+.file-container {
+	 margin-left: auto;
+	 margin-right: auto;
+	 height: 100%;
+   border: 1px solid #ccc;
+   border-radius: 5px;
+   overflow: hidden;
+}
+
+.file-header h1 {
+	font-size: 16px;
+	float: left;
+	margin: 5 0 0 10;
+	color: #555;
+}
+
+.file-header a {
+	text-decoration: none;
+}
+
+.file-header {
+	width: 100%;
+	height: 30px;
+	border-bottom: 1px solid #ccc;
+	background: #eee;
+}
+
+.file {
+		width: 100%;
+}
+
+.comment-box {
+		border: 1px solid #ccc;
+		padding: 5 5 5 5;
+		margin: 5 5 5 5;
+		max-width: calc(100% - 10px);
+		width: calc(100% - 10px);
+        min-width: 50%;
+        min-height: 30px;
+		border-radius: 3px;
+        background: #fafafa;
+        box-shadow: 2px 2px 3px #aaa;
+}

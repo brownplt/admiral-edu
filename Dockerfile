@@ -48,11 +48,6 @@ RUN a2enmod proxy_http
 RUN a2enmod ssl
 RUN a2ensite default-ssl
 
-# Note: You need to modify this file
-ADD docker/captain-teach.conf /etc/apache2/conf-available/captain-teach.conf
-
-RUN a2enconf captain-teach
-
 #
 # Install Racket
 #
@@ -69,12 +64,17 @@ RUN ln -s /usr/racket/bin/raco /usr/local/bin/raco
 
 # Setup Captain Teach Server
 
+# Create User
 RUN adduser --disabled-password --gecos "" admiraledu
 
 # Install Captain Teach Dependencies
-
 RUN su admiraledu -c 'cd ~/; raco planet install gh aws.plt 1 5'
 
+# Add captain-teach apache configuration file
+# Note: You need to modify this file
+ADD docker/captain-teach.conf /etc/apache2/conf-available/captain-teach.conf
+
+RUN a2enconf captain-teach
 
 # Add S3 Captain-Teach credentials
 ADD docker/aws-credentials /home/admiraledu/aws-credentials

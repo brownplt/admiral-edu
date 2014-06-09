@@ -3,6 +3,9 @@ MAINTAINER Arjun Guha <arjun@cs.umass.edu>
 
 WORKDIR /root
 USER root
+
+RUN apt-get update
+
 RUN apt-get install -y wget
 
 

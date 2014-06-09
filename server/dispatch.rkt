@@ -25,6 +25,7 @@
    [("") (dispatch index)]
    [("") #:method "post" (post->dispatch post->index)]
    [("review") (dispatch-html review:load)]
+   [("review" (string-arg)) (dispatch-html review:load)]
    [("file-container") (dispatch-html review:file-container)]
    [("review" "test") (dispatch-html review:load)]))
 
@@ -50,7 +51,7 @@
          (error-not-registered session)
          (page session valid-role)))))
 
-(define (render-html session page)
+(define (render-html session page rest)
   (let ((valid-role (role session)))
     (if (not valid-role)
         (response/xexpr (error-not-registered session))
@@ -58,16 +59,16 @@
          200 #"Okay"
          (current-seconds) TEXT/HTML-MIME-TYPE
          empty
-         (list (string->bytes/utf-8 (page session valid-role)))))))
+         (list (string->bytes/utf-8 (page session valid-role rest)))))))
 
 ;; If the session is valid, tries to render the specified page. Othewise,
 ;; this responds with an invalid session error
 (define (dispatch-html page)
-  (lambda (req)
+  (lambda (req [rest ""])
     (let ((session (get-session req)))
       (if (eq? session 'invalid-session) 
           (response/xexpr error-invalid-session)
-          (render-html session page)))))
+          (render-html session page rest)))))
     
 ;; If the session is valid, tries to render the specified page. Othewise,
 ;; this responds with an invalid session error

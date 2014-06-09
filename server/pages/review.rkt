@@ -9,8 +9,10 @@
          "../config.rkt")
 
 (provide load)
-(define (load session role [message '()])
-  (include-template "html/review.html"))
+(define (load session role rest [message '()])
+  (let* ((path (if (eq? "" rest) "" "../"))
+         [file-container (string-append path "file-container")])
+    (include-template "html/review.html")))
 
 (provide file-container)
 (define (file-container session role [message '()])

@@ -6,7 +6,8 @@
          (prefix-in role: "mysql/role.rkt")
          (prefix-in roles: "mysql/roles.rkt")
          (prefix-in assignment: "mysql/assignment.rkt")
-         (prefix-in submission: "mysql/submission.rkt"))
+         (prefix-in submission: "mysql/submission.rkt")
+         (prefix-in review: "mysql/review.rkt"))
 
 ;; Initializes the database.
 (provide init-db)
@@ -16,7 +17,8 @@
   (role:init)
   (roles:init)
   (assignment:init)
-  (submission:init))
+  (submission:init)
+  (review:init))
 
 
 ;; User Table
@@ -43,6 +45,16 @@
          submission:step-id submission:step-id-type submission:record-step
          submission:user-id submission:user-id-type submission:record-user
          submission:time-stamp submission:time-stamp-type submission:record-time-stamp
-         submission:create submission:list submission:count)
-         
-         
+         submission:create submission:list submission:count
+         submission:exists?)
+
+
+;; Review Table
+(provide review:table
+         review:assignment-id review:assignment-id-type
+         review:step-id review:step-id-type
+         review:version review:version-type
+         review:class-id review:class-id-type
+         review:reviewee-id review:reviewee-id-type
+         review:reviewer-id review:reviewer-id-type
+         review:time-stamp review:time-stamp-type)

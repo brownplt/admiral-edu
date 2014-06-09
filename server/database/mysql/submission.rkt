@@ -128,4 +128,17 @@
             (prep (prepare sql-conn query))
             (result (vector-ref (query-row sql-conn prep assignment class step user) 0)))
        result)]))
-                   
+
+(provide exists?)
+(define (exists? assignment class step user version)
+         (let* ((query (merge "SELECT COUNT(*)"
+                              "FROM" table
+                              "WHERE" assignment-id "=? AND"
+                                      class-id "=? AND"
+                                      step-id "=? AND"
+                                      user-id "=? AND"
+                                      version "=?"
+                              "LIMIT 1"))
+                (prep (prepare sql-conn query))
+                (result (vector-ref (query-row sql-conn prep assignment class step user version) 0)))
+           (> result 0)))

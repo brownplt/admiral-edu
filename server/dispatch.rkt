@@ -15,6 +15,7 @@
 (initialize)
 
 (require "pages/index.rkt"
+         (prefix-in review: "pages/review.rkt")
          "pages/errors.rkt")
 
 ;; Defines how to process incomming requests are handled
@@ -22,7 +23,10 @@
 (define-values (ct-rules mk-url)
   (dispatch-rules
    [("") (dispatch index)]
-   [("") #:method "post" (post->dispatch post->index)]))
+   [("") #:method "post" (post->dispatch post->index)]
+   [("review") (dispatch-html review:load)]
+   [("file-container") (dispatch-html review:file-container)]
+   [("review" "test") (dispatch-html review:load)]))
 
 ;; Defines how a session is created
 ;; request -> ct-session
@@ -46,6 +50,25 @@
          (error-not-registered session)
          (page session valid-role)))))
 
+(define (render-html session page)
+  (let ((valid-role (role session)))
+    (if (not valid-role)
+        (response/xexpr (error-not-registered session))
+        (response/full
+         200 #"Okay"
+         (current-seconds) TEXT/HTML-MIME-TYPE
+         empty
+         (list (string->bytes/utf-8 (page session valid-role)))))))
+
+;; If the session is valid, tries to render the specified page. Othewise,
+;; this responds with an invalid session error
+(define (dispatch-html page)
+  (lambda (req)
+    (let ((session (get-session req)))
+      (if (eq? session 'invalid-session) 
+          (response/xexpr error-invalid-session)
+          (render-html session page)))))
+    
 ;; If the session is valid, tries to render the specified page. Othewise,
 ;; this responds with an invalid session error
 (define (dispatch page)

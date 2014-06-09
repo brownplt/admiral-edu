@@ -78,14 +78,14 @@ module CaptainTeach {
 				}
 
 				createEditor(line : number){
-						if(this.instance == null) return;
-						if(line.toString() in this.editors) return this.editors[line];
-						var editor = document.createElement('textarea');
-						editor.className = "comment-box";
-						editor.innerHTML = line.toString() in this.comments ? this.comments[line] : "";
-						editor.onchange = this.handleChange(line, this, editor);
-						editor.onchange(null);
-						this.editors[line] = this.instance.addLineWidget(line, editor);
+				    if(this.instance == null) return;
+				    if(line.toString() in this.editors) return this.editors[line];
+				    var editor = document.createElement('textarea');
+				    editor.className = "comment-box";
+				    editor.innerHTML = line.toString() in this.comments ? this.comments[line] : "";
+				    editor.onkeyup = this.handleChange(line, this, editor);
+				    this.handleChange(line, this, editor)(null);
+				    this.editors[line] = this.instance.addLineWidget(line, editor);
 						
 				}
 

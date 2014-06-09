@@ -33,10 +33,11 @@ RUN apt-get install -y apache2
 #
 
 # Dependencies
-RUN apt-get install -y libcurl3
+RUN apt-get install -y libcurl3 libjansson4
 
-RUN wget https://github.com/pingidentity/mod_auth_openidc/releases/download/v1.3/libapache2-mod-auth-openidc_1.3_amd64.deb 
-RUN dpkg -i libapache2-mod-auth-openidc_1.3_amd64.deb
+#RUN wget https://github.com/pingidentity/mod_auth_openidc/releases/download/v1.3/libapache2-mod-auth-openidc_1.3_amd64.deb 
+RUN wget https://github.com/pingidentity/mod_auth_openidc/releases/download/v1.5/libapache2-mod-auth-openidc_1.5_amd64.deb
+RUN dpkg -i libapache2-mod-auth-openidc_1.5_amd64.deb
 
 #
 # Configure Apache
@@ -84,10 +85,18 @@ RUN chown admiraledu /home/admiraledu/files
 RUN chgrp admiraledu /home/admiraledu/files
 
 #
+# Copy Captain Teach Scripts, Images, CSS
+#
+ADD html/bin /var/www/html/bin
+ADD html/css /var/www/html/css
+ADD html/imgs /var/www/html/imgs
+ADD code-mirror/mode /var/www/html/mode
+ADD code-mirror/lib /var/www/html/lib
+
+
+#
 # Copy AdmiralEdu to container
 #
-
-
 ADD server /home/admiraledu/server
 
 

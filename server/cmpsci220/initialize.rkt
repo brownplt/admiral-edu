@@ -20,4 +20,6 @@
   (roles:create student-role "Student" 0)
   (role:associate "cmpsci220" "arjunguha@umass.edu" instructor-role)
   (role:associate "cmpsci220" "jcollard@umass.edu" ta-role)
+  (role:associate "cmpsci220" "shriram@gmail.com" instructor-role)
+  (role:associate "cmpsci220" "joe.politz@gmail.com" instructor-role)
   (assignment:create "clock" "cmpsci220"))

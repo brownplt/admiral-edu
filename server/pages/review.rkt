@@ -17,9 +17,12 @@
 
 (provide file-container)
 (define (file-container session role rest [message '()])
-  (let ((assignment (car rest))
-        (step (cadr rest)))
+  (let* ((assignment (car rest))
+         (step (cadr rest))
+         (r (review:select-review assignment (ct-session-class session) step (ct-session-uid session)))
+         (reviewee (car r))
+         (version (cdr r)))
     (string-append (include-template "html/file-container-header.html")
-                   (retrieve-submission-file (ct-session-class session) (ct-session-uid session) assignment step "0" "sample.scala")
+                   (retrieve-submission-file (ct-session-class session) reviewee assignment step version "sample.scala")
                    (include-template "html/file-container-footer.html"))))
 

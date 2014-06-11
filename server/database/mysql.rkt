@@ -57,4 +57,5 @@
          review:class-id review:class-id-type
          review:reviewee-id review:reviewee-id-type
          review:reviewer-id review:reviewer-id-type
-         review:time-stamp review:time-stamp-type)
+         review:time-stamp review:time-stamp-type
+         review:select-review)

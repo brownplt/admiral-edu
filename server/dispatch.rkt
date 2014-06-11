@@ -26,7 +26,25 @@
    [("") #:method "post" (post->dispatch post->index)]
    [("review" (string-arg) (string-arg)) (dispatch-html review:load)]
    [("file-container" (string-arg) (string-arg) (string-arg)) (dispatch-html review:file-container)]
+   [((string-arg) ...) handler]
    [else four-oh-four]))
+
+(define (handler req path)
+  (let ((session (get-session req))
+        (bindings (request-bindings req)))
+    (handlerPrime session bindings path)))
+
+(define (handlerPrime session bindings path)
+  (match path
+    [(list "") (render session index)]
+    [(cons "sudo" (cons uid rest)) (with-sudo uid session bindings rest)]
+    [else ((lambda ()
+            (print path) (newline)
+            (response/xexpr `(html (body (p "many things!"))))))]))
+
+(define (with-sudo uid session bindings path)
+  (let ((new-session (ct-session (ct-session-class session) uid)))
+    (handlerPrime new-session bindings path)))
 
 (define (four-oh-four req)
   (response/xexpr

@@ -15,3 +15,16 @@
     (unarchive path)
     (submission:create assignment class step user)
     (delete-file (string-append path "/submission.tar"))))
+
+(provide retrieve-submission-file)
+(define (retrieve-submission-file class user assignment step version file)
+  (file->string (string-append (submission-path class user assignment step version) "/" file)))
+
+(provide is-directory?)
+(define (is-directory? path)
+  (directory-exists? path))
+
+(provide is-file?)
+(define (is-file? path)
+  (file-exists? path))
+         

@@ -10,11 +10,16 @@
 
 (provide load)
 (define (load session role rest [message '()])
-  (let* ((path (if (eq? "" rest) "" "../"))
-         [file-container (string-append path "file-container")])
+  (let* ((assignment (car rest))
+         (step (cadr rest))
+         [file-container (string-append "../../file-container/" assignment "/" step "/")])
     (include-template "html/review.html")))
 
 (provide file-container)
-(define (file-container session role [message '()])
-  (include-template "html/file-container.html"))
+(define (file-container session role rest [message '()])
+  (let ((assignment (car rest))
+        (step (cadr rest)))
+    (string-append (include-template "html/file-container-header.html")
+                   (retrieve-submission-file (ct-session-class session) (ct-session-uid session) assignment step "0" "sample.scala")
+                   (include-template "html/file-container-footer.html"))))
 

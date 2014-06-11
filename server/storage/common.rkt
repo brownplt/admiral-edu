@@ -24,6 +24,10 @@
 (define (create-path-list class user assignment step version)
   (append root (list class user assignment step version)))
 
+(provide submission-path)
+(define (submission-path class user assignment step version)
+  (to-path (create-path-list class user assignment step version)))
+
 (provide create-directory)
 (define (create-directory class user assignment step version)
   (letrec ((path-list (list class user assignment step version))

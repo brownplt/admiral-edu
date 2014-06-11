@@ -24,10 +24,13 @@
   (dispatch-rules
    [("") (dispatch index)]
    [("") #:method "post" (post->dispatch post->index)]
-   [("review") (dispatch-html review:load)]
-   [("review" (string-arg)) (dispatch-html review:load)]
-   [("file-container") (dispatch-html review:file-container)]
-   [("review" "test") (dispatch-html review:load)]))
+   [("review" (string-arg) (string-arg)) (dispatch-html review:load)]
+   [("file-container" (string-arg) (string-arg) (string-arg)) (dispatch-html review:file-container)]
+   [else four-oh-four]))
+
+(define (four-oh-four req)
+  (response/xexpr
+   '(html (body (p "404")))))
 
 ;; Defines how a session is created
 ;; request -> ct-session
@@ -64,7 +67,7 @@
 ;; If the session is valid, tries to render the specified page. Othewise,
 ;; this responds with an invalid session error
 (define (dispatch-html page)
-  (lambda (req [rest ""])
+  (lambda (req . rest)
     (let ((session (get-session req)))
       (if (eq? session 'invalid-session) 
           (response/xexpr error-invalid-session)

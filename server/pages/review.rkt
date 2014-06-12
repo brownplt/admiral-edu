@@ -32,7 +32,7 @@
          (reviewee (car r))
          (version (cdr r)))
     (string-append (include-template "html/file-container-header.html")
-                   (retrieve-submission-file (ct-session-class session) reviewee assignment stepName version "sample.scala")
+                   (retrieve-submission-file (ct-session-class session) reviewee assignment stepName version (to-path (cddr rest)))
                    (include-template "html/file-container-footer.html"))))
 
 (define (to-step-link step depth)

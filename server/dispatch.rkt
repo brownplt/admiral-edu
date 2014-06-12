@@ -43,9 +43,10 @@
             (response/xexpr `(html (body (p "many things!"))))))]))
 
 (define (with-sudo post uid session bindings path)
-  (let* ((role (roles:get-role uid))
-         (can-sudo (roles:role-can-edit role))
+  (let* ((user-role (role session))
+         (can-sudo (if user-role (roles:role-can-edit user-role) #f))
          (new-session (ct-session (ct-session-class session) uid)))
+    (print (list "Switching From" (ct-session-uid session) "to" uid "Can Sudo:" can-sudo)) (newline)
     (if (not can-sudo) (four-oh-four)
         (handlerPrime post new-session bindings path))))
 
@@ -64,6 +65,7 @@
   (let* ((class (ct-session-class session))
          (uid (ct-session-uid session))
          (result (role:select class uid)))
+    (print result) (newline)
     result))
 
 ;; If the session has a valid role, renders the specified page. Otherwise,

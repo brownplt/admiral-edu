@@ -22,31 +22,34 @@
 (provide ct-rules)
 (define-values (ct-rules mk-url)
   (dispatch-rules
-   [("") (dispatch index)]
-   [("") #:method "post" (post->dispatch post->index)]
-   [("review" (string-arg) (string-arg)) (dispatch-html review:load)]
-   [("file-container" (string-arg) (string-arg) (string-arg)) (dispatch-html review:file-container)]
-   [((string-arg) ...) handler]
+   [((string-arg) ...) (handler #f)]
+   [((string-arg) ...) #:method "post" (handler #t)]
    [else four-oh-four]))
 
-(define (handler req path)
-  (let ((session (get-session req))
-        (bindings (request-bindings req)))
-    (handlerPrime session bindings path)))
+(define (handler post)
+  (lambda (req path)
+    (let ((session (get-session req))
+          (bindings (request-bindings req)))
+      (handlerPrime post session bindings path))))
 
-(define (handlerPrime session bindings path)
+(define (handlerPrime post session bindings path)
   (match path
-    [(list "") (render session index)]
-    [(cons "sudo" (cons uid rest)) (with-sudo uid session bindings rest)]
+    [(list "") (if post (post->render session post->index bindings) (render session index))]
+    [(list "review" assignment step) (render-html session review:load (list assignment step))]
+    [(list "file-container" assignment step path) (render-html session review:file-container (list assignment step path))]
+    [(cons "sudo" (cons uid rest)) (with-sudo post uid session bindings rest)]
     [else ((lambda ()
             (print path) (newline)
             (response/xexpr `(html (body (p "many things!"))))))]))
 
-(define (with-sudo uid session bindings path)
-  (let ((new-session (ct-session (ct-session-class session) uid)))
-    (handlerPrime new-session bindings path)))
+(define (with-sudo post uid session bindings path)
+  (let* ((role (roles:get-role uid))
+         (can-sudo (roles:role-can-edit role))
+         (new-session (ct-session (ct-session-class session) uid)))
+    (if (not can-sudo) (four-oh-four)
+        (handlerPrime post new-session bindings path))))
 
-(define (four-oh-four req)
+(define (four-oh-four)
   (response/xexpr
    '(html (body (p "404")))))
 

@@ -37,7 +37,7 @@
     ['() (if post (post->render session post->index bindings) (render session index))]
     [(list "") (if post (post->render session post->index bindings) (render session index))]
     [(cons "review" rest) (render-html session review:load rest)]
-    [(list "file-container" assignment step path) (render-html session review:file-container (list assignment step path))]
+    [(cons "file-container" rest) (render-html session review:file-container rest)]
     [(cons "su" (cons uid rest)) (with-sudo post uid session bindings rest)]
     [else (four-oh-four)]))
 

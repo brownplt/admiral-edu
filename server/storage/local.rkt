@@ -21,6 +21,27 @@
   (let ((path (string-append (submission-path class user assignment step version) "/" file)))
     (file->string path)))
 
+(provide retrieve-file)
+(define (retrieve-file path)
+    (file->string path))
+
+(provide submission-file-path)
+(define (submission-file-path class user assignment step version file)
+  (let ((path (string-append (submission-path class user assignment step version) "/" file)))
+    path))
+
+(provide sub-directories-of)
+(define (sub-directories-of path)
+  (filter (lambda (p) (is-directory? (string-append (add-slash path) p))) (map path->string (directory-list path))))
+
+(provide add-slash)
+(define (add-slash path)
+  (if (equal? (string-ref path (- (string-length path) 1)) #\/) path (string-append path "/")))
+
+(provide list-files)
+(define (list-files path)
+  (filter (lambda (p) (is-file? (string-append (add-slash path) p))) (map path->string (directory-list path))))
+
 (provide is-directory?)
 (define (is-directory? path)
   (directory-exists? path))

@@ -10,9 +10,11 @@
 (define class-name "cmpsci220")
 
 (provide upload-submission)
-(provide retrieve-submission-file)
+(provide retrieve-submission-file retrieve-file submission-file-path)
+(provide sub-directories-of list-files)
 (provide is-directory?)
 (provide is-file?)
+(provide add-slash)
 
 
 ;; Define Roles

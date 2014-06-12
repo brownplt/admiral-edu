@@ -37,6 +37,46 @@ body {
 	background: #eee;
 }
 
+.browser ul {
+    background-color: #fefefe;
+    padding: 0 0 0 0;
+    margin: 0 0 0 0;
+    
+}
+
+.directory {
+    background-image: url("../imgs/directory.png");
+    background-position: 3px 2px;
+}
+
+.file {
+    background-image: url("../imgs/file.png");
+    background-position: 3px 2px;
+}
+
+.browser li {
+    min-height: 16px;
+    padding-left: 24px;
+    display:inline-block;
+    width:100%;
+    border-bottom: 1px solid #eee;
+    background-repeat: no-repeat;
+    height:20px;
+}
+
+.browser li:hover {
+    background-color: #fafafa
+}
+
+.browser a {
+    text-decoration: none;
+    width: 100%;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
 
 .comment-box {
 		border: 1px solid #ccc;

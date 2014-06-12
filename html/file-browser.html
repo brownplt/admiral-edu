@@ -1,0 +1,39 @@
+<html>
+  
+  <head>
+    <title>Captain Teach - File Container</title>
+    
+    <script src="lib/codemirror.js"></script>
+    <script src="mode/clike/clike.js"></script>
+    <script src="mode/markdown/markdown.js"></script>
+    <script src="bin/review.js"></script>
+    <link rel="stylesheet" href="lib/codemirror.css">
+    <link rel="stylesheet" href="css/file-container.css">
+  </head>
+  
+  
+  <body>    
+    <div id="file-container" class="file-container">
+      <div id="file-header" class="file-header">
+	<h1>
+	  <a href="#">path</a> /
+	  <a href="#">to</a> / 
+	  File.extension</h1>
+      </div>
+
+      <div id="directory" class="browser">
+	<ul>
+	  <li class="directory"><a href="#">demos</a></li>
+	  <li class="directory"><a href="#">src</a></li>
+	  <li class="directory"><a href="#">test</a></li>
+	  <li class="file"><a href="#">Main.scala</a></li>
+	  <li class="file"><a href="#">README.md</a></li>
+	  <li class="file"><a href="#">Makefile</a></li>
+	</ul>
+	     
+      </div>
+
+    </div>
+  </body>
+
+</html>

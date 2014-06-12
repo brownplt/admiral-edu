@@ -18,7 +18,8 @@
 
 (provide retrieve-submission-file)
 (define (retrieve-submission-file class user assignment step version file)
-  (file->string (string-append (submission-path class user assignment step version) "/" file)))
+  (let ((path (string-append (submission-path class user assignment step version) "/" file)))
+    (file->string path)))
 
 (provide is-directory?)
 (define (is-directory? path)

@@ -86,7 +86,7 @@
          (new-review (= (vector-ref result 0) 0))
          (reviewee-id (vector-ref result 1))
          (version (vector-ref result 2)))
-    (if new-review (assign-review assignment class step reviewer (select-least-reviewed assignment class step reviewer)) `(,reviewee-id . ,version))))
+    (if new-review (assign-review assignment class step reviewer (select-least-reviewed assignment class step reviewer)) `(,reviewee-id . ,(number->string version)))))
 
 (define (assign-review assignment class step reviewer pair)
   (let ((reviewee (car pair))

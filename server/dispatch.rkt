@@ -34,19 +34,17 @@
 
 (define (handlerPrime post session bindings path)
   (match path
+    ['() (if post (post->render session post->index bindings) (render session index))]
     [(list "") (if post (post->render session post->index bindings) (render session index))]
-    [(list "review" assignment step) (render-html session review:load (list assignment step))]
+    [(cons "review" rest) (render-html session review:load rest)]
     [(list "file-container" assignment step path) (render-html session review:file-container (list assignment step path))]
-    [(cons "sudo" (cons uid rest)) (with-sudo post uid session bindings rest)]
-    [else ((lambda ()
-            (print path) (newline)
-            (response/xexpr `(html (body (p "many things!"))))))]))
+    [(cons "su" (cons uid rest)) (with-sudo post uid session bindings rest)]
+    [else (four-oh-four)]))
 
 (define (with-sudo post uid session bindings path)
   (let* ((user-role (role session))
          (can-sudo (if user-role (roles:role-can-edit user-role) #f))
          (new-session (ct-session (ct-session-class session) uid)))
-    (print (list "Switching From" (ct-session-uid session) "to" uid "Can Sudo:" can-sudo)) (newline)
     (if (not can-sudo) (four-oh-four)
         (handlerPrime post new-session bindings path))))
 
@@ -65,7 +63,6 @@
   (let* ((class (ct-session-class session))
          (uid (ct-session-uid session))
          (result (role:select class uid)))
-    (print result) (newline)
     result))
 
 ;; If the session has a valid role, renders the specified page. Otherwise,

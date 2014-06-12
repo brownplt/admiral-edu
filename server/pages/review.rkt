@@ -8,11 +8,17 @@
          "../database/mysql.rkt"
          "../config.rkt")
 
+(define (repeat val n)
+  (cond
+    [(<= n 0) '()]
+    [else (cons val (repeat val (- n 1)))]))
+
 (provide load)
 (define (load session role rest [message '()])
   (let* ((assignment (car rest))
          (step (cadr rest))
-         [file-container (string-append "../../file-container/" assignment "/" step "/")])
+         (updir (apply string-append (repeat "../" (length rest))))
+         [file-container (string-append updir "file-container/" assignment "/" step "/")])
     (include-template "html/review.html")))
 
 (provide file-container)

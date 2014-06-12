@@ -41,6 +41,36 @@ var CaptainTeach;
             };
             this.instance = null;
         }
+        ReviewFile.fromJson = function fromJson(json) {
+            var comments = JSON.parse(json).comments;
+            var rf = new ReviewFile();
+            rf.comments = comments;
+            return rf;
+        }
+        ReviewFile.prototype.escape = function (input) {
+            var output = "";
+            for(var i = 0; i < input.length; i++) {
+                var c = input.charAt(i);
+                if(c == '"') {
+                    output += "\\\"";
+                } else {
+                    output += c;
+                }
+            }
+            return output;
+        };
+        ReviewFile.prototype.toJSON = function () {
+            var json = "{\n\t\"comments\" :\n\t{\n";
+            var size = Object.keys(this.comments).length;
+            var i = 0;
+            for(var l in this.comments) {
+                var line = parseInt(l);
+                var maybeComma = ++i < size ? ",\n" : "\n";
+                json += "\t\t\"" + line + "\" : \"" + this.escape(this.comments[line]) + "\"" + maybeComma;
+            }
+            json += "\t}\n}";
+            return json;
+        };
         ReviewFile.prototype.setComment = function (line, comment) {
             this.comments[line] = comment;
             this.createEditor(line);
@@ -100,12 +130,35 @@ var CaptainTeach;
             if(line.toString() in this.editors) {
                 return this.editors[line];
             }
+            var editorContainer = document.createElement('div');
+            editorContainer.className = "comment-container";
+            var close = document.createElement('div');
+            close.className = "comment-close";
+            var closeA = document.createElement('a');
+            closeA.setAttribute('href', "#");
+            var _this = this;
+            closeA.onclick = function (e) {
+                _this.toggleEditor(line);
+            };
+            close.appendChild(closeA);
+            var saveit = document.createElement('div');
+            saveit.className = "comment-save";
+            var saveitA = document.createElement('a');
+            saveitA.innerHTML = "Save";
+            saveitA.setAttribute('href', "#");
+            saveitA.onclick = function (e) {
+                save(this.toJSON());
+            };
+            saveit.appendChild(saveitA);
             var editor = document.createElement('textarea');
             editor.className = "comment-box";
             editor.innerHTML = line.toString() in this.comments ? this.comments[line] : "";
             editor.onkeyup = this.handleChange(line, this, editor);
+            editorContainer.appendChild(close);
+            editorContainer.appendChild(editor);
+            editorContainer.appendChild(saveit);
             this.handleChange(line, this, editor)(null);
-            this.editors[line] = this.instance.addLineWidget(line, editor);
+            this.editors[line] = this.instance.addLineWidget(line, editorContainer);
         };
         ReviewFile.prototype.makeMarker = function () {
             var marker = document.createElement("div");
@@ -117,10 +170,11 @@ var CaptainTeach;
     window.onload = function () {
         var builder = new CaptainTeach.CodeMirrorBuilder();
         builder.mode("text/x-scala").readOnly(true);
-        var review = new ReviewFile();
+        var review = ReviewFile.fromJson(load());
         var file = document.getElementById('file');
         var cm = review.attach(file, builder);
         cm.className += " file";
+        alert("Loaded." + review.toJSON());
     };
 })(CaptainTeach || (CaptainTeach = {}));
 

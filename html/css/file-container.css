@@ -77,14 +77,44 @@ a:hover {
     text-decoration: underline;
 }
 
+.comment-close a {
+    width: 16px;
+    height: 16px;
+    float: right;
+    background-image: url("../imgs/close.png");
+    background-repeat: no-repeat;
+    margin-right: 5px;
+}
 
-.comment-box {
+.comment-container {
+    overflow: hidden;
+}
+
+.comment-save a {
+    float: right;
+    margin-right: 5px;
+    font-size: 14px;
+    text-decoration: none;
+    font-weight: bold;
+    background-color: #acacac;
+    color: black;
+    width: 50px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    border: 1px solid #eee;
+    border-radius:3px;
+    overflow: hidden;
+    
+}
+
+.comment-container textarea {
 		border: 1px solid #ccc;
 		padding: 5 5 5 5;
 		margin: 5 5 5 5;
 		max-width: calc(100% - 10px);
 		width: calc(100% - 10px);
-        min-width: 50%;
+        min-width: calc(100% - 10px);
         min-height: 30px;
 		border-radius: 3px;
         background: #fafafa;

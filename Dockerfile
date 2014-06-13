@@ -50,7 +50,6 @@ RUN a2enmod auth_openidc
 RUN a2enmod proxy
 RUN a2enmod proxy_http
 RUN a2enmod ssl
-RUN a2ensite default-ssl
 
 #
 # Install Racket
@@ -74,11 +73,34 @@ RUN adduser --disabled-password --gecos "" admiraledu
 # Install Captain Teach Dependencies
 RUN su admiraledu -c 'cd ~/; raco planet install gh aws.plt 1 5'
 
+#######################################################################
 # Add captain-teach apache configuration file
+# This file specifies how the user is authenticated
 # Note: You need to modify this file
+#######################################################################
 ADD docker/captain-teach.conf /etc/apache2/conf-available/captain-teach.conf
 
 RUN a2enconf captain-teach
+
+##########################################################################
+# Add captain-teach-http apache site. This site describes how your server
+# should work when it is accessed on port 80
+# The default setting is configured to:
+#   * Redirect traffic to https://localhost/
+##########################################################################
+ADD docker/captain-teach-http.conf /etc/apache2/sites-available/captain-teach-http.conf
+RUN a2ensite captain-teach-http
+
+##########################################################################
+# Add captain-teach-ssl apache site. This site describes how your server
+# should work when it is accessed on port 443
+# The default setting is configured to:
+#     * Use the default "snakeoil" certificate
+##########################################################################
+ADD docker/captain-teach-ssl.conf /etc/apache2/sites-available/captain-teach-ssl.conf
+## You need to push in your certificates here
+## ADD docker/cs220/ /etc/ssl/cs220/
+RUN a2ensite captain-teach-ssl
 
 # Add S3 Captain-Teach credentials
 ADD docker/aws-credentials /home/admiraledu/aws-credentials

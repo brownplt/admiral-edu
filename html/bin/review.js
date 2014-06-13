@@ -97,7 +97,7 @@ var CaptainTeach;
                 _this.toggleEditor(line);
             }
         };
-        ReviewFile.prototype.handleChange = function (line, _this, comment) {
+        ReviewFile.prototype.handleSave = function (line, _this, comment) {
             return function (e) {
                 var value = comment.value;
                 if(value == "") {
@@ -137,28 +137,40 @@ var CaptainTeach;
             var closeA = document.createElement('a');
             closeA.setAttribute('href', "#");
             var _this = this;
+            closeA.innerHTML = "Close Form";
             closeA.onclick = function (e) {
                 _this.toggleEditor(line);
             };
             close.appendChild(closeA);
             var saveit = document.createElement('div');
-            saveit.className = "comment-save";
+            saveit.className = "comment-save-disabled";
             var saveitA = document.createElement('a');
             saveitA.innerHTML = "Save";
             saveitA.setAttribute('href', "#");
-            saveitA.onclick = function (e) {
-                save(this.toJSON());
-            };
             saveit.appendChild(saveitA);
             var editor = document.createElement('textarea');
             editor.className = "comment-box";
             editor.innerHTML = line.toString() in this.comments ? this.comments[line] : "";
-            editor.onkeyup = this.handleChange(line, this, editor);
-            editorContainer.appendChild(close);
+            editor.onkeyup = function (_) {
+                saveit.className = "comment-save";
+                editor.style.height = "";
+                editor.style.height = Math.min(editor.scrollHeight) + 5 + "px";
+            };
+            var _this = this;
+            saveitA.onclick = function (e) {
+                _this.handleSave(line, _this, editor)(editor.innerHTML);
+                var callback = function (a) {
+                    saveit.className = "comment-save-disabled";
+                };
+                save(_this.toJSON(), callback);
+            };
             editorContainer.appendChild(editor);
+            editorContainer.appendChild(close);
             editorContainer.appendChild(saveit);
-            this.handleChange(line, this, editor)(null);
+            this.handleSave(line, this, editor)(null);
             this.editors[line] = this.instance.addLineWidget(line, editorContainer);
+            editor.style.height = "";
+            editor.style.height = Math.min(editor.scrollHeight) + 5 + "px";
         };
         ReviewFile.prototype.makeMarker = function () {
             var marker = document.createElement("div");
@@ -170,11 +182,13 @@ var CaptainTeach;
     window.onload = function () {
         var builder = new CaptainTeach.CodeMirrorBuilder();
         builder.mode("text/x-scala").readOnly(true);
-        var review = ReviewFile.fromJson(load());
-        var file = document.getElementById('file');
-        var cm = review.attach(file, builder);
-        cm.className += " file";
-        alert("Loaded." + review.toJSON());
+        var callback = function (data) {
+            var review = ReviewFile.fromJson(data);
+            var file = document.getElementById('file');
+            var cm = review.attach(file, builder);
+            cm.className += " file";
+        };
+        load(callback);
     };
 })(CaptainTeach || (CaptainTeach = {}));
 

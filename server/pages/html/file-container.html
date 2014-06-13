@@ -4,12 +4,12 @@
     <title>Captain Teach - File Container</title>
 
     <script>
-      function save(json){
-	  
+      function save(json, callback){
+	  callback();
       }
 
-      function load(){
-	  return "{ \"comments\" : {} }";
+      function load(callback){
+	  callback("{ \"comments\" : {} }");
       }
 
     </script>

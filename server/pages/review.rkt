@@ -3,11 +3,13 @@
 (require web-server/http/bindings
          web-server/templates
          web-server/http/response-structs
-         xml)
+         xml
+         json)
 
 (require "../ct-session.rkt"
          "../database/mysql.rkt"
-         "../config.rkt")
+         "../config.rkt"
+         "errors.rkt")
 
 (define (repeat val n)
   (cond
@@ -22,9 +24,48 @@
          [file-container (string-append updir "file-container/" (to-path rest))])
     (include-template "html/review.html")))
 
+(provide push->file-container)
+(define (push->file-container session post-data rest)
+  (cond 
+    [(equal? (last rest) "save") (push->save session post-data rest)]
+    [(equal? (last rest) "load") (push->load session rest)]
+    [else (four-oh-four)]))
+
+(define (push->save session post-data rest)
+  (let* ((json (jsexpr->string (bytes->jsexpr post-data)))
+         (save-path (get-save/load-path session rest)))
+    (write-file save-path json)     
+    (response/full
+     200 #"Okay"
+     (current-seconds) #"application/json; charset=utf-8"
+     empty
+     (list (string->bytes/utf-8 "Success")))))
+
+(define (push->load session rest)
+  (let* ((load-path (get-save/load-path session rest))
+         (data (if (file-exists? load-path) (retrieve-file load-path) "{\"comments\" : {}}")))
+    (response/full
+     200 #"Okay"
+     (current-seconds) #"application/json; charset=utf-8"
+     empty
+     (list (string->bytes/utf-8 data)))))
+
+(define (get-save/load-path session rest)
+  (let* ((reviewer (ct-session-uid session))
+         (class (ct-session-class session))
+         (stepName (cadr rest))
+         (assignment (car rest))
+         (r (review:select-review assignment class stepName reviewer))
+         (reviewee (car r))
+         (path-to-file (to-path (take (cddr rest) (- (length rest) 3))))
+         (path (string-append "reviews/" class "/" assignment "/" stepName "/" reviewee "/" reviewer "/" path-to-file)))
+    path))
+  
 (provide file-container)
 (define (file-container session role rest [message '()])
   (let* ([assignment (xexpr->string (car rest))]
+         [save-url (prepare-save-url rest)]
+         [load-url (prepare-load-url rest)]
          (stepName (cadr rest))
          [step (to-step-link stepName (- (length rest) 2))]
          (last-path (last rest))
@@ -38,6 +79,18 @@
     (string-append (include-template "html/file-container-header.html")
                    contents
                    (include-template "html/file-container-footer.html"))))
+
+(define (prepare-url word rest)
+  (let* ((last-el (last rest))
+         (prefix (if (equal? last-el "") "" (string-append last-el "/"))))
+    (string-append "\"" prefix word "\"")))
+
+(define (prepare-load-url rest)
+  (prepare-url "load" rest))
+
+(define (prepare-save-url rest)
+  (prepare-url "save" rest))
+   
 
 (define (render-directory prefix dir-path)
   (let ((dirs (sub-directories-of dir-path))

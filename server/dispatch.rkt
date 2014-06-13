@@ -29,28 +29,25 @@
 (define (handler post)
   (lambda (req path)
     (let ((session (get-session req))
-          (bindings (request-bindings req)))
-      (handlerPrime post session bindings path))))
+          (bindings (request-bindings req))
+          (post-data (request-post-data/raw req)))
+      (handlerPrime post post-data session bindings path))))
 
-(define (handlerPrime post session bindings path)
+(define (handlerPrime post post-data session bindings path)
   (match path
     ['() (if post (post->render session post->index bindings) (render session index))]
     [(list "") (if post (post->render session post->index bindings) (render session index))]
     [(cons "review" rest) (render-html session review:load rest)]
-    [(cons "file-container" rest) (render-html session review:file-container rest)]
-    [(cons "su" (cons uid rest)) (with-sudo post uid session bindings rest)]
+    [(cons "file-container" rest) (if post (review:push->file-container session post-data rest) (render-html session review:file-container rest))]
+    [(cons "su" (cons uid rest)) (with-sudo post post-data uid session bindings rest)]
     [else (four-oh-four)]))
 
-(define (with-sudo post uid session bindings path)
+(define (with-sudo post post-data uid session bindings path)
   (let* ((user-role (role session))
          (can-sudo (if user-role (roles:role-can-edit user-role) #f))
          (new-session (ct-session (ct-session-class session) uid)))
     (if (not can-sudo) (four-oh-four)
-        (handlerPrime post new-session bindings path))))
-
-(define (four-oh-four)
-  (response/xexpr
-   '(html (body (p "404")))))
+        (handlerPrime post post-data new-session bindings path))))
 
 ;; Defines how a session is created
 ;; request -> ct-session

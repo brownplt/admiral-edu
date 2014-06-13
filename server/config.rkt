@@ -14,7 +14,7 @@
 (provide sub-directories-of list-files)
 (provide is-directory?)
 (provide is-file?)
-(provide add-slash)
+(provide write-file)
 
 
 ;; Define Roles

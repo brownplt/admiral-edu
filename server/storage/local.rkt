@@ -16,6 +16,19 @@
     (submission:create assignment class step user)
     (delete-file (string-append path "/submission.tar"))))
 
+(provide write-file)
+(define (write-file path contents)
+  (ensure-path-exists path)
+  (let ((out (open-output-file path #:exists 'replace)))
+    (display contents out)
+    (close-output-port out)))
+
+(define (ensure-path-exists path)
+  (let* ((split (string-split path "/"))
+         (withoutFile (take split (- (length split) 1)))
+         (to-make (apply string-append (intercalate "/" withoutFile))))
+    (make-directory* to-make)))
+
 (provide retrieve-submission-file)
 (define (retrieve-submission-file class user assignment step version file)
   (let ((path (string-append (submission-path class user assignment step version) "/" file)))

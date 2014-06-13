@@ -77,35 +77,48 @@ a:hover {
     text-decoration: underline;
 }
 
+.comment-container a {
+    margin-bottom: 5px;
+    font-size: 12px;
+    text-decoration: none;
+    font-weight: bold;
+    background-color: #eee;
+    color: black;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius:3px;
+    overflow: hidden;   
+}
+
 .comment-close a {
-    width: 16px;
-    height: 16px;
-    float: right;
-    background-image: url("../imgs/close.png");
-    background-repeat: no-repeat;
-    margin-right: 5px;
+    float: left;
+    width: 100px;
+    margin-left: 10px;
 }
 
 .comment-container {
     overflow: hidden;
 }
 
+.comment-save-disabled a {
+    width: 0px;
+    height: 0px;
+}
+
+.comment-save-disabled a {
+    display:none;
+}
+
 .comment-save a {
     float: right;
-    margin-right: 5px;
-    font-size: 14px;
-    text-decoration: none;
-    font-weight: bold;
-    background-color: #acacac;
-    color: black;
     width: 50px;
-    height: 20px;
-    line-height: 20px;
-    text-align: center;
-    border: 1px solid #eee;
-    border-radius:3px;
-    overflow: hidden;
-    
+    margin-right: 10px;
+}
+
+.comment-container a:hover {
+    background-color: #ffffff;
 }
 
 .comment-container textarea {
@@ -119,4 +132,6 @@ a:hover {
 		border-radius: 3px;
         background: #fafafa;
         box-shadow: 2px 2px 3px #aaa;
+        overflow: hidden;
+        resize: none;
 }

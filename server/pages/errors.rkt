@@ -1,5 +1,6 @@
 #lang racket
 
+(require web-server/servlet)
 (require "../ct-session.rkt")
 
 (provide error-not-registered)
@@ -17,3 +18,8 @@
     (body
      (h1 "An Error Occurred")
      (p "This session is not valid. Try to log out and then log in again."))))
+
+(provide four-oh-four)
+(define (four-oh-four)
+  (response/xexpr
+   '(html (body (p "404")))))

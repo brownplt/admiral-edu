@@ -1,6 +1,7 @@
 #lang racket
 
-(require "database/mysql.rkt")
+; Not config
+; (require "database/mysql.rkt")
 (require "storage/local.rkt")
 
 (provide ct-port)

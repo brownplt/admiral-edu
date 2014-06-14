@@ -3,9 +3,9 @@
 # Get these from the Google Developers Console
 ClientID = very-long-string.apps.googleusercontent.com
 ClientSecret = shorter-string
-RedirectUri = https://localhost/ct/redirect
 
 # This the URL where the site is hosted (no trailing slash)
+# Upon authentication, Google will redirect to BaseUrl/ct/redirect
 BaseUrl = https://localhost
 
 CryptoPassphrase = aBetterPassword

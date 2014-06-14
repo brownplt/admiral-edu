@@ -73,6 +73,11 @@ RUN adduser --disabled-password --gecos "" admiraledu
 # Install Captain Teach Dependencies
 RUN su admiraledu -c 'cd ~/; raco planet install gh aws.plt 1 5'
 
+#
+# Install supervisord
+#
+RUN apt-get install -y supervisor
+
 #######################################################################
 # Add captain-teach apache configuration file
 # This file specifies how the user is authenticated
@@ -124,9 +129,8 @@ ADD code-mirror/lib /var/www/html/lib
 ADD server /home/admiraledu/server
 
 #
-# Install supervisord
+# Configure Supervisor
 #
-RUN apt-get install -y supervisor
 ADD docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 #

@@ -5,7 +5,6 @@
          web-server/dispatch)
 
 (require 
-  "cmpsci220/initialize.rkt"
   "auth/google-openidc.rkt"
   "config.rkt"
   "ct-session.rkt"

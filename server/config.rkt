@@ -1,8 +1,7 @@
 #lang racket
 
-; Not config
-; (require "database/mysql.rkt")
 (require "storage/local.rkt")
+(require "database/mysql.rkt")
 
 (provide ct-port)
 (define ct-port 8080)
@@ -23,3 +22,25 @@
 (define instructor-role 0)
 (define ta-role 1)
 (define student-role 2)
+
+
+;; Initializes the database.
+;; Creates a class called cmpsci220 with two users: arjunguha and jcollard. 
+;; Creates three roles: Instructor, Teaching Assistant, and Student. Instructors
+;;   and teaching assistants have the can-edit field set to true. Students have
+;;   the can-edit field set to false.
+;; Create two role associations for cmpsci220: arjunguha/instructor, jcollard/ta
+(provide initialize)
+(define (initialize)
+  (init-db)
+  (class:create "cmpsci220")
+  (user:create "arjunguha@umass.edu")
+  (user:create "jcollard@umass.edu")
+  (roles:create instructor-role "Instructor" 1)
+  (roles:create ta-role "Teaching Assistant" 1)
+  (roles:create student-role "Student" 0)
+  (role:associate "cmpsci220" "arjunguha@umass.edu" instructor-role)
+  (role:associate "cmpsci220" "jcollard@umass.edu" ta-role)
+  (role:associate "cmpsci220" "shriram@gmail.com" instructor-role)
+  (role:associate "cmpsci220" "joe.politz@gmail.com" instructor-role)
+  (assignment:create "clock" "cmpsci220"))

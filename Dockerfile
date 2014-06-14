@@ -27,7 +27,7 @@ RUN service mysql start && \
 
 #
 # Install Apache
-# 
+#
 
 RUN apt-get install -y apache2
 
@@ -38,7 +38,7 @@ RUN apt-get install -y apache2
 # Dependencies
 RUN apt-get install -y libcurl3 libjansson4
 
-#RUN wget https://github.com/pingidentity/mod_auth_openidc/releases/download/v1.3/libapache2-mod-auth-openidc_1.3_amd64.deb 
+#RUN wget https://github.com/pingidentity/mod_auth_openidc/releases/download/v1.3/libapache2-mod-auth-openidc_1.3_amd64.deb
 RUN wget https://github.com/pingidentity/mod_auth_openidc/releases/download/v1.5/libapache2-mod-auth-openidc_1.5_amd64.deb
 RUN dpkg -i libapache2-mod-auth-openidc_1.5_amd64.deb
 
@@ -118,16 +118,25 @@ ADD html/imgs /var/www/html/imgs
 ADD code-mirror/mode /var/www/html/mode
 ADD code-mirror/lib /var/www/html/lib
 
-
 #
 # Copy AdmiralEdu to container
 #
 ADD server /home/admiraledu/server
 
+#
+# Install supervisord
+#
+RUN apt-get install -y supervisor
+ADD docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+#
+# Apache fails to start on install since it has unbound variables. That puts
+# it into an inconsistent state. The line below cleans up.
+#
+RUN service apache2 start; service apache2 stop
 
 #
 # Run AdmiralEdu
 #
 
-#WORKDIR /home/admiraledu
-CMD service apache2 start; service mysql start; su admiraledu -c 'cd ~/; racket server/captain-teach.rkt'
+CMD supervisord

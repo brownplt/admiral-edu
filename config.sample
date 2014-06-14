@@ -1,0 +1,14 @@
+# Set these variables and save as config
+
+# Get these from the Google Developers Console
+ClientID = very-long-string.apps.googleusercontent.com
+ClientSecret = shorter-string
+RedirectUri = https://localhost/ct/redirect
+
+# This the URL where the site is hosted (no trailing slash)
+BaseUrl = https://localhost
+
+CryptoPassphrase = aBetterPassword
+
+AdminEmail = jcollard@cs.umass.edu
+

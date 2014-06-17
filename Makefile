@@ -16,3 +16,6 @@ run: all
 
 bash: all
 	docker run -i -t --rm -p 443:443 $(ENV) admiral-edu /bin/bash
+
+debug: all
+	docker run -i -t --rm -p 443:443 $(ENV) admiral-edu ./debug.sh

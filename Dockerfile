@@ -140,6 +140,12 @@ ADD docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN service apache2 start; service apache2 stop
 
 #
+# Add Debug Script
+#
+ADD docker/debug.sh /root/debug.sh
+RUN chmod +x /root/debug.sh
+
+#
 # Run AdmiralEdu
 #
 

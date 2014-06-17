@@ -131,7 +131,6 @@ module CaptainTeach {
 	    saveit.className = "comment-save-disabled";
 
 	    var saveitA = document.createElement('a');
-
 	    saveitA.innerHTML = "Save";
 	    saveitA.setAttribute('href', "#");
 

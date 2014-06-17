@@ -7,6 +7,7 @@
 
 (provide upload-submission)
 (define (upload-submission class user assignment step data)
+  (print (list class user assignment step)) (newline)
   (let* ((version (number->string (submission:count assignment class step user)))
          (path (create-directory class user assignment step version))
          (out (open-output-file (string-append path "/submission.tar") #:exists 'replace)))

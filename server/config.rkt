@@ -36,6 +36,8 @@
   (class:create "cmpsci220")
   (user:create "arjunguha@umass.edu")
   (user:create "jcollard@umass.edu")
+  (user:create "shriram@gmail.com")
+  (user:create "joe.politz@gmail.com")
   (roles:create instructor-role "Instructor" 1)
   (roles:create ta-role "Teaching Assistant" 1)
   (roles:create student-role "Student" 0)

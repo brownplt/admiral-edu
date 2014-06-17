@@ -60,6 +60,7 @@
 ;; 'no-such-user-in-class - if the specified user exists but is not registered for the class
 (provide create)
 (define (create assignment class step user)
+  (print (list assignment class step user)) (newline)
   (cond
     [(not (class:exists? class)) 'no-such-class]
     [(not (assignment:exists? assignment class)) 'no-such-assignment]

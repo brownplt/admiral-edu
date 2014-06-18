@@ -2,6 +2,57 @@
   
   <head>
     <title>Captain Teach - Review</title>
+
+    <script>
+    var rubric = { "rubric" : 
+  [
+      {
+	  "class" : "LikertElement",
+	  "id" : "correctness",
+	  "prompt" : "These tests are correct.",
+	  "minLabel" : "False",
+	  "maxLabel" : "True",
+	  "rangeSize" : 5,
+	  "selected" : -1
+      },
+
+      {
+	  "class" : "BasicElement",
+	  "prompt" : "Provide feedback on tests that are not correct by clicking on the line number.",
+	  "id" : "prompt"
+      },
+
+      {
+	  "class" : "LikertElement",
+	  "id" : "coverage",
+	  "prompt" : "These tests cover the possible inputs.",
+	  "minLabel" : "False",
+	  "maxLabel" : "True",
+	  "rangeSize" : 5,
+	  "selected" : -1
+      },
+      {
+	  "class" : "FreeFormElement",
+	  "prompt" : "If applicable, provide one or more inputs that are not covered by the tests.",
+	  "id" : "not-covered",
+	  "content" : ""
+      }
+
+
+  ]
+};
+
+
+    function load(callback){
+	callback(rubric);
+    }
+
+    function save(json, callback){
+	console.log(JSON.stringify(json));
+	callback(true);
+    }
+
+    </script>
     
     <script src="lib/codemirror.js"></script>
     <script src="mode/clike/clike.js"></script>

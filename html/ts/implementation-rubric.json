@@ -1,0 +1,33 @@
+{ "rubric" : 
+  [
+      {
+	  "class" : "BasicElement",
+	  "prompt" : "When reviewing a file you can leave feedback at a specific location by clicking on a line number.",
+	  "id" : "prompt"
+      },
+      {
+	  "class" : "LikertElement",
+	  "id" : "behavior",
+	  "prompt" : "This code correctly implements the desired behavior.",
+	  "minLabel" : "Disagree",
+	  "maxLabel" : "Agree",
+	  "rangeSize" : 9,
+	  "selected" : -1
+      },
+      {
+	  "class" : "LikertElement",
+	  "id" : "structure",
+	  "prompt" : "This code is structured well.",
+	  "minLabel" : "Disagree",
+	  "maxLabel" : "Agree",
+	  "rangeSize" : 9,
+	  "selected" : -1
+      },
+      { 
+	  "class" : "FreeFormElement",
+	  "id" : "feedback",
+	  "prompt" : "Additional Comments",
+	  "content" : ""
+      }
+  ]
+}

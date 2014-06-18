@@ -1,28 +1,141 @@
 declare function save(json, callback) : void;
 declare function load(callback) : void;
 
+function escape(input : string) : string {
+    var output = "";
+    for(var i = 0; i < input.length; i++){
+	var c = input.charAt(i);
+	if(c == '"') 
+	    output += "\\\"";
+	else 
+	    output += c;
+    }
+    return output;
+}
+
+function quote(toquote : string) : string {
+    return "\"" + escape(toquote) + "\"";
+}
+
+
+function concat(map0, map1) : {[key: any]: any;} {
+    var newMap = {};
+    for(var key in map0){
+	newMap[key] = map0[key];
+    }
+    for(var key in map1){
+	newMap[key] = map1[key];
+    }
+    return newMap;
+}
+
 module CaptainTeach.Rubric {
+    var elementConstructors = {};
+
+    class Rubric {
+
+	elements : Element[];
+
+	constructor() {
+	    this.elements = new Array();
+	}
+
+	static fromJson(json){
+	    var newRubric = new Rubric();
+	    var rubric = json.rubric;
+	    for(var i = 0; i < rubric.length; i++){
+		var el_json = rubric[i];
+		if(!("class" in el_json))
+		    throw("Could not create rubric from: " + rubric);
+		if(!(el_json.class in elementConstructors))
+		    throw("Could not create rubric from: " + rubric);
+		var fromJson = elementConstructors[el_json.class];
+		var element = fromJson(el_json);
+		newRubric.append(element);
+	    }
+	    return newRubric;
+	}
+
+	append(el : Element) : Rubric {
+	    this.elements.push(el);
+	    el.register(this);
+	    return this;
+	}
+	
+	toJson() {
+	    var array = new Array(this.elements.length);
+	    for(var i = 0; i < this.elements.length; i++){
+		array[i] = this.elements[i].toJson();
+	    }
+	    var json = { "rubric" : array };
+	    return json;
+	}
+
+	onchange() : void {
+	    save(this.toJson(), function () {});
+	}
+
+	attach(id : string) : void{
+	    var element = document.getElementById(id);
+	    for(var i = 0; i < this.elements.length; i++){
+		var e = this.elements[i];
+		e.toDOM(element);
+	    }
+	}
+
+	
+
+    }
 
 
     interface Element {
+	getClass() : string;
 	getId() : string;
 	getPrompt() : string;
-	toDOM();
+	toDOM(parent);
+	toJson();
 	notify();
-	register(rubric) : void;
+	register(rubric : Rubric) : void;
+
     }
 
     class BasicElement implements Element {
 
+	static clazz = "BasicElement";
 	prompt : string;
 	id : string;
-	rubric;
+	rubric : Rubric;
 	
 
 	constructor(prompt : string, id : string){
 	    this.prompt = prompt;
 	    this.id = id;
 	    this.rubric = null;
+	}
+
+	getClass() { return BasicElement.clazz; }
+
+	static fromJson(element) : BasicElement {
+	    if(! ("id" in element &&
+		  "prompt" in element))
+		throw("Could not create " + BasicElement.clazz + " from" + element);
+	    var el = new BasicElement(element.prompt, element.id);
+	    return el;
+	}
+
+	toJson() {
+	    var json = { 
+		"class" : this.getClass()
+	    };
+	    return concat(json, this.innerJson());
+	}
+
+	innerJson() : {[key: string]: any;} {
+	    var json = {
+		"prompt" : this.prompt,
+		"id" : this.id
+	    }
+	    return json;
 	}
 
 	getId(){
@@ -33,8 +146,9 @@ module CaptainTeach.Rubric {
 	    return this.prompt;
 	}
 
-	toDOM(){
+	toDOM(parent){
 	    var rubricItem = document.createElement('div');
+	    parent.appendChild(rubricItem);
 	    rubricItem.className = "rubric-item instruction";
 	    
 	    var prompt = document.createElement('p');
@@ -55,7 +169,10 @@ module CaptainTeach.Rubric {
 
     }
 
+
     class LikertElement extends BasicElement {
+
+	static clazz = "LikertElement";
 
 	minLabel : string;
 	maxLabel : string;
@@ -70,6 +187,36 @@ module CaptainTeach.Rubric {
 	    this.selected = -1;
 	}
 
+	static fromJson(element) : LikertElement {
+	    if(! ("maxLabel" in element &&
+		  "minLabel" in element &&
+		  "rangeSize" in element &&
+		  "selected" in element &&
+		  "id" in element &&
+		  "prompt" in element))
+		throw("Could not create FreeFormElement from" + element);
+	    var el = new LikertElement(element.prompt, element.id,
+				       element.minLabel, element.maxLabel,
+				       element.rangeSize);
+	    
+	    el.selected = element.selected;
+	    return el;
+	}
+
+	getClass() { return LikertElement.clazz; }
+
+	innerJson() {
+	    var inner = super.innerJson();
+	    var json =
+		{ "minLabel" : this.minLabel,
+		  "maxLabel" : this.maxLabel,
+		  "rangeSize" : this.rangeSize,
+		  "selected" : this.selected
+		};
+	    var merged = concat(inner, json);
+	    return concat(inner, json);
+	}
+
 	getOnChange(_this, input){
 	    return function () {
 		_this.selected = input
@@ -77,8 +224,8 @@ module CaptainTeach.Rubric {
 	    }
 	}
 
-	toDOM(){
-	    var rubricItem = super.toDOM();
+	toDOM(parent){
+	    var rubricItem = super.toDOM(parent);
 	    rubricItem.className = "rubric-item likert question";
 	    var list = document.createElement('ul');
 	    rubricItem.appendChild(list);
@@ -104,13 +251,34 @@ module CaptainTeach.Rubric {
 	}
     }
 
+
     class FreeFormElement extends BasicElement {
 
+	static clazz = "FreeFormElement";
 	content : string;
 	autosave;
 
 	constructor(prompt, id){
 	    super(prompt, id);
+	    this.content = "";
+	}
+
+	static fromJson(element) : FreeFormElement {
+	    if(! ("content" in element &&
+		  "id" in element &&
+		  "prompt" in element))
+		throw("Could not create FreeFormElement from" + element);
+	    var el = new FreeFormElement(element.prompt, element.id);
+	    el.content = element.content;
+	    return el;
+	}
+
+	getClass() { return FreeFormElement.clazz; }
+
+	innerJson() {
+	    var inner = super.innerJson();
+	    var val = { "content" : this.content };
+	    return concat(inner, val);
 	}
 
 	getOnChange(_this, input){
@@ -120,43 +288,53 @@ module CaptainTeach.Rubric {
 		    _this.autosave = function() {
 			_this.notify();
 			_this.autosave = null;
+			console.log("Saved.");
 		    }
-		    window.setTimeout(_this.autosave, 5000);
+		    window.setTimeout(_this.autosave, 2000);
 		}
 	    }
 	}
 
-	toDOM(){
-	    var rubricItem = super.toDOM();
+	toDOM(parent){
+	    var rubricItem = super.toDOM(parent);
 	    rubricItem.className = "rubric-item free-response question";
 	    var content = document.createElement('textarea');
-	    content.setAttribute('name', this.getId());
-	    content.onkeyup = this.getOnChange(this, (<any>content).value);
 	    var _this = this;
+	    content.onkeyup = function (_) {
+		_this.getOnChange(_this, (<any>content).value)();
+		content.style.height = "";
+		content.style.height = Math.min(content.scrollHeight) + "px";
+	    };
+
 	    content.onchange = function () { 
 		_this.content = (<any>content).value;
+		content.style.height = "";
+		content.style.height = Math.min(content.scrollHeight) + "px";
 		_this.notify();
 	    }
+
 	    rubricItem.appendChild(content);
+
+	    content.setAttribute('name', this.getId());
+
+	    (<any>content).value = this.content;
+	    content.onkeyup(null);
 	    return rubricItem;
 	}
 	
     }
 
+    elementConstructors[BasicElement.clazz] = BasicElement.fromJson;
+    elementConstructors[LikertElement.clazz] = LikertElement.fromJson;
+    elementConstructors[FreeFormElement.clazz] = FreeFormElement.fromJson;
+
+
     window.onload = function() {
-	var rubric = document.getElementById('rubric');
-	var basic = new BasicElement("When reviewing a file, you can leave feedback at a specific location by clicking on a line number.", "prompt");
-	var likert1 = new LikertElement("This code correctly implements the desired behavior.", "behavior", "Disagree", "Agree", 9);
-	var likert2 = new LikertElement("This code is structured well.", "structure", "Disagree", "Agree", 9);
-	var freeform = new FreeFormElement("Additional Comments", "feedback");
-
-	rubric.appendChild(basic.toDOM());
-	rubric.appendChild(likert1.toDOM());
-	rubric.appendChild(likert2.toDOM());
-	rubric.appendChild(freeform.toDOM());
-
-	
-
+	load(function (json) {
+	    var rubric = Rubric.fromJson(json);
+	    rubric.attach("rubric");
+	    console.log("Loaded.");
+	});
     }
 
 }

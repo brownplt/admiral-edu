@@ -77,11 +77,16 @@ body {
 }
 
 .free-response textarea {
-    width: 100%;
-    max-width: 100%;
-    min-width: 100%;
-    min-height: 20px;
-    border: 0;
+		border: none;
+		padding: 5 5 5 5;
+		margin: 5 5 5 5;
+		max-width: calc(100% - 10px);
+		width: calc(100% - 10px);
+        min-width: calc(100% - 10px);
+        min-height: 30px;
+		border-radius: 3px;
+        overflow: hidden;
+        resize: none;
 }
 
 .question p {

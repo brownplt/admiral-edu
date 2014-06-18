@@ -9,6 +9,8 @@ var CaptainTeach;
         var BasicElement = (function () {
             function BasicElement(prompt, id) {
                 this.prompt = prompt;
+                this.id = id;
+                this.rubric = null;
             }
             BasicElement.prototype.getId = function () {
                 return this.id;
@@ -24,6 +26,15 @@ var CaptainTeach;
                 rubricItem.appendChild(prompt);
                 return rubricItem;
             };
+            BasicElement.prototype.notify = function () {
+                if(this.rubric == null) {
+                    return;
+                }
+                this.rubric.onchange();
+            };
+            BasicElement.prototype.register = function (rubric) {
+                this.rubric = rubric;
+            };
             return BasicElement;
         })();        
         var LikertElement = (function (_super) {
@@ -33,10 +44,19 @@ var CaptainTeach;
                 this.minLabel = minLabel;
                 this.maxLabel = maxLabel;
                 this.rangeSize = rangeSize;
+                this.selected = -1;
             }
+            LikertElement.prototype.getOnChange = function (_this, input) {
+                return function () {
+                    _this.selected = input;
+                    _this.notify();
+                }
+            };
             LikertElement.prototype.toDOM = function () {
                 var rubricItem = _super.prototype.toDOM.call(this);
+                rubricItem.className = "rubric-item likert question";
                 var list = document.createElement('ul');
+                rubricItem.appendChild(list);
                 var min = document.createElement('li');
                 list.appendChild(min);
                 min.innerHTML = this.minLabel;
@@ -46,6 +66,10 @@ var CaptainTeach;
                     input.setAttribute('type', "radio");
                     input.setAttribute('name', this.getId());
                     input.setAttribute('value', "" + i);
+                    input.onclick = this.getOnChange(this, i);
+                    if(i == this.selected) {
+                        input.setAttribute('checked', "true");
+                    }
                     item.appendChild(input);
                     list.appendChild(item);
                 }
@@ -56,10 +80,49 @@ var CaptainTeach;
             };
             return LikertElement;
         })(BasicElement);        
+        var FreeFormElement = (function (_super) {
+            __extends(FreeFormElement, _super);
+            function FreeFormElement(prompt, id) {
+                        _super.call(this, prompt, id);
+            }
+            FreeFormElement.prototype.getOnChange = function (_this, input) {
+                return function () {
+                    _this.content = input;
+                    if(_this.autosave == null) {
+                        _this.autosave = function () {
+                            _this.notify();
+                            _this.autosave = null;
+                        };
+                        window.setTimeout(_this.autosave, 5000);
+                    }
+                }
+            };
+            FreeFormElement.prototype.toDOM = function () {
+                var rubricItem = _super.prototype.toDOM.call(this);
+                rubricItem.className = "rubric-item free-response question";
+                var content = document.createElement('textarea');
+                content.setAttribute('name', this.getId());
+                content.onkeyup = this.getOnChange(this, (content).value);
+                var _this = this;
+                content.onchange = function () {
+                    _this.content = (content).value;
+                    _this.notify();
+                };
+                rubricItem.appendChild(content);
+                return rubricItem;
+            };
+            return FreeFormElement;
+        })(BasicElement);        
         window.onload = function () {
             var rubric = document.getElementById('rubric');
-            var basic = new BasicElement("When reviewing a file, you can leave feedback at a specific location by clicking on a line number.");
+            var basic = new BasicElement("When reviewing a file, you can leave feedback at a specific location by clicking on a line number.", "prompt");
             var likert1 = new LikertElement("This code correctly implements the desired behavior.", "behavior", "Disagree", "Agree", 9);
+            var likert2 = new LikertElement("This code is structured well.", "structure", "Disagree", "Agree", 9);
+            var freeform = new FreeFormElement("Additional Comments", "feedback");
+            rubric.appendChild(basic.toDOM());
+            rubric.appendChild(likert1.toDOM());
+            rubric.appendChild(likert2.toDOM());
+            rubric.appendChild(freeform.toDOM());
         };
     })(CaptainTeach.Rubric || (CaptainTeach.Rubric = {}));
     var Rubric = CaptainTeach.Rubric;

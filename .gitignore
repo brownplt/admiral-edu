@@ -1,3 +1,8 @@
 [#]*
 *~
 compiled/
+cs220-server
+
+sample
+*.bak
+config

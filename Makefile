@@ -1,5 +1,7 @@
 include config
 
+TAG = admiraledu
+
 ENV = -e ClientID=$(ClientID) \
 	-e ClientSecret=$(ClientSecret) \
 	-e AdminEmail=$(AdminEmail) \
@@ -9,13 +11,13 @@ ENV = -e ClientID=$(ClientID) \
 	-e AdminEmail=$(AdminEmail)
 
 all:
-	docker build -t admiral-edu .
+	docker build -t $(TAG) .
 
 run: all
-	docker run -i -t --rm -p 443:443 $(ENV) admiral-edu
+	docker run -i -t --rm -p 443:443 $(ENV) $(TAG)
 
 bash: all
-	docker run -i -t --rm -p 443:443 $(ENV) admiral-edu /bin/bash
+	docker run -i -t --rm -p 443:443 $(ENV) $(TAG) /bin/bash
 
 debug: all
-	docker run -i -t --rm -p 443:443 $(ENV) admiral-edu ./debug.sh
+	docker run -i -t --rm -p 443:443 $(ENV) $(TAG) ./debug.sh

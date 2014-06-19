@@ -93,9 +93,9 @@ a:hover {
 }
 
 .comment-close a {
-    float: left;
+    float: right;
     width: 100px;
-    margin-left: 10px;
+    margin-right: 10px;
 }
 
 .comment-container {
@@ -112,9 +112,9 @@ a:hover {
 }
 
 .comment-save a {
-    float: right;
+    float: left;
     width: 50px;
-    margin-right: 10px;
+    margin-left: 10px;
 }
 
 .comment-container a:hover {

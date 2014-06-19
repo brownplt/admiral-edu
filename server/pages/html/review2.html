@@ -5,12 +5,10 @@
 
     <script>
       function save(json, callback){
-          console.log("Attempting to save to " + @load-url);
 	  var xhr = new XMLHttpRequest();
 	  xhr.open("POST", @save-url, true);
 	  xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-	  var asString = JSON.stringify(json);
-	  xhr.send(asString);
+	  xhr.send(json);
 	  xhr.onloadend = callback;
       }
 
@@ -21,24 +19,24 @@
           xhr.send();
           xhr.onreadystatechange = function () {
 	      if (xhr.readyState == 4) {
-		  callback(JSON.parse(xhr.responseText));
+		  callback(xhr.responseText);
 	      };
-	  };       
+	  }; 
       }
     </script>
     
-    <script src="/lib/codemirror.js"></script>
-    <script src="/mode/clike/clike.js"></script>
-    <script src="/mode/markdown/markdown.js"></script>
-    <script src="/bin/rubric.js"></script>
-    <link rel="stylesheet" href="/lib/codemirror.css">
-    <link rel="stylesheet" href="/css/review.css">
+    <script src="lib/codemirror.js"></script>
+    <script src="mode/clike/clike.js"></script>
+    <script src="mode/markdown/markdown.js"></script>
+    <script src="bin/rubric.js"></script>
+    <link rel="stylesheet" href="lib/codemirror.css">
+    <link rel="stylesheet" href="css/review.css">
   </head>
   
   
 <body>
   <div class="container">
-    <iframe src="@file-container" scrolling="no" class="file-frame"></iframe>
+    <iframe src="file-container.html" scrolling="no" class="file-frame"></iframe>
   </div>
   <div id="rubric" class="rubric"> 
   </div>

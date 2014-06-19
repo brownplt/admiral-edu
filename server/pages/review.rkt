@@ -21,8 +21,61 @@
   (let* ((assignment (car rest))
          (step (cadr rest))
          (updir (apply string-append (repeat "../" (length rest))))
-         [file-container (string-append updir "file-container/" (to-path rest))])
-    (include-template "html/review.html")))
+         (updir-rubric (apply string-append (repeat "../" (- (length rest) 2))))
+         [file-container (string-append updir "file-container/" (to-path rest))]
+         [save-url (xexpr->string (string-append "\"" updir-rubric step "/save\""))]
+         [load-url (xexpr->string (string-append "\"" updir-rubric step "/load\""))]
+         (reviewer (ct-session-uid session))
+         (class (ct-session-class session))
+         (r (review:select-review assignment class step reviewer)))
+    (if (equal? r 'no-reviews)
+        (let ([display-message "There are no reviews available for you at this time."])
+          (include-template "html/message.html"))
+        (include-template "html/review.html"))))
+
+(provide post->review)
+(define (post->review session post-data rest)
+  (cond
+    [(equal? (last rest) "save") (post->save-rubric session post-data rest)]
+    [(equal? (last rest) "load") (post->load-rubric session rest)]
+    [else (four-oh-four)]))
+
+(define (post->save-rubric session post-data rest)
+  (let* ((json (jsexpr->string (bytes->jsexpr post-data)))
+         (save-path (rubric-get-save/load-path session rest)))
+    (write-file save-path json)
+    (response/full
+     200 #"Okay"
+     (current-seconds) #"application/json; charset=utf-8"
+     empty
+     (list (string->bytes/utf-8 "Success")))))
+
+(define (post->load-rubric session rest)
+  (let* ((load-path (rubric-get-save/load-path session rest))
+         (data (if (file-exists? load-path) (retrieve-file load-path) (retrieve-default-rubric session rest))))
+    (response/full
+     200 #"Okay"
+     (current-seconds) #"application/json; charset=utf-8"
+     empty
+     (list (string->bytes/utf-8 data)))))
+
+(define (rubric-get-save/load-path session rest)
+  (let* ((reviewer (ct-session-uid session))
+         (class (ct-session-class session))
+         (stepName (cadr rest))
+         (assignment (car rest))
+         (r (review:select-review assignment class stepName reviewer))
+         (reviewee (car r))
+         (path (string-append "reviews/" class "/" assignment "/" stepName "/" reviewee "/" reviewer "/rubric.json")))
+    path))
+
+(define (retrieve-default-rubric session rest)
+  (let* ((class (ct-session-class session))
+         (stepName (cadr rest))
+         (assignment (car rest))
+         (path (string-append "reviews/" class "/" assignment "/" stepName "/rubric.json")))
+    (retrieve-file path)))
+                      
 
 (provide push->file-container)
 (define (push->file-container session post-data rest)
@@ -60,6 +113,8 @@
          (path-to-file (to-path (take (cddr rest) (- (length rest) 3))))
          (path (string-append "reviews/" class "/" assignment "/" stepName "/" reviewee "/" reviewer "/" path-to-file)))
     path))
+
+
   
 (provide file-container)
 (define (file-container session role rest [message '()])

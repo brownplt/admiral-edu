@@ -10,8 +10,28 @@
   "ct-session.rkt"
   "database/mysql.rkt")
 
+(define erase-directory
+    (lambda (assignment)
+      (lambda (stepName)
+        (lambda (reviewee)
+          (let ((path (string-append "reviews/" (cadr assignment) "/" (car assignment) "/" stepName "/" reviewee )))
+            (delete-file path))))))
+
+(define (applicative xs ls)
+  (map (lambda (f) (map f xs)) ls))
+
+(define (run-initialize)
+  (initialize)
+  (delete-file "files/")
+  (let ((users (map (lambda (vec) (vector-ref vec 0)) (user:all)))
+        (assignments '(("clock" "cmpsi220") ("tic-tac-toe" "cmpsci220")))
+        (steps '("tests" "implementation")))
+    (map ((erase-directory '("clock" "cmpsci220")) "tests") users )
+    (map ((erase-directory '("clock" "cmpsci220")) "implementation") users )
+    #t))
+    
 ;; Resets the database to a fresh configuration
-(initialize)
+(run-initialize)
 
 (require "pages/index.rkt"
          (prefix-in review: "pages/review.rkt")
@@ -33,10 +53,12 @@
       (handlerPrime post post-data session bindings path))))
 
 (define (handlerPrime post post-data session bindings path)
+  (print (list post path)) (newline)
   (match path
     ['() (if post (post->render session post->index bindings) (render session index))]
+    [(cons "initialize" rest) ((lambda () (run-initialize) (render session initialization)))]
     [(list "") (if post (post->render session post->index bindings) (render session index))]
-    [(cons "review" rest) (render-html session review:load rest)]
+    [(cons "review" rest) (if post (review:post->review session post-data rest) (render-html session review:load rest))]
     [(cons "file-container" rest) (if post (review:push->file-container session post-data rest) (render-html session review:file-container rest))]
     [(cons "su" (cons uid rest)) (with-sudo post post-data uid session bindings rest)]
     [else (four-oh-four)]))
@@ -47,6 +69,11 @@
          (new-session (ct-session (ct-session-class session) uid)))
     (if (not can-sudo) (four-oh-four)
         (handlerPrime post post-data new-session bindings path))))
+
+
+(define (initialization session role [message '()])
+  `(html
+      (p "The service has been initialized to a fresh state.")))
 
 ;; Defines how a session is created
 ;; request -> ct-session

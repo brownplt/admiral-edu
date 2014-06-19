@@ -146,6 +146,12 @@ ADD docker/debug.sh /root/debug.sh
 RUN chmod +x /root/debug.sh
 
 #
+# Add some default rubrics for testing purposes
+#
+ADD rubrics/implementation-rubric.json /home/admiraledu/reviews/cmpsci220/clock/implementation/rubric.json
+ADD rubrics/tests-rubric.json /home/admiraledu/reviews/cmpsci220/clock/tests/rubric.json
+
+#
 # Run AdmiralEdu
 #
 

@@ -85,8 +85,12 @@
          (result (query-row sql-conn prep assignment class step reviewer))
          (new-review (= (vector-ref result 0) 0))
          (reviewee-id (vector-ref result 1))
-         (version (vector-ref result 2)))
-    (if new-review (assign-review assignment class step reviewer (select-least-reviewed assignment class step reviewer)) `(,reviewee-id . ,(number->string version)))))
+         (version (vector-ref result 2))
+         (least (if new-review (select-least-reviewed assignment class step reviewer) #f)))
+    (cond
+      [(not least) `(,reviewee-id . ,(number->string version))]
+      [(eq? least 'no-reviews) 'no-reviews]
+      [else (assign-review assignment class step reviewer least)])))
 
 (define (assign-review assignment class step reviewer pair)
   (let ((reviewee (car pair))

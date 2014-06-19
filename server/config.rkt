@@ -15,6 +15,7 @@
 (provide is-directory?)
 (provide is-file?)
 (provide write-file)
+(provide delete-file)
 
 
 ;; Define Roles

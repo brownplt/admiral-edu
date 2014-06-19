@@ -26,7 +26,8 @@
 (define sql-conn
   (mysql-connect #:user username
                  #:database password
-                 #:password database))
+                 #:password database
+                 #:server "127.0.0.1"))
 (provide try-with-default)
 (define (try-with-default default f . args)
   (with-handlers ([exn:fail? (lambda (exn) default)]) (apply f args)))

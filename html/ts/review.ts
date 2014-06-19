@@ -10,11 +10,13 @@ module CaptainTeach {
 	// Line Number -> Line Widget
 	editors: {[key: number]: any;};
 	instance: any; // CodeMirror Instance
+	autosave;
 	
 	constructor() {
 	    this.comments = <any>{};
 	    this.editors = <any>{};
 	    this.instance = null;
+	    this.autosave = null;
 	}
 
 	static fromJson(json : string){
@@ -109,6 +111,24 @@ module CaptainTeach {
 	    this.editors[line].clear();
 	    delete this.editors[line];
 	}
+
+	getOnChange(_this, editor, line) {
+	    return function (_) {
+		console.log("keyup");
+		editor.style.height = "";
+		editor.style.height = Math.min(editor.scrollHeight) + 5 + "px";
+		if(_this.autosave == null){
+		    _this.autosave = function () {
+			_this.handleSave(line, _this, editor)(editor.innerHTML);
+			var callback = function (a) {};
+			save(_this.toJSON(), callback); 
+			_this.autosave = null;
+			console.log("Saved.");
+		    };
+		    window.setTimeout(_this.autosave, 2000);	
+		}
+	    };
+	}
 	
 	createEditor(line : number){
 	    if(this.instance == null) return;
@@ -124,40 +144,23 @@ module CaptainTeach {
 	    closeA.setAttribute('href', "#");
 	    var _this = this;
 	    closeA.innerHTML = "Close Form";
-	    closeA.onclick = function (e) { _this.toggleEditor(line) };
+	    closeA.onclick = function (e) { 
+		_this.handleSave(line, _this, editor)(editor.innerHTML);
+		var callback = function (a) {};
+		save(_this.toJSON(), callback); 		
+		_this.toggleEditor(line) 
+	    };
 	    close.appendChild(closeA);
-
-	    var saveit = document.createElement('div');
-	    saveit.className = "comment-save-disabled";
-
-	    var saveitA = document.createElement('a');
-	    saveitA.innerHTML = "Save";
-	    saveitA.setAttribute('href', "#");
-
-	    saveit.appendChild(saveitA);
 
 	    var editor = document.createElement('textarea');
 	    editor.className = "comment-box";
 	    editor.innerHTML = line.toString() in this.comments ? this.comments[line] : "";
-	    editor.onkeyup = function (_) {
-		saveit.className = "comment-save"
-		editor.style.height = "";
-		editor.style.height = Math.min(editor.scrollHeight) + 5 + "px";
-	    };
+	    editor.onkeyup = this.getOnChange(this, editor, line);
 
 	    var _this = this;
 
-	    saveitA.onclick = function (e) { 
-		_this.handleSave(line, _this, editor)(editor.innerHTML);
-		var callback = function (a) {
-		    saveit.className = "comment-save-disabled";
-		};
-		save(_this.toJSON(), callback); 
-	    };
-
 	    editorContainer.appendChild(editor);
 	    editorContainer.appendChild(close);
-	    editorContainer.appendChild(saveit);
 
 	    this.handleSave(line, this, editor)(null);
 	    this.editors[line] = this.instance.addLineWidget(line, editorContainer);

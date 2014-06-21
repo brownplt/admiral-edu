@@ -13,6 +13,7 @@
       (title session)
       message
       (user-info session role)
+      (upload-form)
       (users session role))))
 
 (provide post->index)
@@ -34,7 +35,7 @@
         (assignment (extract-binding/single 'assignment binds))
         (step (extract-binding/single 'step binds)))
     (upload-submission (ct-session-class session) (ct-session-uid session) assignment step data)
-    (index session role)))
+    (index session role '((p "Your submission has been accepted.")))))
 
 (define (could-not-create-user exn)
   (print exn)
@@ -62,7 +63,6 @@
 (define (users session role)
   (if (not (roles:role-can-edit role)) '()
       (append
-       (upload-form)
        (add-student-form)
        '((h2 "Instructors"))
        (list-instructors session)

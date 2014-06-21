@@ -13,10 +13,15 @@
 
      $ cp config.sample config
 
-4. Copy the Client ID, Client Secret, and RedirectUri values from the
+4. Copy the Client ID, Client Secret, values from the
    Google Developers Console into the `config` file you created above.
 
    Edit other settings in `config`, such as the hostname. These are obvious.
+
+5. In the Google Developers Console, you must have a `Redirect URIs` to
+   `BaseUri`/ct/redirect. For example, if `BaseUri = https://localhost`
+   I would add `https://localhost/ct/redirect`.
+   
 
 
 ### Configuring Service

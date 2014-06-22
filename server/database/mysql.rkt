@@ -58,4 +58,6 @@
          review:reviewee-id review:reviewee-id-type
          review:reviewer-id review:reviewer-id-type
          review:time-stamp review:time-stamp-type
-         review:select-review)
+         review:select-review
+         review:completed?
+         review:select-by-hash review:select-reviews)

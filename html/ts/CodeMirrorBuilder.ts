@@ -9,7 +9,7 @@ module CaptainTeach {
 		export	class CodeMirrorBuilder {
 
 				_mode: string;
-				_readOnly: bool;
+				_readOnly;
 				
 				constructor(){
 						this._mode = "markdown";
@@ -21,7 +21,7 @@ module CaptainTeach {
 						return this;
 				}
 				
-				readOnly(readOnly : bool){
+				readOnly(readOnly){
 						this._readOnly = readOnly;
 						return this;
 				}

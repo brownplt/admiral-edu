@@ -263,6 +263,7 @@ var CaptainTeach;
                 var rubricItem = _super.prototype.toDOM.call(this, parent);
                 rubricItem.className = "rubric-item free-response question";
                 var content = document.createElement('textarea');
+                content.disabled = true;
                 var _this = this;
                 content.onkeyup = function (_) {
                     _this.getOnChange(_this, content.value)();

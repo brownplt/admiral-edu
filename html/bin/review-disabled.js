@@ -145,7 +145,6 @@ var CaptainTeach;
                         _this.handleSave(line, _this, editor)(editor.innerHTML);
                         var callback = function (a) {
                         };
-                        save(_this.toJSON(), callback);
                         _this.autosave = null;
                         console.log("Saved.");
                     };
@@ -174,12 +173,12 @@ var CaptainTeach;
                 _this.handleSave(line, _this, editor)(editor.innerHTML);
                 var callback = function (a) {
                 };
-                save(_this.toJSON(), callback);
                 _this.toggleEditor(line);
             };
             close.appendChild(closeA);
 
             var editor = document.createElement('textarea');
+            editor.disabled = true;
             editor.className = "comment-box";
             editor.innerHTML = line.toString() in this.comments ? this.comments[line] : "";
             editor.onkeyup = this.getOnChange(this, editor, line);

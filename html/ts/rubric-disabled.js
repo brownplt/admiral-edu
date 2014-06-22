@@ -1,4 +1,3 @@
-declare function save(json, callback) : void;
 declare function load(callback) : void;
 
 function escape(input : string) : string {
@@ -18,7 +17,7 @@ function quote(toquote : string) : string {
 }
 
 
-function concat(map0, map1) : any {
+function concat(map0, map1) : {[key: any]: any;} {
     var newMap = {};
     for(var key in map0){
 	newMap[key] = map0[key];
@@ -72,7 +71,7 @@ module CaptainTeach.Rubric {
 	}
 
 	onchange() : void {
-	    save(this.toJson(), function () {});
+
 	}
 
 	attach(id : string) : void{
@@ -130,7 +129,7 @@ module CaptainTeach.Rubric {
 	    return concat(json, this.innerJson());
 	}
 
-	innerJson() : any {
+	innerJson() : {[key: string]: any;} {
 	    var json = {
 		"prompt" : this.prompt,
 		"id" : this.id

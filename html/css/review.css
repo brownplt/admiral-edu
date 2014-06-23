@@ -92,3 +92,19 @@ body {
 .question p {
     border-bottom: 1px solid #ccc;	
 }
+
+.submit-button a {
+	text-decoration: none;
+	float: right;
+	margin-right: 25px;
+	border: 1px solid black;
+	border-radius: 3px;
+	padding: 5 5 5 5;
+	color: #000;
+	background: #eee;
+}
+
+.submit-button a:hover {
+	background: #aaa;
+	color: #000;
+}

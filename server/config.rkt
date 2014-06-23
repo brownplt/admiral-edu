@@ -39,6 +39,7 @@
   (user:create "jcollard@umass.edu")
   (user:create "shriram@gmail.com")
   (user:create "joe.politz@gmail.com")
+  (user:create "joseph_politz@brown.edu")
   (roles:create instructor-role "Instructor" 1)
   (roles:create ta-role "Teaching Assistant" 1)
   (roles:create student-role "Student" 0)
@@ -46,4 +47,5 @@
   (role:associate "cmpsci220" "jcollard@umass.edu" ta-role)
   (role:associate "cmpsci220" "shriram@gmail.com" instructor-role)
   (role:associate "cmpsci220" "joe.politz@gmail.com" instructor-role)
+  (role:associate "cmpsci220" "joseph_politz@brown.edu" student-role)
   (assignment:create "clock" "cmpsci220"))

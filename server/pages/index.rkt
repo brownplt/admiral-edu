@@ -13,6 +13,8 @@
       (title session)
       message
       (user-info session role)
+      (next-step session)
+      (completed-reviews session)
       (users session role))))
 
 (provide post->index)
@@ -34,7 +36,7 @@
         (assignment (extract-binding/single 'assignment binds))
         (step (extract-binding/single 'step binds)))
     (upload-submission (ct-session-class session) (ct-session-uid session) assignment step data)
-    (index session role)))
+    (index session role '((p "Your submission has been accepted.")))))
 
 (define (could-not-create-user exn)
   (print exn)
@@ -62,7 +64,6 @@
 (define (users session role)
   (if (not (roles:role-can-edit role)) '()
       (append
-       (upload-form)
        (add-student-form)
        '((h2 "Instructors"))
        (list-instructors session)
@@ -96,15 +97,42 @@
             (p "Role: " ,role-select)
             (p (input ((name "submit") (type "submit"))))))))
 
-(define (upload-form)
-  `((h3 "Upload File")
-    (form ((method "post") (action "") (enctype "multipart/form-data"))
-          (p "Assignment: " (select ((name "assignment")) (option ((value "clock")) "clock")))
-          (p "Step: " (select ((name "step")) 
-                              (option ((value "tests")) "tests")
-                              (option ((value "implementation")) "implementation")))
-          (p "File: " (input ((name "file") (type "file") (id "file"))))
-          (p (input ((name "submit") (type "submit")))))))
+(define (next-step session)
+  (let* ((submitted-tests (submission:exists? "clock" "cmpsci220" "tests" (ct-session-uid session) "0"))
+         (review-tests (review:completed? "clock" "cmpsci220" "tests" (ct-session-uid session)))
+         (submitted-implementation (submission:exists? "clock" "cmpsci220" "implementation" (ct-session-uid session) "0"))
+         (review-implementation (review:completed? "clock" "cmpsci220" "implementation" (ct-session-uid session))))
+    (cond
+      [(not submitted-tests) (upload-form "tests")]
+      [(not review-tests) (review-form "tests")]
+      [(not submitted-implementation) (upload-form "implementation")]
+      [(not review-implementation) (review-form "implementation")]
+      [else (finished)])))
+
+(define (finished)
+  `((h3 "Assignment Complete.")
+    (p "You have finished all of the steps for this assignment.")))
+
+(define (review-form step)
+    `((h3 "Review Step")
+      (p "You must complete a review before continuing to the next step. When you have finished reviewing, return to this page.")
+      (p (a ((href ,(string-append "review/clock/" step))) "Access Review"))))
+
+(define (upload-form step)
+    `((h3 "Submission Step")
+      (form ((method "post") (action "") (enctype "multipart/form-data"))
+            (p "Assignment: clock")
+            (p ,(string-append "Step: " step)
+            (p "File: " (input ((name "file") (type "file") (id "file"))))
+            (input ((type "hidden") (name "step") (value ,step)))
+            (input ((type "hidden") (name "assignment") (value "clock")))
+            (p (input ((name "submit") (type "submit"))))))))
+
+(define (completed-reviews session)
+  (let* ((hashes (review:select-reviews (ct-session-uid session))))
+    (print hashes) (newline)
+    (append '((h3 "Available Reviews"))
+    (map (lambda (hash) `(p (a ((href ,(string-append "view-review/" hash))) "View Review"))) hashes))))
       
 
 (define (show-record record)

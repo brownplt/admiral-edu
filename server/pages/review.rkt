@@ -21,6 +21,7 @@
   (let* ((assignment (car rest))
          (step (cadr rest))
          (updir (apply string-append (repeat "../" (length rest))))
+         [root-url updir]
          (updir-rubric (apply string-append (repeat "../" (- (length rest) 2))))
          [file-container (string-append updir "file-container/" (to-path rest))]
          [save-url (xexpr->string (string-append "\"" updir-rubric step "/save\""))]

@@ -299,6 +299,7 @@ module CaptainTeach.Rubric {
 	    var rubricItem = super.toDOM(parent);
 	    rubricItem.className = "rubric-item free-response question";
 	    var content = document.createElement('textarea');
+	    (<any>content).disabled = true;
 	    var _this = this;
 	    content.onkeyup = function (_) {
 		_this.getOnChange(_this, (<any>content).value)();

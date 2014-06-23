@@ -1,5 +1,6 @@
 #lang typed/racket
 
+(provide (all-defined-out))
 (struct: User ([uid : String]))
 (struct: Course ([name : String]))
 (struct: Assignment ([name : String]))
@@ -27,7 +28,7 @@ I ::= SubmitStep(User, Course, Assignment, Files.tar.gz)
 (struct: Review ())
 
 (define-type Input (U SubmitStep SubmitReview GraderReview))
-(struct: SubmitStep ([student : User] [course : Course] [assignment : Assignment] [submission : Archive]))
+(struct: SubmitStep ([submission : Archive]))
 (struct: SubmitReview ([student : User] [course : Course] [assignment : Assignment] [reviewee : User] [reviewdata : Review]))
 (struct: GraderReview ([student : User] [course : Course] [assignment : Assignment] [grader : User] [reviewdata : Review]))
 

@@ -14,7 +14,7 @@ S ::= MustSubmitNext(User, Course, Assignment, Step)
 
 (define-type State (U MustSubmitNext MustReviewNext GraderMustGradeNext))
 (struct: MustSubmitNext ([student : User] [course : Course] [assignment : Assignment] [step : Step]))
-(struct: MustReviewNext ([student : User] [course : Course] [assignment : Assignment] [reviewee : User]))
+(struct: MustReviewNext ([student : User] [course : Course] [assignment : Assignment] [step : Step] [reviewee : User]))
 (struct: GraderMustGradeNext ([student : User] [course : Course] [assignment : Assignment] [step : Step]))
 
 #|
@@ -29,8 +29,8 @@ I ::= SubmitStep(User, Course, Assignment, Files.tar.gz)
 
 (define-type Input (U SubmitStep SubmitReview GraderReview))
 (struct: SubmitStep ([submission : Archive]))
-(struct: SubmitReview ([student : User] [course : Course] [assignment : Assignment] [reviewee : User] [reviewdata : Review]))
-(struct: GraderReview ([student : User] [course : Course] [assignment : Assignment] [grader : User] [reviewdata : Review]))
+(struct: SubmitReview ([reviewdata : Review]))
+(struct: GraderReview ([grader : User] [reviewdata : Review]))
 
 #|
 O ::= AssignReview(Reviewer, Reviewee, Course, Assignment, Step, Files.tar.gz, ReviewFormat.json)

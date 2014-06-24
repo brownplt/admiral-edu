@@ -2,9 +2,37 @@
 
 (require "machine.rkt")
 
-(struct: (a) Left ([v : a]) #:transparent)
-(struct: (a) Right ([v : a]) #:transparent)
-(define-type (Either a b) (U (Left a) (Right b)))
+(: make-available! (User Course Assignment Step Archive DB -> AvailableForReview))
+(define (make-available! student course assignment step submission db)
+  (AvailableForReview student course assignment step submission))
+
+(: select-review! (Step DB -> (Values User Review)))
+(define (select-review! step db)
+  (values
+   (User "undefined")
+   (Review)))
+
+(: accept-review! (User User Course Assignment Step Review -> AcceptReview))
+(define (accept-review! reviewer reviewee course bheap bheap-tests reviewdata)
+  (AcceptReview reviewer reviewee course bheap bheap-tests reviewdata))
+
+(: submission-step (Assignment Step -> User Course Archive Time DB -> (U (Pairof State (Listof Output)) String)))
+(define (submission-step assignment step)
+  (lambda (student course submission time db)
+    (let*-values (((reviewee reviewdata) (select-review! bheap-tests db))
+                ((next-step) (MustReviewNext student course assignment step reviewee))
+                ((make-available) (make-available! student course assignment step submission db))
+                ((get-review) (AssignReview student reviewee course assignment step reviewdata))
+                ((outputs) (list make-available get-review)))
+    (cons next-step outputs))))
+
+(: review-step (Assignment Step (User Course -> State) -> User Course User Review Time DB -> (U (Pairof State (Listof Output)) String)))
+(define (review-step assignment step next-step)
+  (lambda (reviewer course reviewee reviewdata time db)
+    (let* ((next (next-step reviewer course))
+           (accept (accept-review! reviewer reviewee course assignment step reviewdata))
+           (outputs (list accept)))
+      (cons next outputs))))
 
 (struct: Nothing () #:transparent)
 (struct: (a) Just ([v : a]) #:transparent)
@@ -22,43 +50,32 @@
 (define bheap-tests (Step "tests"))
 (define bheap-implementation (Step "implementation"))
 
-(: sample-assignment (State Input Time DB -> (Either (Pair State (Listof Output)) String)))
+(: sample-assignment (State Input Time DB -> (U (Pairof State (Listof Output)) String)))
 (define (sample-assignment state input time db)
-  (match `(,state . ,input)
-    [`(,(MustSubmitNext student course bheap bheap-tests) . ,(SubmitStep submission)) (submit-tests student course bheap bheap-tests submission time db)]
-    [else (Right "Illegal State")]))
+  (match (cons state input)
+    [(cons (MustSubmitNext student course (Assignment "bheap") (Step "tests")) (SubmitStep submission)) (submit-tests student course submission time db)]
+    [(cons (MustReviewNext student course (Assignment "bheap") (Step "tests") reviewee) (SubmitReview reviewdata)) (review-tests student course reviewee reviewdata time db)]
+    [(cons (MustSubmitNext student course (Assignment "bheap") (Step "implementation")) (SubmitStep submission)) (submit-implementation student course submission time db)]
+    [(cons (MustReviewNext student course (Assignment "bheap") (Step "implementation") reviewee) (SubmitReview reviewdata)) (review-implementation student course reviewee reviewdata time db)]
+    [(cons (GraderMustGradeNext student course (Assignment "bheap") (Step "implementation")) (GraderReview grader reviewdata)) (grade-implementation student course grader reviewdata db)]
+    [else "Illegal State"]))
 
-(: submit-tests (User Course Assignment Step Archive Time DB -> (Either (Pair State (Listof Output)) String)))
-(define (submit-tests student course assignment step submission time db) 
-  (let*-values (((reviewee reviewdata) (select-review! bheap-tests db))
-                ((next-step) (MustReviewNext student course assignment reviewee))
-                ((make-available) (make-available! student course assignment step submission db))
-                ((get-review) (AssignReview student reviewee course assignment step reviewdata))
-                ((outputs) (list make-available get-review)))
-    (Left (pair next-step outputs))))
+(: submit-tests (User Course Archive Time DB -> (U (Pairof State (Listof Output)) String)))
+(define submit-tests (submission-step bheap bheap-tests))
 
+(: review-tests (User Course User Review Time DB -> (U (Pairof State (Listof Output)) String)))
+(define review-tests
+  (let ((next-step (lambda ([user : User] [course : Course]) (MustSubmitNext user course bheap bheap-implementation))))
+    (review-step bheap bheap-implementation next-step)))
 
-(define (pair a b)
-  `(,a . ,b))
+(: submit-implementation (User Course Archive Time DB -> (U (Pairof State (Listof Output)) String)))
+(define submit-implementation (submission-step bheap bheap-implementation))
 
-(: make-available! (User Course Assignment Step Archive DB -> AvailableForReview))
-(define (make-available! student course assignment step submission db)
-  (AvailableForReview student course assignment step submission))
+(: review-implementation (User Course User Review Time DB -> (U (Pairof State (Listof Output)) String)))
+(define review-implementation
+  (let ((next-step (lambda ([user : User] [course : Course]) (GraderMustGradeNext user course bheap bheap-implementation))))
+    (review-step bheap bheap-implementation next-step)))
 
-(: select-review! (Step DB -> (Values User Review)))
-(define (select-review! step db)
-  (values
-   (User "undefined")
-   (Review)))
-
-(: review-tests (Input Time DB -> (Either (Pair State (Listof Output)) String)))
-(define (review-tests input itme db)
-  (Right "Not yet implemented."))
-
-(: submit-implementation (Input Time DB -> (Either (Pair State (Listof Output)) String)))
-(define (submit-implementation input time db)
-  (Right "Not yet implemented"))
-
-(: review-implementation (Input Time DB -> (Either (Pair State (Listof Output)) String)))
-(define (review-implementation input itme db)
-  (Right "Not yet implemented."))
+(: grade-implementation (User Course User Review DB -> (U (Pairof State (Listof Output)) String)))
+(define (grade-implementation student course grader reviewdata db)
+  "Not yet implemented.")

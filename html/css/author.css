@@ -1,0 +1,43 @@
+
+.section {
+    width: 500px;
+    margin: 5 5 5 5;
+/*
+    border:1px solid black;
+    border-radius: 3px;
+*/
+}
+
+.section h2 {
+    margin: 5px;
+}
+
+.author-item {
+    margin: 5 5 5 5;
+    min-height: 30px;
+}
+
+.author-item input {
+    width: calc(100% - 100px);
+    border: 1px solid black;     
+    border-radius: 3px;
+    padding: 3px;
+}
+
+.author-item textarea {
+    width: calc(100% - 100px);
+    height: 60px;
+    border: 1px solid black;
+    border-radius: 3px;    
+    padding: 3px;
+    resize: none;
+    overflow:hidden;
+}
+
+.author-item p {
+    float: left;
+    margin: 5 5 5 5;
+    width: 75px;
+    line-height: 100%;
+    font-size: 16px;
+}

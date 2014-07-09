@@ -1,11 +1,90 @@
+.rubric-label {
+    float: left;
+    margin-left: 10px;
+    width: 75px;
+}
+
+.rubric {
+    background: #eee;
+}
+
+.reviews p {
+    margin: 5 0 5 0;
+}
+
+.review {
+    margin: 0 0 0 0;
+}
+
+.add-step a {
+    margin: 5 5 5 5;
+    float: left;
+    text-decoration: none;
+    color: #000;
+    background: #eee;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 3px;
+}
+
+
+.add-step a:hover {
+    color: #000;
+    background: #fff;
+}
+
+.section-header {
+    border-bottom: 1px solid black;
+    height: 25px;
+}
+
+.bg-1 {
+    background: #eee;
+}
+
+.bg-2 {
+    background: #eef;
+}
+
+.bg-3 {
+    background: #fee;
+}
+
+.section-header h3 {
+    float: left;
+    margin: 0 0 0 10;
+    line-height: 25px;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+
+.section-header a {
+    float: right;
+    margin-top: 5px;
+    margin-right: 5px;
+    text-decoration: none;
+    background:url("../imgs/close.png");
+    background-repeat: no-repeat;
+    width: 16px;
+    height: 16px;
+}
+
+.section-header a:hover {
+    background:url("../imgs/close-hover.png");
+}
+
+.step {
+    border-top: 1px solid #999;
+    overflow: hidden;
+    
+}
 
 .section {
+    border: 1px solid black;
+    border-radius: 3px;
     width: 500px;
     margin: 5 5 5 5;
-/*
-    border:1px solid black;
-    border-radius: 3px;
-*/
 }
 
 .section h2 {
@@ -18,20 +97,19 @@
 }
 
 .author-item input {
-    width: calc(100% - 100px);
+    width: calc(100% - 90px);
     border: 1px solid black;     
     border-radius: 3px;
     padding: 3px;
 }
 
 .author-item textarea {
-    width: calc(100% - 100px);
+    width: calc(100% - 90px);
     height: 60px;
     border: 1px solid black;
     border-radius: 3px;    
     padding: 3px;
     resize: none;
-    overflow:hidden;
 }
 
 .author-item p {

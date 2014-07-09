@@ -1,5 +1,7 @@
 #lang racket
 
+(require (planet esilkensen/yaml:3:1))
+
 (struct Assignment (name id description steps) #:transparent)
 
 (define (assignment name id description . steps)
@@ -10,10 +12,10 @@
 (define (step id instructions . reviews)
   (Step id instructions reviews))
 
-(struct Student-submission (rubric) #:transparent)
+(struct Student-submission (amount rubric) #:transparent)
 
-(define (student-submission . elements)
-  (Student-submission (Rubric elements)))
+(define (student-submission amount . elements)
+  (Student-submission amount (Rubric elements)))
 
 (struct Instructor-solution (id rubric) #:transparent)
 
@@ -27,7 +29,13 @@
 
 (struct instruction (text) #:transparent)
 
-(struct likert (id text min-label max-label granularity) #:transparent)
+(define (instruction->yaml instruction)
+  (write-yaml instruction))
+
+(struct likert (id text min max granularity) #:transparent)
+
+(define (likert->yaml likert)
+ (write-yaml likert))
 
 (struct free-form (id text) #:transparent)
 
@@ -76,7 +84,8 @@
                                           (free-form "not-covered"
                                                      "If applicable, provide inputs that are not covered by the tests."))
                      
-                     (student-submission (likert "correctness"
+                     (student-submission 1
+                                         (likert "correctness"
                                                   "These tests are correct."
                                                   "Disagree"
                                                   "Agree"
@@ -138,7 +147,8 @@
                                           (free-form "feedback"
                                                      "Additional Comments"))
                      
-                     (student-submission (likert "behavior"
+                     (student-submission 1
+                                         (likert "behavior"
                                                   "This code correctly implements the desired behavior."
                                                   "Disagree"
                                                   "Agree"

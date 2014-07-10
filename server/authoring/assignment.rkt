@@ -1,6 +1,6 @@
 #lang racket
 
-(provide (except-out (all-defined-out)))
+(provide (except-out (all-defined-out) struct:Rubric Rubric? Rubric-elements Rubric))
 
 (require (planet esilkensen/yaml:3:1)
          rackunit)
@@ -25,12 +25,42 @@
 (define (instructor-solution id . elements)
   (Instructor-solution id (Rubric elements)))
 
+(provide (contract-out 
+          [struct Rubric ((elements (non-empty-listof rubric-element?)))]))
 (struct Rubric (elements) #:transparent)
 
 (define (rubric . elements)
   (Rubric elements))
 
+(define (rubric->yaml rubric)
+  (cond [(not (Rubric? rubric)) (raise-argument-error 'rubric->yaml "Rubric" rubric)]
+        [else (let ((elements (Rubric-elements rubric)))
+                `#hash(("rubric" . ,(map rubric-element->yaml elements))))]))
 
+(define (yaml->rubric yaml)
+  (cond [(not (yaml? yaml)) (raise-argument-error 'yaml->rubric "yaml" yaml)]
+        [(not (= 1 (hash-count yaml))) (raise-user-error "Expected a single record `rubric`." yaml)]
+        [(not (hash-has-key? yaml "rubric")) (raise-user-error "Expected a single record `rubric`." yaml)]
+        [else (let ((elems (map yaml->element (hash-ref yaml "rubric"))))
+                (Rubric elems))]))
+         
+
+
+(define (yaml->element yaml)
+  (cond [(not (yaml? yaml)) (raise-argument-error 'yaml->rubric-element "yaml" yaml)]
+        [(not (= 1 (hash-count yaml))) (raise-user-error "Expected a single record `likert`, `free-form`, or `instruction`." yaml)]
+        [(hash-has-key? yaml "instruction") (yaml->instruction yaml)]
+        [(hash-has-key? yaml "likert") (yaml->likert yaml)]
+        [(hash-has-key? yaml "free-form") (yaml->free-form yaml)]
+        [else (raise-user-error "Expected a single record `likert`, `free-form`, or `instruction`." yaml)]))
+        
+
+(define (rubric-element->yaml el)
+  (cond [(not (rubric-element? el)) (raise-argument-error 'rubric-element->yaml "rubric-element" el)]
+        [else (cond
+                [(instruction? el) (instruction->yaml el)]
+                [(likert? el) (likert->yaml el)]
+                [(free-form? el) (free-form->yaml el)])]))
 
 (struct instruction (text) #:transparent)
 
@@ -129,26 +159,45 @@
                (step "tests"
                      "Submit your test cases. Do not submit any clock implementation."
                      (instructor-solution "Poor Tests"
-                                          
-                                          (likert "correctness"
-                                                  "These tests are correct."
-                                                  "Disagree"
-                                                  "Agree"
-                                                  9)
-                                          
-                                          (instruction "Provide feedback on tests that are not correct by clicking on the line number and adding a comment.")
-                                          
-                                          (likert "coverage"
-                                                  "These tests cover the possible inputs."
-                                                  "Disagree"
-                                                  "Agree"
-                                                  9)
-                                          
-                                          (free-form "not-covered"
-                                                     "If applicable, provide inputs that are not covered by the tests."))
+                                          (rubric
+                                           (likert "correctness"
+                                                   "These tests are correct."
+                                                   "Disagree"
+                                                   "Agree"
+                                                   9)
+                                           
+                                           (instruction "Provide feedback on tests that are not correct by clicking on the line number and adding a comment.")
+                                           
+                                           (likert "coverage"
+                                                   "These tests cover the possible inputs."
+                                                   "Disagree"
+                                                   "Agree"
+                                                   9)
+                                           
+                                           (free-form "not-covered"
+                                                      "If applicable, provide inputs that are not covered by the tests.")))
                      
                      (instructor-solution "Good Tests"
+                                          (rubric
+                                           (likert "correctness"
+                                                   "These tests are correct."
+                                                   "Disagree"
+                                                   "Agree"
+                                                   9)
                                           
+                                           (instruction "Provide feedback on tests that are not correct by clicking on the line number and adding a comment.")
+                                          
+                                           (likert "coverage"
+                                                   "These tests cover the possible inputs."
+                                                   "Disagree"
+                                                   "Agree"
+                                                   9)
+                                           
+                                           (free-form "not-covered"
+                                                      "If applicable, provide inputs that are not covered by the tests.")))
+                     
+                     (student-submission 1
+                                         (rubric
                                           (likert "correctness"
                                                   "These tests are correct."
                                                   "Disagree"
@@ -164,31 +213,13 @@
                                                   9)
                                           
                                           (free-form "not-covered"
-                                                     "If applicable, provide inputs that are not covered by the tests."))
-                     
-                     (student-submission 1
-                                         (likert "correctness"
-                                                  "These tests are correct."
-                                                  "Disagree"
-                                                  "Agree"
-                                                  9)
-                                          
-                                          (instruction "Provide feedback on tests that are not correct by clicking on the line number and adding a comment.")
-                                          
-                                          (likert "coverage"
-                                                  "These tests cover the possible inputs."
-                                                  "Disagree"
-                                                  "Agree"
-                                                  9)
-                                          
-                                          (free-form "not-covered"
-                                                     "If applicable, provide inputs that are not covered by the tests.")))
+                                                     "If applicable, provide inputs that are not covered by the tests."))))
                
                (step "implementation"
                      "Submit all of your test cases and your clock implementation."
                      
                      (instructor-solution "Poor Implementation"
-                                          
+                                          (rubric
                                           (likert "behavior"
                                                   "This code correctly implements the desired behavior."
                                                   "Disagree"
@@ -206,10 +237,10 @@
                                           (instruction "If applicable, leave inline feedback where the code is not structured well.")
                                           
                                           (free-form "feedback"
-                                                     "Additional Comments"))
+                                                     "Additional Comments")))
                      
                      (instructor-solution "Good Implementation"
-                                          
+                                          (rubric
                                           (likert "behavior"
                                                   "This code correctly implements the desired behavior."
                                                   "Disagree"
@@ -227,9 +258,10 @@
                                           (instruction "If applicable, leave inline feedback where the code is not structured well.")
                                           
                                           (free-form "feedback"
-                                                     "Additional Comments"))
+                                                     "Additional Comments")))
                      
                      (student-submission 1
+                                         (rubric
                                          (likert "behavior"
                                                   "This code correctly implements the desired behavior."
                                                   "Disagree"
@@ -247,4 +279,25 @@
                                          (instruction "If applicable, leave inline feedback where the code is not structured well.")
                                           
                                          (free-form "feedback"
-                                                     "Additional Comments")))))
+                                                     "Additional Comments"))))))
+
+(define test-rubric
+  (rubric
+                                         (likert "behavior"
+                                                  "This code correctly implements the desired behavior."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                         (instruction "If applicable, leave inline feedback where the incorrect behaviors exist.")
+                                          
+                                         (likert "structure"
+                                                  "This code is structured well."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                         (instruction "If applicable, leave inline feedback where the code is not structured well.")
+                                          
+                                         (free-form "feedback"
+                                                     "Additional Comments")))

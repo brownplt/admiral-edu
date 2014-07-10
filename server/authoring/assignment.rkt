@@ -15,15 +15,9 @@
 (define (step id instructions . reviews)
   (Step id instructions reviews))
 
-(struct Student-submission (amount rubric) #:transparent)
+(struct student-submission (amount rubric) #:transparent)
 
-(define (student-submission amount . elements)
-  (Student-submission amount (Rubric elements)))
-
-(struct Instructor-solution (id rubric) #:transparent)
-
-(define (instructor-solution id . elements)
-  (Instructor-solution id (Rubric elements)))
+(struct instructor-solution (id rubric) #:transparent)
 
 (provide (contract-out 
           [struct Rubric ((elements (non-empty-listof rubric-element?)))]))
@@ -43,8 +37,6 @@
         [(not (hash-has-key? yaml "rubric")) (raise-user-error "Expected a single record `rubric`." yaml)]
         [else (let ((elems (map yaml->element (hash-ref yaml "rubric"))))
                 (Rubric elems))]))
-         
-
 
 (define (yaml->element yaml)
   (cond [(not (yaml? yaml)) (raise-argument-error 'yaml->rubric-element "yaml" yaml)]

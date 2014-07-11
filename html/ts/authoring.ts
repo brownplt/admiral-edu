@@ -4,6 +4,7 @@
 module Authoring {
 
     var assignment = new Example("Assignment Description")
+	.description("After creation, the assignment will appear on the instructor dashboard where it can be manually opened and closed for students to access.")
 	.field("name", "string")
 	.field("id", "string")
 	.field("description", "string")

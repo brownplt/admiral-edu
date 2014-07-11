@@ -1,0 +1,93 @@
+<html>
+  <head>
+    <title>Authoring Assignment</title>
+    <script src="../bin/authoring.js"></script>
+    <script src="../lib/codemirror.js"></script>
+    <script src="../mode/yaml/yaml.js"></script>
+    
+    <link rel="stylesheet" href="../lib/codemirror.css">
+    <link rel="stylesheet" href="../css/review.css">
+    <link rel="stylesheet" href="../css/authoring.css">
+  </head>
+
+  <body>
+
+    <div class="assignment-description box">
+      <div class="header">
+	<h1>Assignment Description</h1>
+      </div>
+      <div class="assignment">
+	<textarea id="assignment">
+name: Untitled Assignment
+id: new-assignment
+description: Useful description to be seen by student
+steps: 
+  - id: tests
+    instructions: Submit your test cases.
+    reviews:
+      - instructor-solution:
+          id: poor-tests
+          rubric:
+            - likert:
+                id: correctness
+                text: These tests are correct.
+                min-label: Disagree
+                max-label: Agree
+                granularity: 9
+            - free-form:
+                id: not-covered
+                text: If applicable, provide inputs that are not covered by the tests.
+      - student-submission:
+          amount: 2
+          rubric:
+            - likert:
+                id: correctness
+                text: These tests are correct.
+                min-label: Disagree
+                max-label: Agree
+                granularity: 9
+            - free-form:
+                id: not-covered
+                text: If applicable, provide inputs that are not covered by the tests.
+  - id: implementation
+    instructions: Submit all of your test cases and your clock implementation
+    reviews:
+      - instructor-solution:
+          id: good-implementation
+          rubric:
+            - instruction: You are reviewing an instructor provided solution.
+            - likert:
+                id: behavior
+                text: This code correctly implements the desired behavior.
+                min-label: Disagree
+                max-label: Agree
+                granularity: 9
+            - instruction: If applicable, leave inline feedback where the incorrect behaviors exist.
+            - free-form:
+                id: feedback
+                text: Additional Comments
+      - student-submission:
+          amount: 2
+          rubric:
+            - likert:
+                id: behavior
+                text: This code correctly implements the desired behavior.
+                min-label: Disagree
+                max-label: Agree
+                granularity: 9
+            - instruction: If applicable, leave inline feedback where the incorrect behaviors exist.
+            - free-form:
+                id: feedback
+                text: Additional Comments
+	</textarea>
+      </div>
+    </div>
+
+    <div class="examples box" id="examples">
+      <div class="header">
+	<h1>Quick Reference</h1>
+      </div>
+    </div>
+
+  </body>
+</html>

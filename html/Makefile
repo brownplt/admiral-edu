@@ -2,7 +2,10 @@ CC=tsc
 src=ts
 bin=bin
 
-all: $(bin)/captain-teach.js $(bin)/review.js $(bin)/rubric.js $(bin)/review-disabled.js $(bin)/rubric-disabled.js $(bin)/author.js
+all: $(bin)/captain-teach.js $(bin)/review.js $(bin)/rubric.js $(bin)/review-disabled.js $(bin)/rubric-disabled.js $(bin)/author.js $(bin)/authoring.js
+
+$(bin)/authoring.js:$(src)/authoring.ts $(src)/Examples.ts
+	$(CC) --out $(bin)/authoring.js $(src)/authoring.ts
 
 $(bin)/author.js:$(src)/author.ts
 	$(CC) --out $(bin)/author.js $(src)/author.ts

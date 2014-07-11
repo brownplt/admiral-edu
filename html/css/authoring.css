@@ -1,0 +1,96 @@
+.assignment-description {
+    padding: 0 0 0 0;
+    margin: 0 0 0 0;
+    width: calc(60% - 20px);
+    height: calc(100% - 10px);
+    float:left;
+    margin-right: 10px;
+}
+
+.visible {
+    border-bottom: 1px solid #aaa;
+}
+
+.hidden {
+    width: 0px;
+    height: 0px;
+    overflow: hidden;
+}
+
+.box {
+    border: 1px solid #777;
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: 3px 3px 3px #aaa;
+}
+
+.examples {
+    min-width: 400px;
+    
+}
+
+
+.example a {
+    font-weight: bold;
+    color: black;
+    padding: 5 5 5 5;
+    text-decoration: none;
+    display: block;
+    background: #F2FEFF;
+    border-bottom: 1px solid #aaa;
+}
+
+.example a:hover {
+    background: #DEFCFF;
+}
+
+.example h1 {
+    font-size: 14px;
+    font-weight: bold;
+    text-decoration: underline; 
+    margin: 5 5 5 5;
+}
+
+.examples h2 {
+    font-size: 14px;
+    font-weight: bold;
+    margin: 2 5 0 10;
+    display: inline;
+}
+
+
+
+.example textarea {
+    width: calc(100% - 10px);
+    font-family: monospace;
+    font-size: 12px;
+    margin: 2 5 2 5;
+    resize: none;
+    height: 120px;
+}
+
+.header {
+    height: 25px;
+    border-bottom: 1px solid #aaa;
+    background: #eee;
+}
+
+.assignment {
+    height:calc(100% - 25px);
+    overflow:hidden;
+}
+
+.header h1 {
+    line-height: 25px;
+    font-size: 18px;
+    margin: 0 0 0 5;    
+}
+
+.examples p {
+    font-size: 14px;
+    display: inline;
+}
+
+.description {
+    margin: 5 5 5 5 ;
+}

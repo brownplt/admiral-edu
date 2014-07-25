@@ -167,7 +167,7 @@
 
 
 
-;; Any Rubric Element
+;; Any Rubricoo Element
 (define (yaml->element yaml)
   (cond [(not (yaml? yaml)) (raise-argument-error 'yaml->rubric-element "yaml" yaml)]
         [(not (= 1 (hash-count yaml))) (raise-user-error "Expected a single record `likert`, `free-form`, or `instruction`." yaml)]

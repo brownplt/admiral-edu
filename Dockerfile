@@ -1,5 +1,5 @@
 FROM ubuntu:14.04
-MAINTAINER Arjun Guha <arjun@cs.umass.edu>
+MAINTAINER Joseph Collard <josephmcollard@gmail.com>
 
 WORKDIR /root
 USER root

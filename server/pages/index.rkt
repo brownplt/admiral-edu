@@ -14,7 +14,7 @@
       message
       (user-info session role)
       (next-step session)
-      (completed-reviews session)
+      ;(completed-reviews session)
       (users session role))))
 
 (provide post->index)

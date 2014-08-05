@@ -52,7 +52,7 @@ module Authoring {
 
 	    var open = document.createElement('a');
 	    open.innerHTML = this.name;
-	    open.setAttribute('href', '#');
+	    open.setAttribute('href', 'javascript:void(0)');
 	    
 	    open.onclick = function (_) { 
 		description.className = _this.hidden ? "hidden" : "visible";

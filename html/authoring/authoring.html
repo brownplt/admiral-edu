@@ -8,6 +8,18 @@
     <link rel="stylesheet" href="../lib/codemirror.css">
     <link rel="stylesheet" href="../css/review.css">
     <link rel="stylesheet" href="../css/authoring.css">
+
+    <script>
+      function save(content, callback){
+      console.log(content);
+      callback("test");
+      }
+
+      function load(callback){
+
+      }
+    </script>
+
   </head>
 
   <body>
@@ -90,7 +102,7 @@ steps:
     </div>
 
     <div class="validate">
-      <a href="#" onclick="alert('TODO')">Validate</a>
+      <a href="javascript:validate()">Validate</a>
     </div>
   </body>
 </html>

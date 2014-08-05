@@ -1,6 +1,9 @@
 /// <reference path="CodeMirrorBuilder.ts" />
 /// <reference path="Examples.ts" />
 
+declare function save(content, callback);
+declare function load(callback) : string;
+
 module Authoring {
 
     var assignment = new Example("Assignment Description")
@@ -84,7 +87,6 @@ module Authoring {
 
     var examples = [assignment, step, instructorSolution, studentSubmission, instruction, likert, freeform];
 
-
     window.onload = function() {
     
 	var types = document.getElementById('examples');
@@ -96,9 +98,22 @@ module Authoring {
 	var textarea = document.getElementById('assignment');
 	var builder = new CaptainTeach.CodeMirrorBuilder();
 	builder.mode("text/x-yaml");
-	var instance = builder.build(textarea);
+	instance = builder.build(textarea);
 	instance.setSize("100%", "100%");
 	console.log("loaded.");
+
     }
 
+}
+
+var instance;
+
+function handleResponse(response){
+    console.log(response);
+}
+
+function validate(){
+    console.log("validating");
+    var content = instance.getValue();
+    save(content, handleResponse)
 }

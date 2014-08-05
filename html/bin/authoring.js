@@ -74,7 +74,7 @@ var Authoring;
             description.innerHTML = '<div class="description"><p>' + _this.desc.join(" ") + '</p></div>';
             var open = document.createElement('a');
             open.innerHTML = this.name;
-            open.setAttribute('href', '#');
+            open.setAttribute('href', 'javascript:void(0)');
             open.onclick = function (_) {
                 description.className = _this.hidden ? "hidden" : "visible";
                 _this.hidden = !_this.hidden;
@@ -132,9 +132,18 @@ var Authoring;
         var textarea = document.getElementById('assignment');
         var builder = new CaptainTeach.CodeMirrorBuilder();
         builder.mode("text/x-yaml");
-        var instance = builder.build(textarea);
+        instance = builder.build(textarea);
         instance.setSize("100%", "100%");
         console.log("loaded.");
     };
 })(Authoring || (Authoring = {}));
 
+var instance;
+function handleResponse(response) {
+    console.log(response);
+}
+function validate() {
+    console.log("validating");
+    var content = instance.getValue();
+    save(content, handleResponse);
+}

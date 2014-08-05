@@ -35,7 +35,8 @@
 
 (require "pages/index.rkt"
          (prefix-in review: "pages/review.rkt")
-         "pages/errors.rkt")
+         "pages/errors.rkt"
+         "pages/author.rkt")
 
 ;; Defines how to process incomming requests are handled
 (provide ct-rules)
@@ -61,6 +62,7 @@
     [(cons "review" rest) (if post (review:post->review session post-data rest) (render-html session review:load rest))]
     [(cons "file-container" rest) (if post (review:push->file-container session post-data rest) (render-html session review:file-container rest))]
     [(cons "su" (cons uid rest)) (with-sudo post post-data uid session bindings rest)]
+    [(cons "author" rest) (if post (post->validate session post-data rest) (render-html session authoring rest))]
     [else (four-oh-four)]))
 
 (define (with-sudo post post-data uid session bindings path)

@@ -3,8 +3,14 @@
 (provide (except-out (all-defined-out)) (all-from-out "assignment-structs.rkt"))
 
 (require (planet esilkensen/yaml:3:1)
+         json
          "assignment-structs.rkt"
          "util.rkt")
+
+(define basic-class "BasicElement")
+(define likert-class "LikertElement")
+(define free-form-class "FreeFormElement")
+
 
 ;; Assignment
 (define (yaml->assignment yaml) 
@@ -107,6 +113,12 @@
         [else (let ((elems (map yaml->element yaml)))
                 (Rubric elems))]))
 
+(define (rubric->json rubric)
+  (cond [(not (Rubric? rubric)) (raise-argument-error 'rubric->json "Rubric" rubric)]
+        [else (let* ((elements (Rubric-elements rubric))
+                     (inner (map rubric-element->json elements)))
+                `#hasheq((rubric . ,inner)))]))
+
 ;; Rubric elements
 
 ;; Instruction
@@ -117,11 +129,17 @@
         [else (let ((text (hash-ref yaml "instruction")))
                 (instruction text))]))
 
-
 (define (instruction->yaml instruction)
   (cond [(not (instruction? instruction)) (raise-argument-error 'instruction->yaml "instruction" instruction)]
         [else (let ((text (instruction-text instruction)))
                 `#hash(("instruction" . ,text)))]))
+
+(define (instruction->json instruction)
+  (cond [(not (instruction? instruction)) (raise-argument-error 'instruction->json "instruction" instruction)]
+        [else (let ((text (instruction-text instruction)))
+                `#hasheq((class . ,basic-class)
+                         (prompt . ,text)
+                         (id . "prompt")))]))
 
 ;; Complex rubric-element creator
 (define (yaml->rubric-element key constructor . arguments)
@@ -156,6 +174,21 @@
                     (granularity (likert-granularity likert)))
                 `#hash(("likert" . #hash(("id" . ,id) ("text" . ,text) ("min-label" . ,min) ("max-label" . ,max) ("granularity" . ,granularity)))))]))
 
+(define (likert->json likert)
+  (cond [(not (likert? likert)) (raise-argument-error 'likert->json "likert" likert)]
+        [else (let ((id (likert-id likert))
+                    (text (likert-text likert))
+                    (min (likert-min likert))
+                    (max (likert-max likert))
+                    (granularity (likert-granularity likert)))
+                `#hasheq((class . ,likert-class)
+                         (id . ,id)
+                         (prompt . ,text)
+                         (minLabel . ,min)
+                         (maxLabel . ,max)
+                         (rangeSize . ,granularity)
+                         (selected . -1)))]))
+
 ;; Free Form
 (define yaml->free-form
   (yaml->rubric-element "free-form" free-form "id" "text"))
@@ -165,7 +198,14 @@
         (text (free-form-text form)))
     `#hash(("free-form" . #hash(("id" . ,id) ("text" . ,text))))))
 
-
+(define (free-form->json form)
+  (cond [(not (free-form? form)) (raise-argument-error 'free-form->json "free-form" form)]
+        [else (let ((id (free-form-id form))
+                    (text (free-form-text form)))
+                `#hasheq((class . ,free-form-class)
+                         (id . ,id)
+                         (prompt . ,text)
+                         (content . "")))]))
 
 ;; Any Rubricoo Element
 (define (yaml->element yaml)
@@ -182,3 +222,10 @@
                 [(instruction? el) (instruction->yaml el)]
                 [(likert? el) (likert->yaml el)]
                 [(free-form? el) (free-form->yaml el)])]))
+
+(define (rubric-element->json el)
+  (cond [(not (rubric-element? el)) (raise-argument-error 'rubric-element->json "rubric-element" el)]
+        [else (cond
+                [(instruction? el) (instruction->json el)]
+                [(likert? el) (likert->json el)]
+                [(free-form? el) (free-form->json el)])]))

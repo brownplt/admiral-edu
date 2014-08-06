@@ -247,14 +247,44 @@
                                        (cond [(equal? head next) head]
                                              [else (helper next (cdr tail))]))]))))
         (helper (car ls) (cdr ls)))))
-                
-                
+
+(define (getId review) 
+  (cond [(student-submission? review) (student-submission-id review)]
+        [(instructor-solution? review) (instructor-solution-id review)]
+        [else (raise-user-error 'validate-step "Expected to find student-submissions / instructor-solution.")]))
+
+(define (getRubric review) 
+  (cond [(student-submission? review) (student-submission-rubric review)]
+        [(instructor-solution? review) (instructor-solution-rubric review)]
+        [else (raise-user-error 'validate-step "Expected to find student-submissions / instructor-solution.")]))
+
+(define (validate-step step)
+  (cond [(not (Step? step)) (raise-argument-error 'validate-step "Step" step)]
+        [(validate-id (Step-id step)) (validate-id (Step-id step))]
+        [else (let* ((reviews (Step-reviews step))
+                     (ids (map getId reviews))
+                     (sorted (sort ids string<?)))
+                (let ((repeat (repeats? sorted))
+                      (invalid-ids (filter (lambda (x) x) (map validate-id ids))))
+                  (cond [repeat (string-append "Each review id must be unique for the step it is in. Found duplicate review id '" repeat "' in the step '" (Step-id step) "'.")]
+                        [(not (null? invalid-ids)) (string-join invalid-ids "\n")]
+                        [else #f])))]))
+
+(define (validate-id id)
+  (let ((try-match (regexp-match "[a-zA-Z0-9-]*" id)))
+    (cond [(null? try-match) "Id can only contain letters, numbers, and '-' characters. Rejected '" id "'."]
+          [(equal? (car try-match) id) #f]
+          [else (let* ((drop-amount (string-length (car try-match)))
+                       (illegal-char (substring id drop-amount (+ drop-amount 1))))
+                  (string-append "Id can only contain letters, numbers, and '-' characters. Rejected '" id "' because it contained '" illegal-char "'."))])))
         
 (define (validate-assignment assignment)
   (cond [(not (Assignment? assignment)) (raise-argument-error 'validate-assignment "Assignment" assignment)]
         [(assignment:exists? (Assignment-id assignment) class-name) (string-append "The specified assignment id '" (Assignment-id assignment) "' already exists.")]
-        [else (let ((check-steps (repeat-id? (Assignment-steps assignment))))
-                (cond [check-steps (string-append "Assignment may not have multiple steps with the same id. Found multiple instances of '" check-steps "'")]
+        [else (let ((check-steps (repeat-id? (Assignment-steps assignment)))
+                    (valid-id (validate-id (Assignment-id assignment))))
+                (cond [valid-id valid-id]
+                      [check-steps (string-append "Assignment may not have multiple steps with the same id. Found multiple instances of '" check-steps "'")]
                       [else #f]))]))
 
 (define (create-assignment assignment)
@@ -268,12 +298,25 @@
   (let ((id (Assignment-id assignment)))
     (assignment:create id class-name)))
 
+;;(create-default-rubric class assignment stepName rubric review-id)
+
 (define (create-base-rubrics assignment)
-  #t)
+  (let* ((class class-name)
+         (assign (Assignment-id assignment))
+         (steps (Assignment-steps assignment))
+         (create (lambda (step) 
+                   (let* ((stepName (Step-id step))
+                          (reviews (Step-reviews step))
+                          (create (lambda (review)
+                                    (let ((review-id (getId review))
+                                          (rubric (jsexpr->string (rubric->json (getRubric review)))))
+                                      (create-default-rubric class assign stepName rubric review-id)))))
+                     (map create reviews)))))
+    (map create steps)))
         
 
 
-(define test-assignment2
+(define test-assignment
   (assignment "Clocks"
               "clock"
               "Students develop functions representing an alarm clock."
@@ -404,3 +447,70 @@
                                           
                                          (free-form "feedback"
                                                      "Additional Comments"))))))
+
+(define test-step (step "implementation"
+                     "Submit all of your test cases and your clock implementation."
+                     
+                     (instructor-solution "poor-implementation"
+                                          (rubric
+                                          (likert "behavior"
+                                                  "This code correctly implements the desired behavior."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                          (instruction "If applicable, leave inline feedback where the incorrect behaviors exist.")
+                                          
+                                          (likert "structure"
+                                                  "This code is structured well."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                          (instruction "If applicable, leave inline feedback where the code is not structured well.")
+                                          
+                                          (free-form "feedback"
+                                                     "Additional Comments")))
+                     
+                     (instructor-solution "good-implementation"
+                                          (rubric
+                                          (likert "behavior"
+                                                  "This code correctly implements the desired behavior."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                          (instruction "If applicable, leave inline feedback where the incorrect behaviors exist.")
+                                          
+                                          (likert "structure"
+                                                  "This code is structured well."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                          (instruction "If applicable, leave inline feedback where the code is not structured well.")
+                                          
+                                          (free-form "feedback"
+                                                     "Additional Comments")))
+                     
+                     (student-submission "student-review"
+                                         1
+                                         (rubric
+                                         (likert "behavior"
+                                                  "This code correctly implements the desired behavior."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                         (instruction "If applicable, leave inline feedback where the incorrect behaviors exist.")
+                                          
+                                         (likert "structure"
+                                                  "This code is structured well."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                         (instruction "If applicable, leave inline feedback where the code is not structured well.")
+                                          
+                                         (free-form "feedback"
+                                                     "Additional Comments")))))

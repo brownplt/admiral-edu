@@ -11,6 +11,7 @@
 
 (provide upload-submission)
 (provide retrieve-submission-file retrieve-file submission-file-path)
+(provide (all-from-out "storage/local.rkt"))
 (provide sub-directories-of list-files)
 (provide is-directory?)
 (provide is-file?)

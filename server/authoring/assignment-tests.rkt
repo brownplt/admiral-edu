@@ -110,7 +110,8 @@
                                            (free-form "not-covered"
                                                       "If applicable, provide inputs that are not covered by the tests.")))
                      
-                     (student-submission 1
+                     (student-submission "student-review"
+                                         1
                                          (rubric
                                           (likert "correctness"
                                                   "These tests are correct."
@@ -174,7 +175,8 @@
                                           (free-form "feedback"
                                                      "Additional Comments")))
                      
-                     (student-submission 1
+                     (student-submission "student-review"
+                                         1
                                          (rubric
                                          (likert "behavior"
                                                   "This code correctly implements the desired behavior."
@@ -222,15 +224,15 @@
   (check-equal? submission (yaml->instructor-solution (instructor-solution->yaml submission)))
   (check-equal? submission (yaml->review (review->yaml submission))))
 
-(check-true (yaml? (student-submission->yaml (student-submission 1 test-rubric))))
+(check-true (yaml? (student-submission->yaml (student-submission "review" 1 test-rubric))))
 
-(let ((submission (student-submission 2 test-rubric)))
+(let ((submission (student-submission "review" 2 test-rubric)))
   (check-equal? submission (yaml->student-submission (student-submission->yaml submission)))
   (check-equal? submission (yaml->review (review->yaml submission))))
 
 (check-true (yaml? (step->yaml (step "test-id" "test instructions"))))
 (check-true (yaml? (step->yaml (step "test-id" "test instructions" (instructor-solution "test-id" test-rubric)))))
-(check-true (yaml? (step->yaml (step "test-id" "test instructions" (instructor-solution "test-id" test-rubric) (student-submission 2 test-rubric)))))
+(check-true (yaml? (step->yaml (step "test-id" "test instructions" (instructor-solution "test-id" test-rubric) (student-submission "review" 2 test-rubric)))))
 
 (let ((step (step "test-id" "test instructions")))
   (check-equal? step (yaml->step (step->yaml step))))
@@ -238,7 +240,7 @@
 (let ((step (step "test-id" "test instructions" (instructor-solution "test-id" test-rubric))))
   (check-equal? step (yaml->step (step->yaml step))))
 
-(let ((step (step "test-id" "test instructions" (instructor-solution "test-id" test-rubric) (student-submission 2 test-rubric))))
+(let ((step (step "test-id" "test instructions" (instructor-solution "test-id" test-rubric) (student-submission "review" 2 test-rubric))))
   (check-equal? step (yaml->step (step->yaml step))))
 
 (check-true (yaml? (assignment->yaml test-assignment)))

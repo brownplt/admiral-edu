@@ -6,7 +6,7 @@ steps:
     instructions: Submit your test cases. Do not submit any implementation details.
     reviews:
       - instructor-solution:
-          id: Poor Tests
+          id: poor-tests
           rubric:
             - likert:
                 id: correctness
@@ -25,7 +25,7 @@ steps:
                 id: not-covered
                 text: If applicable, provide inputs that are not covered by the tests.
       - instructor-solution:
-          id: Good Tests
+          id: good-tests
           rubric:
             - likert:
                 id: correctness
@@ -44,6 +44,7 @@ steps:
                 id: not-covered
                 text: If applicable, provide inputs that are not covered by the tests. 
       - student-submission:
+          id: student-review
           amount: 1
           rubric:
             - likert:
@@ -66,7 +67,7 @@ steps:
     instructions: Submit all of your test cases and your clock implementation
     reviews:
       - instructor-solution:
-          id: Poor Implementation
+          id: poor-implementation
           rubric:
             - likert:
                 id: behavior
@@ -86,7 +87,7 @@ steps:
                 id: feedback
                 text: Additional Comments
       - instructor-solution:
-          id: Good Implementation
+          id: good-implementation
           rubric:
             - likert:
                 id: behavior
@@ -106,6 +107,7 @@ steps:
                 id: feedback
                 text: Additional Comments
       - student-submission:
+          id: student-review
           amount: 1
           rubric:
             - likert:

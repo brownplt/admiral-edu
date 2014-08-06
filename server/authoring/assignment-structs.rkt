@@ -21,8 +21,8 @@
 
 ;; Student Submission Review
 (provide (contract-out
-          [struct student-submission ((amount integer?) (rubric Rubric?))]))
-(struct student-submission (amount rubric) #:transparent)
+          [struct student-submission ((id string?) (amount integer?) (rubric Rubric?))]))
+(struct student-submission (id amount rubric) #:transparent)
 
 ;; Instructor Solution Review
 (provide (contract-out

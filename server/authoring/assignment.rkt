@@ -59,19 +59,21 @@
 (define (student-submission->yaml submission) 
   (cond [(not (student-submission? submission)) (raise-argument-error 'student-submission->yaml "student-submission" submission)]
         [else (let ((amount (student-submission-amount submission))
-                    (rubric (rubric->yaml (student-submission-rubric submission))))
-                `#hash(("student-submission" . #hash(("amount" . ,amount) ("rubric" . ,rubric)))))]))
+                    (rubric (rubric->yaml (student-submission-rubric submission)))
+                    (id (student-submission-id submission)))
+                `#hash(("student-submission" . #hash(("id" . ,id) ("amount" . ,amount) ("rubric" . ,rubric)))))]))
 
 (define (yaml->student-submission yaml) 
   (cond [(not (yaml? yaml)) (raise-argument-error 'yaml->student-submission "yaml" yaml)]
         [(not (= 1 (hash-count yaml))) (raise-user-error "Expected a single record `student-submission`." yaml)]
         [(not (hash-has-key? yaml "student-submission")) (raise-user-error "Expected a single record `student-submission`." yaml)]
         [else (let ((rec (hash-ref yaml "student-submission")))
-                (cond [(not (= 2 (hash-count rec))) (raise-user-error "Expected two fields `amount` and `rubric`." rec)]
-                      [(not (hash-has-keys? rec "amount" "rubric")) (raise-user-error "Expected two fields `amount` and `rubric`." rec)]
+                (cond [(not (= 3 (hash-count rec))) (raise-user-error "Expected three fields `id`, `amount` and `rubric`." rec)]
+                      [(not (hash-has-keys? rec "id" "amount" "rubric")) (raise-user-error "Expected three fields `id`, `amount` and `rubric`." rec)]
                       [else (let ((amount (hash-ref rec "amount"))
-                                  (rubric (hash-ref rec "rubric")))
-                              (student-submission amount (yaml->rubric rubric)))]))]))
+                                  (rubric (hash-ref rec "rubric"))
+                                  (id (hash-ref rec "id")))
+                              (student-submission id amount (yaml->rubric rubric)))]))]))
 
 ;; Instructor Solution
 (define (instructor-solution->yaml solution)
@@ -265,17 +267,20 @@
 (define (create-database-entries assignment)
   (let ((id (Assignment-id assignment)))
     (assignment:create id class-name)))
+
+(define (create-base-rubrics assignment)
+  #t)
         
 
 
-(define test-assignment
+(define test-assignment2
   (assignment "Clocks"
               "clock"
               "Students develop functions representing an alarm clock."
               
                (step "tests"
                      "Submit your test cases. Do not submit any clock implementation."
-                     (instructor-solution "Poor Tests"
+                     (instructor-solution "poor-tests"
                                           (rubric
                                            (likert "correctness"
                                                    "These tests are correct."
@@ -294,7 +299,7 @@
                                            (free-form "not-covered"
                                                       "If applicable, provide inputs that are not covered by the tests.")))
                      
-                     (instructor-solution "Good Tests"
+                     (instructor-solution "good-tests"
                                           (rubric
                                            (likert "correctness"
                                                    "These tests are correct."
@@ -313,7 +318,8 @@
                                            (free-form "not-covered"
                                                       "If applicable, provide inputs that are not covered by the tests.")))
                      
-                     (student-submission 1
+                     (student-submission "student-review"
+                                         1
                                          (rubric
                                           (likert "correctness"
                                                   "These tests are correct."
@@ -335,7 +341,7 @@
                (step "implementation"
                      "Submit all of your test cases and your clock implementation."
                      
-                     (instructor-solution "Poor Implementation"
+                     (instructor-solution "poor-implementation"
                                           (rubric
                                           (likert "behavior"
                                                   "This code correctly implements the desired behavior."
@@ -356,7 +362,7 @@
                                           (free-form "feedback"
                                                      "Additional Comments")))
                      
-                     (instructor-solution "Good Implementation"
+                     (instructor-solution "good-implementation"
                                           (rubric
                                           (likert "behavior"
                                                   "This code correctly implements the desired behavior."
@@ -377,7 +383,8 @@
                                           (free-form "feedback"
                                                      "Additional Comments")))
                      
-                     (student-submission 1
+                     (student-submission "student-review"
+                                         1
                                          (rubric
                                          (likert "behavior"
                                                   "This code correctly implements the desired behavior."

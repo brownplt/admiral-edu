@@ -6,7 +6,7 @@ steps:
   instructions: Submit your test cases. Do not submit any implementation details.
   reviews:
   - instructor-solution:
-      id: Poor Tests
+      id: poor-tests
       rubric:
       - likert: {id: correctness, text: These tests are correct., max-label: Agree,
           min-label: Disagree, granularity: 9}
@@ -17,7 +17,7 @@ steps:
       - free-form: {id: not-covered, text: 'If applicable, provide inputs that are
             not covered by the tests.'}
   - instructor-solution:
-      id: Good Tests
+      id: good-tets
       rubric:
       - likert: {id: correctness, text: These tests are correct., max-label: Agree,
           min-label: Disagree, granularity: 9}
@@ -28,6 +28,7 @@ steps:
       - free-form: {id: not-covered, text: 'If applicable, provide inputs that are
             not covered by the tests.'}
   - student-submission:
+      id: student-review
       rubric:
       - likert: {id: correctness, text: These tests are correct., max-label: Agree,
           min-label: Disagree, granularity: 9}
@@ -40,7 +41,7 @@ steps:
       amount: 1
 - reviews:
   - instructor-solution:
-      id: Poor Implementation
+      id: poor-implementation
       rubric:
       - likert: {id: behavior, text: This code correctly implements the desired behavior.,
           max-label: Agree, min-label: Disagree, granularity: 9}
@@ -52,7 +53,7 @@ steps:
           structured well.'}
       - free-form: {id: feedback, text: Additional Comments}
   - instructor-solution:
-      id: Good Implementation
+      id: good-implementation
       rubric:
       - likert: {id: behavior, text: This code correctly implements the desired behavior.,
           max-label: Agree, min-label: Disagree, granularity: 9}
@@ -64,6 +65,7 @@ steps:
           structured well.'}
       - free-form: {id: feedback, text: Additional Comments}
   - student-submission:
+      id: student-review
       rubric:
       - likert: {id: behavior, text: This code correctly implements the desired behavior.,
           max-label: Agree, min-label: Disagree, granularity: 9}

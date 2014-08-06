@@ -5,7 +5,9 @@
 (require (planet esilkensen/yaml:3:1)
          json
          "assignment-structs.rkt"
-         "util.rkt")
+         "util.rkt"
+         "../database/mysql.rkt"
+         "../config.rkt")
 
 (define basic-class "BasicElement")
 (define likert-class "LikertElement")
@@ -229,3 +231,169 @@
                 [(instruction? el) (instruction->json el)]
                 [(likert? el) (likert->json el)]
                 [(free-form? el) (free-form->json el)])]))
+
+(define (repeat-id? steps)
+  (cond [(not ((listof Step?) steps)) (raise-argument-error 'repeat-name? "listof Step?" steps)]
+        [(null? steps) #f]
+        [else (repeats? (sort (map Step-id steps) string<?))]))
+
+(define (repeats? ls)
+  (if (null? ls) #f
+      (letrec ((helper (lambda (head tail)
+                         (cond [(null? tail) #f]
+                               [else (let ((next (car tail)))
+                                       (cond [(equal? head next) head]
+                                             [else (helper next (cdr tail))]))]))))
+        (helper (car ls) (cdr ls)))))
+                
+                
+        
+(define (validate-assignment assignment)
+  (cond [(not (Assignment? assignment)) (raise-argument-error 'validate-assignment "Assignment" assignment)]
+        [(assignment:exists? (Assignment-id assignment) class-name) (string-append "The specified assignment id '" (Assignment-id assignment) "' already exists.")]
+        [else (let ((check-steps (repeat-id? (Assignment-steps assignment))))
+                (cond [check-steps (string-append "Assignment may not have multiple steps with the same id. Found multiple instances of '" check-steps "'")]
+                      [else #f]))]))
+
+(define (create-assignment assignment)
+  (cond [(not (Assignment? assignment)) (raise-argument-error 'create-assignment "Assignment" assignment)]
+        [else (let ((validation (validate-assignment assignment)))
+                (cond [validation validation]
+                      [else (create-database-entries assignment)
+                            (create-base-rubrics assignment)]))]))
+
+(define (create-database-entries assignment)
+  (let ((id (Assignment-id assignment)))
+    (assignment:create id class-name)))
+        
+
+
+(define test-assignment
+  (assignment "Clocks"
+              "clock"
+              "Students develop functions representing an alarm clock."
+              
+               (step "tests"
+                     "Submit your test cases. Do not submit any clock implementation."
+                     (instructor-solution "Poor Tests"
+                                          (rubric
+                                           (likert "correctness"
+                                                   "These tests are correct."
+                                                   "Disagree"
+                                                   "Agree"
+                                                   9)
+                                           
+                                           (instruction "Provide feedback on tests that are not correct by clicking on the line number and adding a comment.")
+                                           
+                                           (likert "coverage"
+                                                   "These tests cover the possible inputs."
+                                                   "Disagree"
+                                                   "Agree"
+                                                   9)
+                                           
+                                           (free-form "not-covered"
+                                                      "If applicable, provide inputs that are not covered by the tests.")))
+                     
+                     (instructor-solution "Good Tests"
+                                          (rubric
+                                           (likert "correctness"
+                                                   "These tests are correct."
+                                                   "Disagree"
+                                                   "Agree"
+                                                   9)
+                                          
+                                           (instruction "Provide feedback on tests that are not correct by clicking on the line number and adding a comment.")
+                                          
+                                           (likert "coverage"
+                                                   "These tests cover the possible inputs."
+                                                   "Disagree"
+                                                   "Agree"
+                                                   9)
+                                           
+                                           (free-form "not-covered"
+                                                      "If applicable, provide inputs that are not covered by the tests.")))
+                     
+                     (student-submission 1
+                                         (rubric
+                                          (likert "correctness"
+                                                  "These tests are correct."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                          (instruction "Provide feedback on tests that are not correct by clicking on the line number and adding a comment.")
+                                          
+                                          (likert "coverage"
+                                                  "These tests cover the possible inputs."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                          (free-form "not-covered"
+                                                     "If applicable, provide inputs that are not covered by the tests."))))
+               
+               (step "implementation"
+                     "Submit all of your test cases and your clock implementation."
+                     
+                     (instructor-solution "Poor Implementation"
+                                          (rubric
+                                          (likert "behavior"
+                                                  "This code correctly implements the desired behavior."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                          (instruction "If applicable, leave inline feedback where the incorrect behaviors exist.")
+                                          
+                                          (likert "structure"
+                                                  "This code is structured well."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                          (instruction "If applicable, leave inline feedback where the code is not structured well.")
+                                          
+                                          (free-form "feedback"
+                                                     "Additional Comments")))
+                     
+                     (instructor-solution "Good Implementation"
+                                          (rubric
+                                          (likert "behavior"
+                                                  "This code correctly implements the desired behavior."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                          (instruction "If applicable, leave inline feedback where the incorrect behaviors exist.")
+                                          
+                                          (likert "structure"
+                                                  "This code is structured well."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                          (instruction "If applicable, leave inline feedback where the code is not structured well.")
+                                          
+                                          (free-form "feedback"
+                                                     "Additional Comments")))
+                     
+                     (student-submission 1
+                                         (rubric
+                                         (likert "behavior"
+                                                  "This code correctly implements the desired behavior."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                         (instruction "If applicable, leave inline feedback where the incorrect behaviors exist.")
+                                          
+                                         (likert "structure"
+                                                  "This code is structured well."
+                                                  "Disagree"
+                                                  "Agree"
+                                                  9)
+                                          
+                                         (instruction "If applicable, leave inline feedback where the code is not structured well.")
+                                          
+                                         (free-form "feedback"
+                                                     "Additional Comments"))))))

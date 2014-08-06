@@ -14,6 +14,9 @@
 (define class-id "class_id")
 (define class-id-type class:id-type)
 
+(define assignment-open "assignment_open")
+(define assignment-open-type "BOOLEAN")
+
 ;; Initializes the assignment table.
 (provide init)
 (define (init)
@@ -21,6 +24,7 @@
         (create (prepare sql-conn (merge "CREATE TABLE" table "(" 
                                          assignment-id assignment-id-type ","
                                          class-id class-id-type ","
+                                         assignment-open assignment-open-type ","
                                          "PRIMARY KEY (" assignment-id "," class-id "))"))))
     (query-exec sql-conn drop)
     (query-exec sql-conn create)))
@@ -36,7 +40,7 @@
     [(not (class:exists? class)) 'no-such-class]
     [(exists? assignment class) 'duplicate-assignment]
     [else
-     (let* ((query (merge "INSERT INTO" table "VALUES(?,?)"))
+     (let* ((query (merge "INSERT INTO" table "VALUES(?,?,0)"))
             (prep (prepare sql-conn query)))
        (query-exec sql-conn prep assignment class) 
        #t)]))
@@ -46,7 +50,7 @@
 (define (exists? assignment class)
   (let* ((query (merge "SELECT COUNT(*) FROM" table "WHERE" assignment-id "=? AND" class-id "=? LIMIT 1"))
          (prep (prepare sql-conn query))
-         (result (vector-ref (query-row sql-conn query assignment class) 0)))
+         (result (vector-ref (query-row sql-conn prep assignment class) 0)))
     (= 1 result)))
 
 (provide all)
@@ -54,6 +58,19 @@
   (let* ((query (merge "SELECT * FROM" table))
          (prep (prepare sql-conn query)))
     (query-rows sql-conn prep)))
+
+(provide open)
+(define (open assignment class)
+  (let* ((query (merge "UPDATE" table "SET" assignment-open "=1 WHERE" assignment-id "=? AND" class-id "=?"))
+         (prep (prepare sql-conn query)))
+    (query-exec sql-conn prep assignment class)))
+
+(provide close)
+(define (close assignment class)
+  (let* ((query (merge "UPDATE" table "SET" assignment-open "=0 WHERE" assignment-id "=? AND" class-id "=?"))
+         (prep (prepare sql-conn query)))
+    (query-exec sql-conn prep assignment class)))
+         
     
 (provide list)
 (define (list class)

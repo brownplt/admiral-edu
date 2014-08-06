@@ -66,4 +66,12 @@
 (provide is-file?)
 (define (is-file? path)
   (file-exists? path))
+
+(define (retrieve-default-rubric class assignment stepName)
+  (let ((path (string-append "reviews/" class "/" assignment "/" stepName "/rubric.json")))
+    (retrieve-file path)))
+
+(define (create-default-rubric class assignment stepName rubric)
+  (let ((path (string-append "reviews/" class "/" assignment "/" stepName "/rubric.json")))
+    (write-file path rubric)))
          

@@ -61,4 +61,5 @@
          review:assign-student-reviews
          review:assign-instructor-solution
          review:select-reviews
-         review:select-assigned-reviews)
+         review:select-assigned-reviews
+         review:mark-complete)

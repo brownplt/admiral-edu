@@ -35,6 +35,7 @@
          (yaml (string->yaml yaml-string))
          (assignment (yaml->assignment yaml)))    
     (print (yaml->assignment (string->yaml (bytes->string/utf-8 post-data)))) (newline)
+    (yaml-bytes->create-assignment post-data)
     (response/full
      200 #"Okay"
      (current-seconds) #"application/json; charset=utf-8"

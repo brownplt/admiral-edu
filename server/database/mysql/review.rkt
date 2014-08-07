@@ -102,7 +102,12 @@
 
 (provide assign-instructor-solution)
 (define (assign-instructor-solution assignment class step uid review-id)
-  (create assignment class step "instructor" uid review-id 1))
+  (create-instructor-review assignment class step uid review-id 1))
+
+(define (create-instructor-review assignment class step reviewer id is-instructor-solution)
+  (let* ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,?)"))
+         (prep (prepare sql-conn query)))
+    (query-exec sql-conn prep assignment class step "instructor" reviewer (random-hash) id is-instructor-solution)))
 
 
 #|
@@ -147,7 +152,13 @@
          (result (query-row sql-conn prep the-hash)))
     (vector->list result)))
                        
- ;;(path (string-append "reviews/" class "/" assignment "/" stepName "/" reviewee "/" reviewer "/" path-to-file)))                       
+(provide mark-complete)
+(define (mark-complete the-hash)
+  (let* ((query (merge "UPDATE" table
+                       "SET" completed "=1"
+                       "WHERE" hash "=?"))
+         (prep (prepare sql-conn query)))
+    (query-exec sql-conn prep the-hash)))
 
 (provide select-reviews)
 (define (select-reviews reviewee)
@@ -157,17 +168,16 @@
     (flatten (map vector->list result))))
 
 (provide select-assigned-reviews)
-(define (select-assigned-reviews assignment class step uid rid)
+(define (select-assigned-reviews assignment class step uid)
   (let* ((query (merge "SELECT" hash
                        "FROM" table
                        "WHERE" class-id "=? AND"
                                assignment-id "=? AND"
                                step-id "=? AND"
-                               review-id "=? AND"
                                reviewer-id "=?"))
          (prep (prepare sql-conn query))
-         (result (query-rows sql-conn prep class assignment step rid uid)))
-    (map vector->list result)))
+         (result (query-rows sql-conn prep class assignment step uid)))
+    (flatten (map vector->list result))))
     
 
 ;; TODO: Re-write using counter field.
@@ -227,7 +237,7 @@
                                review-id "=?"))
          (prep (prepare sql-conn query))
          (result (vector-ref (query-row sql-conn prep assignment class step reviewer id) 0)))
-    result 0))
+    result))
 
 (provide count)
 (define (count assignment class step reviewee)

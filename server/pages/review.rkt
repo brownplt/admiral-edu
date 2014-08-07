@@ -20,6 +20,7 @@
 (define (load session role rest [message '()])
   (let* ((assignment (car rest))
          (step (cadr rest))
+         (r-hash (caddr rest))
          (updir (apply string-append (repeat "../" (length rest))))
          [root-url updir]
          (updir-rubric (apply string-append (repeat "../" (- (length rest) 2))))
@@ -28,7 +29,7 @@
          [load-url (xexpr->string (string-append "\"" updir-rubric step "/load\""))]
          (reviewer (ct-session-uid session))
          (class (ct-session-class session))
-         (r (review:select-review assignment class step reviewer)))
+         (r (review:select-by-hash r-hash)))
     (if (equal? r 'no-reviews)
         (let ([display-message "There are no reviews available for you at this time."])
           (include-template "html/message.html"))
@@ -65,18 +66,20 @@
          (class (ct-session-class session))
          (stepName (cadr rest))
          (assignment (car rest))
-         (r (review:select-review assignment class stepName reviewer))
+         (rhash (caddr rest))
+         (r (review:select-by-hash rhash))
          (reviewee (car r))
          (path (string-append "reviews/" class "/" assignment "/" stepName "/" reviewee "/" reviewer "/rubric.json")))
     path))
 
+#|
 (define (retrieve-default-rubric session rest)
   (let* ((class (ct-session-class session))
          (stepName (cadr rest))
          (assignment (car rest))
          (path (string-append "reviews/" class "/" assignment "/" stepName "/rubric.json")))
     (retrieve-file path)))
-                      
+|#                    
 
 (provide push->file-container)
 (define (push->file-container session post-data rest)
@@ -109,7 +112,8 @@
          (class (ct-session-class session))
          (stepName (cadr rest))
          (assignment (car rest))
-         (r (review:select-review assignment class stepName reviewer))
+         (rhash (caddr rest))
+         (r (review:select-by-hash rhash))
          (reviewee (car r))
          (path-to-file (to-path (take (cddr rest) (- (length rest) 3))))
          (path (string-append "reviews/" class "/" assignment "/" stepName "/" reviewee "/" reviewer "/" path-to-file)))
@@ -123,11 +127,12 @@
          [save-url (prepare-save-url rest)]
          [load-url (prepare-load-url rest)]
          (stepName (cadr rest))
+         (rhash (caddr rest))
          [step (to-step-link stepName (- (length rest) 2))]
          (last-path (last rest))
          (prefix (if (equal? last-path "") "" (string-append last-path "/")))
          [path (to-path-html (cddr rest))]
-         (r (review:select-review assignment (ct-session-class session) stepName (ct-session-uid session)))
+         (r (review:select-by-hash rhash))
          (reviewee (car r))
          (version (cdr r))
          (file-path (submission-file-path (ct-session-class session) reviewee assignment stepName version (to-path (cddr rest))))

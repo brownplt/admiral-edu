@@ -39,6 +39,14 @@
 (define time-stamp "time_stamp")
 (define time-stamp-type "TIMESTAMP")
 
+(provide review-id review-id-type)
+(define review-id "review_id")
+(define review-id-type "VARCHAR(255)")
+
+(provide instructor-solution instructor-solution-type)
+(define instructor-solution "instructor_solution")
+(define instructor-solution-type "BOOLEAN")
+
 (provide completed completed-type)
 (define completed "completed")
 (define completed-type "BOOL")
@@ -61,16 +69,18 @@
                                          version version-type ","
                                          completed completed-type ","
                                          hash hash-type ","
-                                         "PRIMARY KEY (" assignment-id "," class-id "," step-id "," reviewee-id "," reviewer-id "," version "))"))))
+                                         review-id review-id-type ","
+                                         instructor-solution instructor-solution-type ","
+                                         "PRIMARY KEY (" assignment-id "," class-id "," step-id "," reviewee-id "," reviewer-id "," version "," review-id "))"))))
     (query-exec sql-conn drop)
     (query-exec sql-conn create)))
 
 (provide create)
-(define (create assignment class step reviewee reviewer version)
+(define (create assignment class step reviewee reviewer version id is-instructor-solution)
   (if (not (submission:exists? assignment class step reviewee version)) 'no-such-submission
-      (let* ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),?,false,?)"))
+      (let* ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),?,false,?, ?, ?)"))
              (prep (prepare sql-conn query)))
-        (query-exec sql-conn prep assignment class step reviewee reviewer version (random-hash)))))
+        (query-exec sql-conn prep assignment class step reviewee reviewer version (random-hash) id is-instructor-solution))))
 
 (provide select-review)
 (define (select-review assignment class step reviewer)

@@ -67,12 +67,23 @@
 (define (is-file? path)
   (file-exists? path))
 
+(provide retrieve-default-rubric)
 (define (retrieve-default-rubric class assignment stepName review-id)
-  (let ((path (string-append "reviews/" class "/" assignment "/" stepName "/" review-id "/rubric.json")))
+  (let ((path (string-append class "/" assignment "/reviews/"  stepName "/" review-id "/rubric.json")))
     (retrieve-file path)))
 
 (provide create-default-rubric)
 (define (create-default-rubric class assignment stepName rubric review-id)
-  (let ((path (string-append "reviews/" class "/" assignment "/" stepName "/" review-id "/rubric.json")))
+  (let ((path (string-append class "/" assignment "/reviews/" stepName "/" review-id "/rubric.json")))
     (write-file path rubric)))
+
+(provide save-assignment-description)
+(define (save-assignment-description class assignment description)
+  (let ((path (string-append class "/" assignment "/description.yaml")))
+    (write-file path description)))
+
+(provide retrieve-assignment-description)
+(define (retrieve-assignment-description class assignment)
+  (let ((path (string-append class "/" assignment "/description.yaml")))
+    (retrieve-file path)))
          

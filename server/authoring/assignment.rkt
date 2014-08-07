@@ -7,7 +7,8 @@
          "assignment-structs.rkt"
          "util.rkt"
          "../database/mysql.rkt"
-         "../config.rkt")
+         "../config.rkt"
+         (prefix-in machine: "progress-machine.rkt"))
 
 (define basic-class "BasicElement")
 (define likert-class "LikertElement")
@@ -287,6 +288,13 @@
                       [check-steps (string-append "Assignment may not have multiple steps with the same id. Found multiple instances of '" check-steps "'")]
                       [else #f]))]))
 
+(define (yaml-bytes->create-assignment bytes)
+  (let* ((yaml-string (bytes->string/utf-8 bytes))
+         (yaml (string->yaml yaml-string)) ;; Handle exceptions and return message based on why it couldn't be parsed into an assignment
+         (assignment (yaml->assignment yaml)))
+    (create-assignment assignment)
+    (save-assignment-description class-name (Assignment-id assignment) yaml-string)))
+
 (define (create-assignment assignment)
   (cond [(not (Assignment? assignment)) (raise-argument-error 'create-assignment "Assignment" assignment)]
         [else (let ((validation (validate-assignment assignment)))
@@ -313,9 +321,61 @@
                                       (create-default-rubric class assign stepName rubric review-id)))))
                      (map create reviews)))))
     (map create steps)))
-        
 
+(define (assignment->progress-machine assignment)
+  (cond [(Assignment? assignment) (raise-argument-error 'assignment->progress-machine "Assignment" assignment)]
+        [else (let ((steps (Assignment-steps assignment)))
+                #f)]))
 
+(struct Success (message))
+(struct Failure (message))
+(define (failure . messages)
+  (apply string-append messages))
+
+#|
+(define (submit-step assignment-id step)
+  ;; Assignment must exist
+  (cond 
+    [(not (assignment:exists? assignment-id)) (failure "The specified assignment '" assignment-id "' does not exists.")]
+    [else 
+|#
+
+(define (next-action assignment-id steps uid)
+  (cond 
+    [(null? steps) #t]
+    [else 
+     (let ((check-result (check-step assignment-id (car steps) uid))
+           (rest (cdr steps)))
+       (cond
+         [check-result (next-action assignment-id rest uid)]
+         [else check-result]))]))
+
+(struct MustSubmitNext (step-id instructions))
+(define (check-step assignment-id step uid)
+  (let* ((step-id (Step-id step))
+         (has-submitted (submission:count assignment-id class-name step-id uid)))
+    (cond 
+      [(not has-submitted) (MustSubmitNext step-id (Step-instructions step))]
+      [else (check-reviews assignment-id step (Step-reviews step) uid)])))
+
+(struct MustReviewNext (step-id reviews))  
+(define (check-reviews assignment-id step reviews uid)
+  (cond
+    [(null? reviews) #t]
+    [else (let* ((next-review (car reviews))
+                 (rest (cdr reviews))
+                 (result (cond
+                           [(instructor-solution? next-review) (check-instructor-solution assignment-id step next-review uid)]
+                           [(student-submission? next-review) (check-instructor-solution assignment-id step next-review uid)])))
+            (cond
+              [result (check-reviews assignment-id step rest uid)]
+              [else (MustReviewNext (Step-id step '()))]) ;; TODO: Query for the list of reviews that are needed and return them here
+            )]))
+
+(define (check-instructor-solution assignment-id step instructor-solution uid)
+  (let ((id (instructor-solution-id instructor-solution)))
+
+                 
 (define test-assignment
   (assignment "Clocks"
               "clock"

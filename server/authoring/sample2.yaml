@@ -17,7 +17,7 @@ steps:
       - free-form: {id: not-covered, text: 'If applicable, provide inputs that are
             not covered by the tests.'}
   - instructor-solution:
-      id: good-tets
+      id: good-tests
       rubric:
       - likert: {id: correctness, text: These tests are correct., max-label: Agree,
           min-label: Disagree, granularity: 9}

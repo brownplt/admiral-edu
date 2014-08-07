@@ -40,7 +40,6 @@
 (provide submission:table 
          submission:record submission:record?
          submission:assignment-id submission:assignment-id-type submission:record-assignment
-         submission:version submission:version-type submission:record-version
          submission:class-id submission:class-id-type submission:record-class
          submission:step-id submission:step-id-type submission:record-step
          submission:user-id submission:user-id-type submission:record-user
@@ -53,11 +52,13 @@
 (provide review:table
          review:assignment-id review:assignment-id-type
          review:step-id review:step-id-type
-         review:version review:version-type
          review:class-id review:class-id-type
          review:reviewee-id review:reviewee-id-type
          review:reviewer-id review:reviewer-id-type
          review:time-stamp review:time-stamp-type
-         review:select-review
-         review:completed?
-         review:select-by-hash review:select-reviews)
+         review:completed? review:count-completed
+         review:select-by-hash review:select-reviews
+         review:assign-student-reviews
+         review:assign-instructor-solution
+         review:select-reviews
+         review:select-assigned-reviews)

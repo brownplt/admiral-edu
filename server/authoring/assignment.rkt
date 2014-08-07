@@ -332,14 +332,48 @@
 (define (failure . messages)
   (apply string-append messages))
 
-#|
-(define (submit-step assignment-id step)
+;; Attempts to submit for the specified uid, assignment, and step-id. If this is not the next expected action,
+;; This returns a failure with a message describing what the user should do next.
+(define (submit-step assignment-id step-id uid data)
   ;; Assignment must exist
   (cond 
     [(not (assignment:exists? assignment-id)) (failure "The specified assignment '" assignment-id "' does not exists.")]
-    [else 
-|#
+    [else (let* ((assignment ((yaml->assignment (string->yaml (retrieve-assignment-description class-name assignment-id)))))
+                 (assignment-id (Assignment-id assignment))
+                 (steps (Assignment-steps assignment))
+                 (next (next-action assignment-id steps uid)))
+            (cond
+              [(and (MustSubmitNext? next) (equal? (Step-id (MustSubmitNext-step next)) step-id)) (do-submit-step assignment-id step-id uid data)]
+              [else (failure "Could not submit to the step '" step-id "'." (next-action-error next))]))]))
 
+(define (do-submit-step assignment-id step-id uid data steps)
+  (upload-submission class-name uid step-id data)
+  ;; Assign reviews to the student if applicable
+  (let ((next (next-action assignment-id steps uid)))
+    (cond
+      [(MustReviewNext? next) (assign-reviews assignment-id next uid)])))
+
+(define (assign-reviews step uid)
+  (let ((reviews (Step-reviews step)))
+    (map assign-review reviews uid)))
+
+;(assign-student-reviews assignment class step uid review-id amount)
+;(assign-instructor-solution assignment class step uid review-id)
+
+(define (assign-review assignment-id step-id uid review)
+  (let ((review-id (getId review)))
+    (cond [(instructor-solution? review) (review:assign-instructor-solution assignment class-name step uid review-id)]
+          [(student-submission? review) (review:assign-student-reviews assignment class-name step uid review-id (student-submission-amount review))])))
+
+(define (next-action-error next)
+  (cond [(MustSubmitNext? next) (string-append "Your next action is to submit to on '" (Step-id (MustSubmitNext-step next)) "'.")]
+        [(MustReviewNext? next) (string-append "Your next action is to complete reviews for '" (Step-id (MustReviewNext-step next)) "'.")]
+        [(eq? #t next) "You have completed this assignment."]
+        [else ""]))
+  
+
+;; Given an assignment-id and the list of steps to complete, returns the next-action the user must take
+;; or #t if the user has completed the assignment
 (define (next-action assignment-id steps uid)
   (cond 
     [(null? steps) #t]
@@ -350,15 +384,20 @@
          [check-result (next-action assignment-id rest uid)]
          [else check-result]))]))
 
-(struct MustSubmitNext (step-id instructions))
+;; Returns #t if this step has been submitted to and all reviews have been compelted.
+;; If the uid has not submitted for this step, returns a MustSubmitNext for this step-id along with the instructions from the assignment description
+;; Otherwise, returns a MustReviewNext for this step-id
+(struct MustSubmitNext (step instructions))
 (define (check-step assignment-id step uid)
   (let* ((step-id (Step-id step))
          (has-submitted (submission:count assignment-id class-name step-id uid)))
     (cond 
-      [(not has-submitted) (MustSubmitNext step-id (Step-instructions step))]
+      [(not has-submitted) (MustSubmitNext step (Step-instructions step))]
       [else (check-reviews assignment-id step (Step-reviews step) uid)])))
 
-(struct MustReviewNext (step-id reviews))  
+;; Returns #t if all of the reviews for the specified step are completed.
+;; Otherwise, returns a MustReviewNext with the step for which reviews have not been completed
+(struct MustReviewNext (step reviews))  
 (define (check-reviews assignment-id step reviews uid)
   (cond
     [(null? reviews) #t]
@@ -366,14 +405,24 @@
                  (rest (cdr reviews))
                  (result (cond
                            [(instructor-solution? next-review) (check-instructor-solution assignment-id step next-review uid)]
-                           [(student-submission? next-review) (check-instructor-solution assignment-id step next-review uid)])))
+                           [(student-submission? next-review) (check-student-submission assignment-id step next-review uid)])))
             (cond
               [result (check-reviews assignment-id step rest uid)]
-              [else (MustReviewNext (Step-id step '()))]) ;; TODO: Query for the list of reviews that are needed and return them here
+              [else (MustReviewNext step '())]) ;; TODO: Query for the list of reviews that are needed and return them here
             )]))
 
+;; Returns #t if the instructor solution has been reviewed and #f otherwise
 (define (check-instructor-solution assignment-id step instructor-solution uid)
-  (let ((id (instructor-solution-id instructor-solution)))
+  (let* ((id (instructor-solution-id instructor-solution))
+         (count (review:completed? assignment-id class-name (Step-id step) uid id)))
+    count))
+
+(define (check-student-submission assignment-id step student-submission uid)
+  (let* ((id (student-submission-id student-submission))
+         (count (review:count-completed assignment-id class-name (Step-id step) uid id))
+         (required-reviews (student-submission-amount student-submission)))
+    (>= count required-reviews)))
+    
 
                  
 (define test-assignment

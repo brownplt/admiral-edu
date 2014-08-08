@@ -235,10 +235,17 @@
                 [(likert? el) (likert->json el)]
                 [(free-form? el) (free-form->json el)])]))
 
+#|
 (define (repeat-id? steps)
   (cond [(not ((listof Step?) steps)) (raise-argument-error 'repeat-name? "listof Step?" steps)]
         [(null? steps) #f]
         [else (repeats? (sort (map Step-id steps) string<?))]))
+|#
+
+(define (repeat-id? getter)
+  (lambda (list)
+    (cond [(null? list) #f]
+          [else (repeats? (sort (map getter list) string<?))])))
 
 (define (repeats? ls)
   (if (null? ls) #f
@@ -282,13 +289,15 @@
 (define (validate-assignment assignment)
   (cond [(not (Assignment? assignment)) (raise-argument-error 'validate-assignment "Assignment" assignment)]
         [(assignment:exists? (Assignment-id assignment) class-name) (string-append "The specified assignment id '" (Assignment-id assignment) "' already exists.")]
-        [else (let* ((check-steps (repeat-id? (Assignment-steps assignment)))
+        [else (let* ((check-steps ((repeat-id? Step-id) (Assignment-steps assignment)))
+                     (check-review-ids (filter (lambda (x) x) (map (repeat-id? getId) (map Step-reviews (Assignment-steps assignment)))))
                      (valid-id (validate-id (Assignment-id assignment)))
                      (ids (append (map Step-id (Assignment-steps assignment)) (flatten (map (lambda (step) (map getId (Step-reviews step))) (Assignment-steps assignment)))))
                      (valid-step-ids (filter (lambda (x) (not (eq? #f x))) (map validate-id ids))))
                 (cond [valid-id valid-id]
+                      [(not (null? check-review-ids)) (string-append "Found duplicate review-ids: " (string-join check-review-ids ", "))]
                       [check-steps (string-append "Assignment may not have multiple steps with the same id. Found multiple instances of '" check-steps "'")]
-                      [(not (null? valid-step-ids)) (string-join valid-step-ids " ")]
+                      [(not (null? valid-step-ids)) (string-join valid-step-ids "")]
                       [else #f]))]))
 
 ;;(with-handlers ([exn:fail? could-not-create-user]) (create-new-user (ct-session-class session) new-uid new-role))
@@ -297,6 +306,7 @@
     (let ((yaml (with-handlers ([exn:fail? could-not-parse]) (string->yaml yaml-string))))
       (cond [(Failure? yaml) (Failure-message yaml)]
             [else (let ((assignment (with-handlers ([exn:fail? invalid-yaml]) (yaml->assignment yaml))))
+                    (print assignment) (newline)
                     (cond [(Failure? assignment) (Failure-message assignment)]
                           [else (let ((result (create-assignment assignment)))                                  
                                   (cond [(eq? #t result) (save-assignment-description class-name (Assignment-id assignment) yaml-string) "Success"]
@@ -344,7 +354,7 @@
 (struct Success (message))
 (struct Failure (message))
 (define (failure . messages)
-  (apply string-append messages))
+  (Failure (apply string-append messages)))
 
 (define (next-step assignment-id uid)
   (let ((assignment (yaml->assignment (string->yaml (retrieve-assignment-description class-name assignment-id)))))

@@ -109,7 +109,12 @@ module Authoring {
 var instance;
 
 function handleResponse(response){
-    console.log("Response:" + response.currentTarget.response);
+    var response = response.currentTarget.response;
+    if(response === "Success"){
+	window.location.href = "/ct/assignments/";
+    }else{
+	alert(response);
+    }
 }
 
 function validate(){

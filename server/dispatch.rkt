@@ -37,7 +37,8 @@
          (prefix-in review: "pages/review.rkt")
          "pages/errors.rkt"
          "pages/author.rkt"
-         "pages/next.rkt")
+         "pages/next.rkt"
+         "pages/assignments.rkt")
 
 ;; Defines how to process incomming requests are handled
 (provide ct-rules)
@@ -65,6 +66,7 @@
     [(cons "su" (cons uid rest)) (with-sudo post post-data uid session bindings rest)]
     [(cons "author" rest) (if post (post->validate session post-data rest) (render-html session authoring rest))]
     [(cons "next" rest) (render-html session next rest)]
+    [(cons "assignments" rest) (render-html session assignments rest)]
     [else (four-oh-four)]))
 
 (define (with-sudo post post-data uid session bindings path)

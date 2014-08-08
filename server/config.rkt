@@ -48,5 +48,4 @@
   (role:associate "cmpsci220" "jcollard@umass.edu" ta-role)
   (role:associate "cmpsci220" "shriram@gmail.com" instructor-role)
   (role:associate "cmpsci220" "joe.politz@gmail.com" instructor-role)
-  (role:associate "cmpsci220" "joseph_politz@brown.edu" student-role)
-  (assignment:create "clock" "cmpsci220"))
+  (role:associate "cmpsci220" "joseph_politz@brown.edu" student-role))

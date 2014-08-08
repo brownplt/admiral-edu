@@ -17,6 +17,9 @@
 (define assignment-open "assignment_open")
 (define assignment-open-type "BOOLEAN")
 
+(define assignment-ready "assignment_ready")
+(define assignment-ready-type "BOOLEAN")
+
 ;; Initializes the assignment table.
 (provide init)
 (define (init)
@@ -25,6 +28,7 @@
                                          assignment-id assignment-id-type ","
                                          class-id class-id-type ","
                                          assignment-open assignment-open-type ","
+                                         assignment-ready assignment-ready-type ","
                                          "PRIMARY KEY (" assignment-id "," class-id "))"))))
     (query-exec sql-conn drop)
     (query-exec sql-conn create)))
@@ -40,7 +44,7 @@
     [(not (class:exists? class)) 'no-such-class]
     [(exists? assignment class) 'duplicate-assignment]
     [else
-     (let* ((query (merge "INSERT INTO" table "VALUES(?,?,0)"))
+     (let* ((query (merge "INSERT INTO" table "VALUES(?,?,0,0)"))
             (prep (prepare sql-conn query)))
        (query-exec sql-conn prep assignment class) 
        #t)]))
@@ -59,24 +63,40 @@
          (prep (prepare sql-conn query)))
     (query-rows sql-conn prep)))
 
+(define (set-column column-name value)
+  (lambda (assignment class)
+    (let* ((query (merge "UPDATE" table "SET" column-name "=? WHERE" assignment-id "=? AND" class-id "=?"))
+           (prep (prepare sql-conn query)))
+      (query-exec sql-conn prep value assignment class))))
+
 (provide open)
-(define (open assignment class)
-  (let* ((query (merge "UPDATE" table "SET" assignment-open "=1 WHERE" assignment-id "=? AND" class-id "=?"))
-         (prep (prepare sql-conn query)))
-    (query-exec sql-conn prep assignment class)))
+(define open (set-column assignment-open 1))
 
 (provide close)
-(define (close assignment class)
-  (let* ((query (merge "UPDATE" table "SET" assignment-open "=0 WHERE" assignment-id "=? AND" class-id "=?"))
-         (prep (prepare sql-conn query)))
-    (query-exec sql-conn prep assignment class)))
-         
+(define close (set-column assignment-open 0))
+
+(provide mark-ready)
+(define mark-ready (set-column assignment-ready 1))
+
+(provide mark-not-ready)
+(define mark-not-ready (set-column assignment-ready 0))
+  
+(provide record-class record-id record-open record-ready record?)
+(struct record (class id open ready) #:transparent)
     
 (provide list)
 (define (list class)
   (cond
     [(not (class:exists? class)) 'no-such-class]
     [else
-     (let* ((query (merge "SELECT * FROM" table "WHERE" class-id "=?"))
-            (prep (prepare sql-conn query)))
-       (query-rows sql-conn prep class))]))
+     (let* ((query (merge "SELECT" class-id "," assignment-id "," assignment-open "," assignment-ready "FROM" table "WHERE" class-id "=? ORDER BY" assignment-id "ASC"))
+            (prep (prepare sql-conn query))
+            (results (query-rows sql-conn prep class)))
+       (map result->record results))]))
+
+(define (result->record result)
+  (let ((class (vector-ref result 0))
+        (id (vector-ref result 1))
+        (open (= 1 (vector-ref result 2)))
+        (ready (= 1 (vector-ref result 3))))
+    (record class id open ready)))

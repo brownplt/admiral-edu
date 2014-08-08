@@ -34,7 +34,10 @@
 (provide roles:create roles:get-role roles:role-id roles:role-name roles:role-can-edit roles:all)
 
 ;; Assignment Table
-(provide assignment:exists? assignment:create assignment:all assignment:list)
+(provide assignment:exists? assignment:create assignment:all assignment:list
+         assignment:open assignment:close assignment:mark-ready assignment:mark-not-ready
+         assignment:record-class assignment:record-id assignment:record-open assignment:record-ready
+         assignment:record?)
 
 ;; Submission Table
 (provide submission:table 

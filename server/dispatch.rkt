@@ -38,7 +38,8 @@
          "pages/errors.rkt"
          "pages/author.rkt"
          "pages/next.rkt"
-         "pages/assignments.rkt")
+         "pages/assignments.rkt"
+         (prefix-in dep: "pages/dependencies.rkt"))
 
 ;; Defines how to process incomming requests are handled
 (provide ct-rules)
@@ -52,8 +53,9 @@
   (lambda (req path)
     (let ((session (get-session req))
           (bindings (request-bindings req))
-          (post-data (request-post-data/raw req)))
-      (handlerPrime post post-data session bindings path))))
+          (post-data (request-post-data/raw req))
+          (clean-path (filter (lambda (x) (not (equal? "" x))) path)))
+      (handlerPrime post post-data session bindings clean-path))))
 
 (define (handlerPrime post post-data session bindings path)
   (print (list post path)) (newline)
@@ -67,6 +69,7 @@
     [(cons "author" rest) (if post (post->validate session post-data rest) (render-html session authoring rest))]
     [(cons "next" rest) (render-html session next rest)]
     [(cons "assignments" rest) (render-html session assignments rest)]
+    [(cons "dependencies" rest) (if post (dep:post->load-rubric session rest) (render-html session dep:dependencies rest))]
     [else (four-oh-four)]))
 
 (define (with-sudo post post-data uid session bindings path)

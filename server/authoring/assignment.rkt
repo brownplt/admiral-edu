@@ -452,8 +452,26 @@
          (count (review:count-completed assignment-id class-name (Step-id step) uid id))
          (required-reviews (student-submission-amount student-submission)))
     (>= count required-reviews)))
-    
 
+(define (assignment-id->assignment-dependencies id)
+  (assignment-dependencies (assignment-id->assignment id)))
+
+(define (assignment-dependencies assignment)
+  (cond [(not (Assignment? assignment)) (raise-argument-error 'determine-dependencies "Assignment" assignment)]
+        [else (flatten (map step-dependencies (Assignment-steps assignment)))]))
+
+(define (step-dependencies step)
+  (map (determine-dependency (Step-id step)) (Step-reviews step)))
+
+(define (determine-dependency step-id)
+  (lambda (review)
+    (cond [(instructor-solution? review) (dependency step-id (getId review) 1 #t)]
+          [(student-submission? review) (dependency step-id (getId review) (student-submission-amount review) #f)])))
+                  
+(struct dependency (step-id review-id amount instructor-solution) #:transparent)
+                
+(define (assignment-id->assignment id)
+  (yaml->assignment (string->yaml (retrieve-assignment-description class-name id))))
                  
 (define test-assignment
   (assignment "Clocks"

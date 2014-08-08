@@ -20,9 +20,7 @@
 
 (provide authoring)
 (define (authoring session role rest [message '()])
-  (let* ((last-path (last rest))
-         (prefix (if (equal? last-path "") "" (string-append last-path "/")))
-         [save-url "\"validate\""]
+  (let* ([save-url "\"validate\""]
          [load-url "test"]
          (contents "Test Contents"))
     (string-append (include-template "html/authoring-header.html")

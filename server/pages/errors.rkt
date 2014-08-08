@@ -2,6 +2,11 @@
 
 (require web-server/servlet)
 (require "../ct-session.rkt")
+(require web-server/http/bindings
+         web-server/templates
+         web-server/http/response-structs
+         xml
+         json)
 
 (provide error-not-registered)
 (define (error-not-registered session)
@@ -23,3 +28,9 @@
 (define (four-oh-four)
   (response/xexpr
    '(html (body (p "404")))))
+
+(provide error-page)
+(define (error-page . message)
+  (let ([display-message (apply string-append message)])
+    (include-template "html/error.html")))
+    

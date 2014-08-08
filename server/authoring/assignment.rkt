@@ -282,25 +282,39 @@
 (define (validate-assignment assignment)
   (cond [(not (Assignment? assignment)) (raise-argument-error 'validate-assignment "Assignment" assignment)]
         [(assignment:exists? (Assignment-id assignment) class-name) (string-append "The specified assignment id '" (Assignment-id assignment) "' already exists.")]
-        [else (let ((check-steps (repeat-id? (Assignment-steps assignment)))
-                    (valid-id (validate-id (Assignment-id assignment))))
+        [else (let* ((check-steps (repeat-id? (Assignment-steps assignment)))
+                     (valid-id (validate-id (Assignment-id assignment)))
+                     (ids (append (map Step-id (Assignment-steps assignment)) (flatten (map (lambda (step) (map getId (Step-reviews step))) (Assignment-steps assignment)))))
+                     (valid-step-ids (filter (lambda (x) (not (eq? #f x))) (map validate-id ids))))
                 (cond [valid-id valid-id]
                       [check-steps (string-append "Assignment may not have multiple steps with the same id. Found multiple instances of '" check-steps "'")]
+                      [(not (null? valid-step-ids)) (string-join valid-step-ids " ")]
                       [else #f]))]))
 
+;;(with-handlers ([exn:fail? could-not-create-user]) (create-new-user (ct-session-class session) new-uid new-role))
 (define (yaml-bytes->create-assignment bytes)
-  (let* ((yaml-string (bytes->string/utf-8 bytes))
-         (yaml (string->yaml yaml-string)) ;; Handle exceptions and return message based on why it couldn't be parsed into an assignment
-         (assignment (yaml->assignment yaml)))
-    (create-assignment assignment)
-    (save-assignment-description class-name (Assignment-id assignment) yaml-string)))
+  (let ((yaml-string (bytes->string/utf-8 bytes)))
+    (let ((yaml (with-handlers ([exn:fail? could-not-parse]) (string->yaml yaml-string))))
+      (cond [(Failure? yaml) (Failure-message yaml)]
+            [else (let ((assignment (with-handlers ([exn:fail? invalid-yaml]) (yaml->assignment yaml))))
+                    (cond [(Failure? assignment) (Failure-message assignment)]
+                          [else (let ((result (create-assignment assignment)))                                  
+                                  (cond [(eq? #t result) (save-assignment-description class-name (Assignment-id assignment) yaml-string) "Success"]
+                                        [else result]))]))]))))
+
+(define (could-not-parse exn)
+  (failure "Could not parse as YAML."))
+
+(define (invalid-yaml exn)
+  (failure "YAML did not contain a valid assignment description."))
+
 
 (define (create-assignment assignment)
   (cond [(not (Assignment? assignment)) (raise-argument-error 'create-assignment "Assignment" assignment)]
         [else (let ((validation (validate-assignment assignment)))
                 (cond [validation validation]
                       [else (create-database-entries assignment)
-                            (create-base-rubrics assignment)]))]))
+                            (create-base-rubrics assignment) #t]))]))
 
 (define (create-database-entries assignment)
   (let ((id (Assignment-id assignment)))

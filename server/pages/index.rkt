@@ -13,7 +13,7 @@
       (title session)
       message
       (user-info session role)
-      (next-step session)
+      ;(next-step session)
       ;(completed-reviews session)
       (users session role))))
 
@@ -97,6 +97,7 @@
             (p "Role: " ,role-select)
             (p (input ((name "submit") (type "submit"))))))))
 
+#|
 (define (next-step session)
   (let* ((submitted-tests (submission:exists? "clock" "cmpsci220" "tests" (ct-session-uid session) "0"))
          (review-tests (review:completed? "clock" "cmpsci220" "tests" (ct-session-uid session)))
@@ -108,6 +109,7 @@
       [(not submitted-implementation) (upload-form "implementation")]
       [(not review-implementation) (review-form "implementation")]
       [else (finished)])))
+|#
 
 (define (finished)
   `((h3 "Assignment Complete.")

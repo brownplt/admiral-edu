@@ -40,6 +40,7 @@ RUN apt-get install -y libcurl3 libjansson4
 
 #RUN wget https://github.com/pingidentity/mod_auth_openidc/releases/download/v1.3/libapache2-mod-auth-openidc_1.3_amd64.deb
 RUN wget https://github.com/pingidentity/mod_auth_openidc/releases/download/v1.5/libapache2-mod-auth-openidc_1.5_amd64.deb
+#RUN wget https://github.com/pingidentity/mod_auth_openidc/releases/download/v1.5.3/libapache2-mod-auth-openidc_1.5.3-2_amd64.deb
 RUN dpkg -i libapache2-mod-auth-openidc_1.5_amd64.deb
 
 #

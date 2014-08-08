@@ -1,8 +1,9 @@
 var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
-}
+};
 var AuthorItem = (function () {
     function AuthorItem(label) {
         this.label = label;
@@ -11,6 +12,7 @@ var AuthorItem = (function () {
         var emptyDiv = document.createElement('div');
         return emptyDiv;
     };
+
     AuthorItem.prototype.toDOM = function () {
         var item = document.createElement('div');
         item.className = "author-item";
@@ -20,6 +22,7 @@ var AuthorItem = (function () {
     };
     return AuthorItem;
 })();
+
 var ReviewsItem = (function (_super) {
     __extends(ReviewsItem, _super);
     function ReviewsItem(step) {
@@ -31,16 +34,22 @@ var ReviewsItem = (function (_super) {
         dom.className = "reviews";
         return dom;
     };
+
     ReviewsItem.prototype.getElement = function () {
         var _this = this;
+
         var div = document.createElement('div');
+
         var reviews = document.createElement('div');
+
         var buttonDiv = document.createElement('div');
         buttonDiv.className = "add-step";
+
         var button = document.createElement('a');
         button.innerHTML = "Add Review";
         button.setAttribute('href', 'javascript:void(0);');
         button.setAttribute('title', "Add Review");
+
         button.onclick = function () {
             var review = _this.step.addReview();
             reviews.appendChild(review.toDOM());
@@ -52,8 +61,10 @@ var ReviewsItem = (function (_super) {
     };
     return ReviewsItem;
 })(AuthorItem);
+
 var RubricItem = (function () {
-    function RubricItem() { }
+    function RubricItem() {
+    }
     RubricItem.prototype.toDOM = function () {
         var parent = document.createElement('div');
         var div = document.createElement('div');
@@ -67,6 +78,7 @@ var RubricItem = (function () {
     };
     return RubricItem;
 })();
+
 var ChangingItem = (function (_super) {
     __extends(ChangingItem, _super);
     function ChangingItem(label, onchange) {
@@ -76,6 +88,7 @@ var ChangingItem = (function (_super) {
     ChangingItem.prototype.construct = function () {
         throw "Subclass must define construct()";
     };
+
     ChangingItem.prototype.getElement = function () {
         var input = this.construct();
         input.onkeyup = this.onchange(input.value);
@@ -83,6 +96,7 @@ var ChangingItem = (function (_super) {
     };
     return ChangingItem;
 })(AuthorItem);
+
 var InputItem = (function (_super) {
     __extends(InputItem, _super);
     function InputItem(label, onchange) {
@@ -95,6 +109,7 @@ var InputItem = (function (_super) {
     };
     return InputItem;
 })(ChangingItem);
+
 var TextAreaItem = (function (_super) {
     __extends(TextAreaItem, _super);
     function TextAreaItem(label, onchange) {
@@ -106,6 +121,7 @@ var TextAreaItem = (function (_super) {
     };
     return TextAreaItem;
 })(ChangingItem);
+
 var SelectItem = (function (_super) {
     __extends(SelectItem, _super);
     function SelectItem(label) {
@@ -117,16 +133,19 @@ var SelectItem = (function (_super) {
         this.options.push(option);
         this.actions.push(onselect);
     };
+
     SelectItem.prototype.getElement = function () {
         var _this = this;
         var div = document.createElement('div');
         var select = document.createElement('select');
+
         select.onchange = function () {
-            var i = (select).selectedIndex;
+            var i = select.selectedIndex;
             _this.actions[i]();
         };
+
         div.appendChild(select);
-        for(var i = 0; i < this.options.length; i++) {
+        for (var i = 0; i < this.options.length; i++) {
             var option = document.createElement('option');
             option.innerHTML = this.options[i];
             select.appendChild(option);
@@ -135,6 +154,7 @@ var SelectItem = (function (_super) {
     };
     return SelectItem;
 })(AuthorItem);
+
 var AddStepButton = (function () {
     function AddStepButton(assignment, steps) {
         this.assignment = assignment;
@@ -156,6 +176,7 @@ var AddStepButton = (function () {
     };
     return AddStepButton;
 })();
+
 var AssignmentDescription = (function () {
     function AssignmentDescription() {
         this.steps = new Array();
@@ -163,12 +184,15 @@ var AssignmentDescription = (function () {
     AssignmentDescription.prototype.setName = function (name) {
         this.name = name;
     };
+
     AssignmentDescription.prototype.setId = function (id) {
         this.id = id;
     };
+
     AssignmentDescription.prototype.setDescription = function (description) {
         this.description = description;
     };
+
     AssignmentDescription.prototype.attach = function (parent) {
         var _this = this;
         var element = document.getElementById(parent);
@@ -179,25 +203,33 @@ var AssignmentDescription = (function () {
         header.className = "section-header bg-1";
         header.innerHTML = "<h3>Assignment</h3>";
         info.appendChild(header);
+
         var name = new InputItem("Name", this.setName);
         var id = new InputItem("ID", this.setId);
         var description = new TextAreaItem("Description", this.setDescription);
+
         info.appendChild(name.toDOM());
         info.appendChild(id.toDOM());
         info.appendChild(description.toDOM());
+
         section.appendChild(info);
+
         var steps = document.createElement('div');
         info.appendChild(steps);
+
         var addStepButton = new AddStepButton(this, steps);
+
         info.appendChild(addStepButton.toDOM());
+
         element.appendChild(section);
     };
+
     AssignmentDescription.prototype.addStep = function () {
         var _this = this;
         var step = new Step();
         step.remove = function () {
             var i = _this.steps.indexOf(step);
-            if(i > -1) {
+            if (i > -1) {
                 _this.steps.splice(i, 1);
             }
         };
@@ -206,6 +238,7 @@ var AssignmentDescription = (function () {
     };
     return AssignmentDescription;
 })();
+
 var Step = (function () {
     function Step() {
         this.reviews = new Array();
@@ -213,28 +246,33 @@ var Step = (function () {
     Step.prototype.setID = function (id) {
         this.id = id;
     };
+
     Step.prototype.setInstructions = function (instructions) {
         this.instructions = instructions;
     };
+
     Step.prototype.addReview = function () {
         var _this = this;
         var review = new Review();
         review.remove = function () {
             var i = _this.reviews.indexOf(review);
-            if(i > -1) {
+            if (i > -1) {
                 _this.reviews.splice(i, 1);
             }
         };
         this.reviews.push(review);
         return review;
     };
+
     Step.prototype.toDOM = function () {
         var _this = this;
         var section = document.createElement('div');
         section.className = "step";
+
         var header = document.createElement('div');
         header.className = "section-header bg-2";
         header.innerHTML = "<h3>Submission</h3>";
+
         var removeButton = document.createElement('a');
         removeButton.innerHTML = "&nbsp;";
         removeButton.setAttribute('href', 'javascript:void(0);');
@@ -243,15 +281,18 @@ var Step = (function () {
             _this.remove();
             section.parentNode.removeChild(section);
         };
+
         header.appendChild(removeButton);
         section.appendChild(header);
         section.appendChild(new InputItem("ID", this.setID).toDOM());
         section.appendChild(new TextAreaItem("Instructions", this.setInstructions).toDOM());
         section.appendChild(new ReviewsItem(this).toDOM());
+
         return section;
     };
     return Step;
 })();
+
 var Review = (function () {
     function Review() {
         this.rubric = new RubricItem();
@@ -260,9 +301,11 @@ var Review = (function () {
         var _this = this;
         var div = document.createElement('div');
         div.className = "review step";
+
         var header = document.createElement('div');
         header.className = "section-header bg-3";
         header.innerHTML = "<h3>Review</h3>";
+
         var remove = document.createElement('a');
         remove.innerHTML = "&nbsp;";
         remove.setAttribute('href', 'javascript:void(0);');
@@ -272,22 +315,29 @@ var Review = (function () {
             _this.remove();
         };
         header.appendChild(remove);
+
         div.appendChild(header);
+
         var type = new SelectItem("Type");
+
         var studentSelect = function () {
             alert("student");
         };
+
         var instSelect = function () {
             alert("inst");
         };
+
         type.addOption("Student Submission", studentSelect);
         type.addOption("Instructor Solution", instSelect);
         div.appendChild(type.toDOM());
         div.appendChild(this.rubric.toDOM());
+
         return div;
     };
     return Review;
 })();
+
 window.onload = function () {
     var assignment = new AssignmentDescription();
     assignment.attach("assignment");

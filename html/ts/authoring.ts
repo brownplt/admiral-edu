@@ -109,7 +109,7 @@ module Authoring {
 var instance;
 
 function handleResponse(response){
-    console.log(response);
+    console.log("Response:" + response.currentTarget.response);
 }
 
 function validate(){

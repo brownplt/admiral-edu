@@ -31,16 +31,13 @@
 
 (provide post->validate)
 (define (post->validate session post-data rest)
-  (let* ((yaml-string (bytes->string/utf-8 post-data))
-         (yaml (string->yaml yaml-string))
-         (assignment (yaml->assignment yaml)))    
-    (print (yaml->assignment (string->yaml (bytes->string/utf-8 post-data)))) (newline)
-    (yaml-bytes->create-assignment post-data)
+  (let ((result (yaml-bytes->create-assignment post-data)))
+    (print "Recieved new assignment. Responding with: ") (print response) (newline)
     (response/full
      200 #"Okay"
      (current-seconds) #"application/json; charset=utf-8"
      empty
-     (list (string->bytes/utf-8 "Success")))))
+     (list (string->bytes/utf-8 result)))))
 
 
   

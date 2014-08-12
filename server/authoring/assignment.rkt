@@ -458,17 +458,45 @@
 
 (define (assignment-dependencies assignment)
   (cond [(not (Assignment? assignment)) (raise-argument-error 'determine-dependencies "Assignment" assignment)]
-        [else (flatten (map step-dependencies (Assignment-steps assignment)))]))
+        [else (flatten (map (step-dependencies (Assignment-id assignment)) (Assignment-steps assignment)))]))
 
-(define (step-dependencies step)
-  (map (determine-dependency (Step-id step)) (Step-reviews step)))
+(define (find-dependencies assignment-id step-id review-id)
+  (let ((deps (assignment-id->assignment-dependencies assignment-id))
+        (f (lambda (dep) (and (equal? (dependency-step-id dep) step-id) (equal? (dependency-review-id dep) review-id)))))
+    (filter f deps)))       
 
-(define (determine-dependency step-id)
+(define (find-dependencies-prime assignment step-id review-id)
+  (let ((deps (assignment-dependencies assignment))
+        (f (lambda (dep) (and (equal? (dependency-step-id dep) step-id) (equal? (dependency-review-id dep) review-id)))))
+    (filter f deps)))
+
+(define (step-dependencies assignment-id)
+  (lambda (step)
+    (map (determine-dependency assignment-id (Step-id step)) (Step-reviews step))))
+
+(define (determine-dependency assignment-id step-id)
   (lambda (review)
-    (cond [(instructor-solution? review) (dependency step-id (getId review) 1 #t)]
-          [(student-submission? review) (dependency step-id (getId review) (student-submission-amount review) #f)])))
+    (let* ((review-id (getId review))
+           (met (lambda (n) (check-upload assignment-id step-id review-id n))))
+      (cond [(instructor-solution? review) (dependency step-id (getId review) 1 #t (met 1))]
+            [(student-submission? review) 
+             (let ((n (student-submission-amount review)))
+               (dependency step-id (getId review) n #f (met n)))]))))
+
+(define (default-submission review-id n)
+  (string-append "default-submission-" review-id "-" (number->string n)))
+
+(define (check-upload assignment-id step-id review-id n)
+  (cond [(<= n 0) #t]
+        [(not (submission:exists? assignment-id class-name step-id (default-submission review-id n))) #f]
+        [else (check-upload assignment-id step-id review-id (- n 1))]))
+
+(define (check-ready assignment-id)
+  (let ((deps (assignment-id->assignment-dependencies assignment-id))
+        (filter-function (lambda (dep) (not (dependency-met dep)))))
+    (if (null? (filter filter-function deps)) (assignment:mark-ready assignment-id class-name) #f)))
                   
-(struct dependency (step-id review-id amount instructor-solution) #:transparent)
+(struct dependency (step-id review-id amount instructor-solution met) #:transparent)
                 
 (define (assignment-id->assignment id)
   (yaml->assignment (string->yaml (retrieve-assignment-description class-name id))))

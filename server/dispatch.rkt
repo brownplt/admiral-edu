@@ -39,6 +39,7 @@
          "pages/author.rkt"
          "pages/next.rkt"
          "pages/assignments.rkt"
+         (prefix-in submit: "pages/submit.rkt")
          (prefix-in dep: "pages/dependencies.rkt"))
 
 ;; Defines how to process incomming requests are handled
@@ -69,7 +70,8 @@
     [(cons "author" rest) (if post (post->validate session post-data rest) (render-html session authoring rest))]
     [(cons "next" rest) (render-html session next rest)]
     [(cons "assignments" rest) (render-html session assignments rest)]
-    [(cons "dependencies" rest) (if post (dep:post->load-rubric session rest) (render-html session dep:dependencies rest))]
+    [(cons "dependencies" rest) (if post (dep:post session rest bindings) (render-html session dep:dependencies rest))]
+    [(cons "submit" rest) (if post (submit:submit session role rest bindings) #f)] ;;TODO Handle correctly when not a post
     [else (four-oh-four)]))
 
 (define (with-sudo post post-data uid session bindings path)

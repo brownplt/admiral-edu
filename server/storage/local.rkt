@@ -5,10 +5,19 @@
 
 
 
+(provide upload-instructor-solution)
+(define (upload-instructor-solution class user assignment step data)
+  (let* ((path (create-directory class user assignment step))
+         (out (open-output-file (string-append path "/submission.tar") #:exists 'replace)))
+    (display data out)
+    (close-output-port out)
+    (unarchive path)
+    (submission:create-instructor-solution assignment class step user)
+    (delete-file (string-append path "/submission.tar"))))
+
 (provide upload-submission)
 (define (upload-submission class user assignment step data)
-  (let* ((version (number->string (submission:count assignment class step user)))
-         (path (create-directory class user assignment step version))
+  (let* ((path (create-directory class user assignment step))
          (out (open-output-file (string-append path "/submission.tar") #:exists 'replace)))
     (display data out)
     (close-output-port out)

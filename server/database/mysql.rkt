@@ -48,7 +48,8 @@
          submission:user-id submission:user-id-type submission:record-user
          submission:time-stamp submission:time-stamp-type submission:record-time-stamp
          submission:create submission:list submission:count
-         submission:exists?)
+         submission:exists?
+         submission:create-instructor-solution)
 
 
 ;; Review Table

@@ -21,16 +21,16 @@
 (define (to-path ls)
   (foldr string-append "" (cons path-delim (intercalate path-delim ls))))
 
-(define (create-path-list class user assignment step version)
-  (append root (list class user assignment step version)))
+(define (create-path-list class user assignment step)
+  (append root (list class user assignment step)))
 
 (provide submission-path)
-(define (submission-path class user assignment step version)
-  (to-path (create-path-list class user assignment step version)))
+(define (submission-path class user assignment step)
+  (to-path (create-path-list class user assignment step)))
 
 (provide create-directory)
-(define (create-directory class user assignment step version)
-  (letrec ((path-list (list class user assignment step version))
+(define (create-directory class user assignment step)
+  (letrec ((path-list (list class user assignment step))
            (helper (lambda (acc rest)
                           ;; This is O(n^2) where n is the number of sub-directories. 
                           ;; Could be improved to O(n). However, n is a constant so in practice

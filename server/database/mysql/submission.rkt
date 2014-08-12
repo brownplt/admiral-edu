@@ -51,6 +51,13 @@
     (query-exec sql-conn create)))
 
 
+(provide create-instructor-solution)
+(define (create-instructor-solution assignment class step user)
+     (let* ((query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),0)"))
+            (prep (prepare sql-conn query)))
+       (query-exec sql-conn prep assignment class step user)
+       #t))
+
 ;; Creates a record for the specified assignment, class, step, and user.
 ;; This function returns one of the following:
 ;; #t - If successful, a timestamp and version number are generated and returns #t

@@ -18,12 +18,13 @@
 
 (provide load)
 (define (load session role rest [message '()])
-  (let* ((assignment (car rest))
-         (step (cadr rest))
-         (r-hash (caddr rest))
-         (updir (apply string-append (repeat "../" (length rest))))
+  (let* ((r-hash (car rest))
+         (review (review:select-by-hash r-hash))
+         (assignment (review:record-assignment-id review))
+         (step (review:record-step-id review))
+         (updir (apply string-append (repeat "../" (+ (length rest) 1))))
          [root-url updir]
-         (updir-rubric (apply string-append (repeat "../" (- (length rest) 2))))
+         (updir-rubric (apply string-append (repeat "../" (- (length rest) 1))))
          [file-container (string-append updir "file-container/" (to-path rest))]
          [save-url (xexpr->string (string-append "\"" updir-rubric step "/save\""))]
          [load-url (xexpr->string (string-append "\"" updir-rubric step "/load\""))]
@@ -37,105 +38,101 @@
 
 (provide post->review)
 (define (post->review session post-data rest)
-  (cond
-    [(equal? (last rest) "save") (post->save-rubric session post-data rest)]
-    [(equal? (last rest) "load") (post->load-rubric session rest)]
-    [else (four-oh-four)]))
+  (let* ((r-hash (car rest))
+         (review (review:select-by-hash r-hash)))
+    (cond
+      [(equal? (last rest) "save") (post->save-rubric session post-data review)]
+      [(equal? (last rest) "load") (post->load-rubric session review)]
+      [else (four-oh-four)])))
 
-(define (post->save-rubric session post-data rest)
-  (let* ((json (jsexpr->string (bytes->jsexpr post-data)))
-         (save-path (rubric-get-save/load-path session rest)))
-    (write-file save-path json)
+(define (post->save-rubric session post-data review)
+  (let ((data (jsexpr->string (bytes->jsexpr post-data)))
+        (class (ct-session-class session))
+        (assignment (review:record-assignment-id review))
+        (stepName (review:record-step-id review))
+        (reviewee (review:record-reviewee-id review))
+        (reviewer (ct-session-uid session))
+        (review-id (review:record-review-id review)))
+    (save-rubric class assignment stepName review-id reviewer reviewee data)
     (response/full
      200 #"Okay"
      (current-seconds) #"application/json; charset=utf-8"
      empty
      (list (string->bytes/utf-8 "Success")))))
-
-(define (post->load-rubric session rest)
-  (let* ((load-path (rubric-get-save/load-path session rest))
-         (data (if (file-exists? load-path) (retrieve-file load-path) (retrieve-default-rubric session rest))))
+  
+(define (post->load-rubric session review)
+  (let* ((class (ct-session-class session))
+         (assignment (review:record-assignment-id review))
+         (stepName (review:record-step-id review))
+         (reviewee (review:record-reviewee-id review))
+         (reviewer (ct-session-uid session))
+         (review-id (review:record-review-id review))
+         (data (retrieve-rubric class assignment stepName review-id reviewer reviewee)))
     (response/full
      200 #"Okay"
      (current-seconds) #"application/json; charset=utf-8"
      empty
      (list (string->bytes/utf-8 data)))))
-
-(define (rubric-get-save/load-path session rest)
-  (let* ((reviewer (ct-session-uid session))
-         (class (ct-session-class session))
-         (stepName (cadr rest))
-         (assignment (car rest))
-         (rhash (caddr rest))
-         (r (review:select-by-hash rhash))
-         (reviewee (car r))
-         (path (string-append "reviews/" class "/" assignment "/" stepName "/" reviewee "/" reviewer "/rubric.json")))
-    path))
-
-#|
-(define (retrieve-default-rubric session rest)
-  (let* ((class (ct-session-class session))
-         (stepName (cadr rest))
-         (assignment (car rest))
-         (path (string-append "reviews/" class "/" assignment "/" stepName "/rubric.json")))
-    (retrieve-file path)))
-|#                    
 
 (provide push->file-container)
 (define (push->file-container session post-data rest)
-  (cond 
-    [(equal? (last rest) "save") (push->save session post-data rest)]
-    [(equal? (last rest) "load") (push->load session rest)]
-    [else (four-oh-four)]))
+  (let* ((r-hash (car rest))
+         (review (review:select-by-hash r-hash)))
+    (cond 
+      [(equal? (last rest) "save") (push->save session post-data review)]
+      [(equal? (last rest) "load") (push->load session review)]
+      [else (four-oh-four)])))
 
-(define (push->save session post-data rest)
-  (let* ((json (jsexpr->string (bytes->jsexpr post-data)))
-         (save-path (get-save/load-path session rest)))
-    (write-file save-path json)     
+(define (push->save session post-data review)
+  (let ((data (jsexpr->string (bytes->jsexpr post-data)))
+        (class (ct-session-class session))
+        (assignment (review:record-assignment-id review))
+        (stepName (review:record-step-id review))
+        (reviewee (review:record-reviewee-id review))
+        (reviewer (ct-session-uid session))
+        (review-id (review:record-review-id review)))
+    (save-review-comments class assignment stepName review-id reviewer reviewee data)
     (response/full
      200 #"Okay"
      (current-seconds) #"application/json; charset=utf-8"
      empty
      (list (string->bytes/utf-8 "Success")))))
 
-(define (push->load session rest)
-  (let* ((load-path (get-save/load-path session rest))
-         (data (if (file-exists? load-path) (retrieve-file load-path) "{\"comments\" : {}}")))
+(define (push->load session review)
+  (let* ((class (ct-session-class session))
+         (assignment (review:record-assignment-id review))
+         (stepName (review:record-step-id review))
+         (reviewee (review:record-reviewee-id review))
+         (reviewer (ct-session-uid session))
+         (review-id (review:record-review-id review))
+         (data (load-review-comments class assignment stepName review-id reviewer reviewee)))
     (response/full
      200 #"Okay"
      (current-seconds) #"application/json; charset=utf-8"
      empty
      (list (string->bytes/utf-8 data)))))
-
-(define (get-save/load-path session rest)
-  (let* ((reviewer (ct-session-uid session))
-         (class (ct-session-class session))
-         (stepName (cadr rest))
-         (assignment (car rest))
-         (rhash (caddr rest))
-         (r (review:select-by-hash rhash))
-         (reviewee (car r))
-         (path-to-file (to-path (take (cddr rest) (- (length rest) 3))))
-         (path (string-append "reviews/" class "/" assignment "/" stepName "/" reviewee "/" reviewer "/" path-to-file)))
-    path))
-
-
   
 (provide file-container)
 (define (file-container session role rest [message '()])
-  (let* ([assignment (xexpr->string (car rest))]
+  (print "in file-container") (newline)
+  (print (list "rest" rest)) (newline)
+  (let* ((r-hash (car rest))
+         (review (review:select-by-hash r-hash))
+         (class (ct-session-class session))
+         [assignment (review:record-assignment-id review)]
+         (stepName (review:record-step-id review))
+         (reviewee (review:record-reviewee-id review))
          [save-url (prepare-save-url rest)]
          [load-url (prepare-load-url rest)]
-         (stepName (cadr rest))
-         (rhash (caddr rest))
          [step (to-step-link stepName (- (length rest) 2))]
          (last-path (last rest))
          (prefix (if (equal? last-path "") "" (string-append last-path "/")))
-         [path (to-path-html (cddr rest))]
-         (r (review:select-by-hash rhash))
-         (reviewee (car r))
-         (version (cdr r))
-         (file-path (submission-file-path (ct-session-class session) reviewee assignment stepName version (to-path (cddr rest))))
+         [path (to-path-html (cdr rest))]
+         (file (to-path (cdr rest)))
+         (temp (list (print (list class assignment reviewee stepName file)) (newline)))
+         (test (print (list "test")))
+         (test-prime (newline))
+         (file-path (submission-file-path class reviewee assignment stepName file))
          (contents (if (is-directory? file-path) (render-directory prefix file-path) (render-file file-path))))
     (string-append (include-template "html/file-container-header.html")
                    contents

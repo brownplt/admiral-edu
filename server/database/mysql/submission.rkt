@@ -51,6 +51,7 @@
     (query-exec sql-conn create)))
 
 
+;;TODO Add Instructor-solution field and mark true
 (provide create-instructor-solution)
 (define (create-instructor-solution assignment class step user)
      (let* ((query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),0)"))

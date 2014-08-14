@@ -38,6 +38,12 @@
       [else #f])))
 
 (define (handle-submit session role rest uid assignment step data)
-  (upload-submission class-name uid assignment step data)    
-  (render-html (string-append "<p>File submitted.</p>"
-                              "<p><a href='../../../next/" assignment "'>Continue</a></p>" )))
+  (let ((result (submit-step assignment step uid data)))
+    (cond [(Success? result) 
+           (let ((message (Success-message result)))
+             (render-html (string-append "<p>" message "</p>"
+                                         "<p><a href='../../../next/" assignment "/'>Continue</a></p>" )))]
+          [(Failure? result)
+           (let ((message (Failure-message result)))
+             (render-html (string-append "<p>" message "</p>"
+                                         "<p><a href='../../../next/" assignment "/'>Back</a></p>" )))])))

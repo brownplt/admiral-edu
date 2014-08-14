@@ -54,6 +54,9 @@
 
 ;; Review Table
 (provide review:table
+         review:record review:record? review:record-class-id 
+         review:record-assignment-id review:record-step-id review:record-reviewee-id 
+         review:record-reviewer-id review:record-completed review:record-review-id
          review:assignment-id review:assignment-id-type
          review:step-id review:step-id-type
          review:class-id review:class-id-type

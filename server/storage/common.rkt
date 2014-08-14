@@ -21,12 +21,12 @@
 (define (to-path ls)
   (foldr string-append "" (cons path-delim (intercalate path-delim ls))))
 
-(define (create-path-list class user assignment step)
-  (append root (list class user assignment step)))
+(define (create-path-list class assignment user step)
+  (append root (list class assignment user step)))
 
 (provide submission-path)
-(define (submission-path class user assignment step)
-  (to-path (create-path-list class user assignment step)))
+(define (submission-path class assignment user step)
+  (to-path (create-path-list class assignment user step)))
 
 (provide create-directory)
 (define (create-directory class user assignment step)

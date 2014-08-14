@@ -21,8 +21,7 @@
 (provide next)
 (define (next session role rest [message '()])
   (let* ((uid (ct-session-uid session))
-         (assignment (car rest))
-         (test (list (print uid) (newline) (print assignment) (newline) (print "Calling next-step") (newline)))         
+         (assignment (car rest))     
          (do-next (next-step assignment uid)))
     (cond 
       [(MustSubmitNext? do-next) (handle-submit-next assignment do-next)]
@@ -44,9 +43,14 @@
   (let* ((step (MustReviewNext-step action))
          (step-id (Step-id step))
          (reviews (MustReviewNext-reviews action)))
+    ;;TODO: Does this only show incomplete reviews?
     (string-append 
      "<p>You must complete the following reviews: </p>"
-     "<p>TODO: List review links here</p>"))) ;;TODO: List Reviews
+     (apply string-append (map review-link reviews)))))
+
+;; TODO Number these?
+(define (review-link hash)
+  (string-append "<p><a href='../../review/" hash "/'>Review</a></p>"))
 
 (define (assignment-completed)
   "You have completed this assignment.")

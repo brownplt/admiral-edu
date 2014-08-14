@@ -306,7 +306,6 @@
     (let ((yaml (with-handlers ([exn:fail? could-not-parse]) (string->yaml yaml-string))))
       (cond [(Failure? yaml) (Failure-message yaml)]
             [else (let ((assignment (with-handlers ([exn:fail? invalid-yaml]) (yaml->assignment yaml))))
-                    (print assignment) (newline)
                     (cond [(Failure? assignment) (Failure-message assignment)]
                           [else (let ((result (create-assignment assignment)))                                  
                                   (cond [(eq? #t result) (save-assignment-description class-name (Assignment-id assignment) yaml-string) "Success"]
@@ -380,21 +379,20 @@
   ;; Assign reviews to the student if applicable
   (let ((next (next-action assignment-id steps uid)))
     (cond
-      [(MustReviewNext? next) (assign-reviews assignment-id next uid)])))
+      [(MustReviewNext? next) (assign-reviews assignment-id next uid)])
+    (Success "Assignment submitted.")))
 
 (define (assign-reviews assignment-id next uid)
   (let* ((step (MustReviewNext-step next))
          (reviews (Step-reviews step)))
     (map (assign-review assignment-id (Step-id step) uid) reviews)))
 
-;(assign-student-reviews assignment class step uid review-id amount)
-;(assign-instructor-solution assignment class step uid review-id)
-
 (define (assign-review assignment-id step-id uid)
   (lambda (review)
-    (let ((review-id (getId review)))
-      (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id class-name step-id uid review-id)]
-            [(student-submission? review) (review:assign-student-reviews assignment-id class-name step-id uid review-id (student-submission-amount review))]))))
+    (let ((review-id (getId review))
+          (amount (student-submission-amount review)))
+      (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id class-name step-id "instructor" uid review-id)]
+            [(student-submission? review) (review:assign-student-reviews assignment-id class-name step-id uid review-id amount)]))))
 
 (define (next-action-error next)
   (cond [(MustSubmitNext? next) (string-append "Your next action is to submit to on '" (Step-id (MustSubmitNext-step next)) "'.")]
@@ -447,7 +445,7 @@
          (count (review:completed? assignment-id class-name (Step-id step) uid id)))
     count))
 
-(define (check-student-submission assignment-id step student-submission uid)
+(define (check-student-submission assignment-id step student-submission uid) 
   (let* ((id (student-submission-id student-submission))
          (count (review:count-completed assignment-id class-name (Step-id step) uid id))
          (required-reviews (student-submission-amount student-submission)))
@@ -484,6 +482,7 @@
                (dependency step-id (getId review) n #f (met n)))]))))
 
 (define (default-submission review-id n)
+  (print "Called default-submission") (newline)
   (string-append "default-submission-" review-id "-" (number->string n)))
 
 (define (check-upload assignment-id step-id review-id n)
@@ -500,6 +499,7 @@
                 
 (define (assignment-id->assignment id)
   (yaml->assignment (string->yaml (retrieve-assignment-description class-name id))))
+         
                  
 (define test-assignment
   (assignment "Clocks"

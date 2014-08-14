@@ -7,8 +7,9 @@
 
 (provide upload-instructor-solution)
 (define (upload-instructor-solution class user assignment step data)
-  (let* ((path (create-directory class user assignment step))
+  (let* ((path (create-directory class assignment user step))
          (out (open-output-file (string-append path "/submission.tar") #:exists 'replace)))
+    (print (list "Creating instructor submission" path)) (newline)
     (display data out)
     (close-output-port out)
     (unarchive path)
@@ -17,7 +18,7 @@
 
 (provide upload-submission)
 (define (upload-submission class user assignment step data)
-  (let* ((path (create-directory class user assignment step))
+  (let* ((path (create-directory class assignment user step))
          (out (open-output-file (string-append path "/submission.tar") #:exists 'replace)))
     (display data out)
     (close-output-port out)
@@ -44,7 +45,7 @@
 
 (provide retrieve-submission-file)
 (define (retrieve-submission-file class user assignment step version file)
-  (let ((path (string-append (submission-path class user assignment step version) "/" file)))
+  (let ((path (string-append (submission-path class assignment user step) "/" file)))
     (file->string path)))
 
 (provide retrieve-file)
@@ -52,8 +53,8 @@
     (file->string path))
 
 (provide submission-file-path)
-(define (submission-file-path class user assignment step version file)
-  (let ((path (string-append (submission-path class user assignment step version) "/" file)))
+(define (submission-file-path class user assignment step file)
+  (let ((path (string-append (submission-path class assignment user step) "/" file)))
     path))
 
 (provide sub-directories-of)
@@ -75,6 +76,33 @@
 (provide is-file?)
 (define (is-file? path)
   (file-exists? path))
+
+;; If the review comments exist, return that file. Otherwise return a default json which has no comments.
+(provide load-review-comments)
+(define (load-review-comments class assignment stepName review-id reviewer reviewee)
+  (let ((path (string-append class "/" assignment "/reviews/" stepName "/" review-id "/" reviewer "/" reviewee "/comments.json")))
+    (if (file-exists? path)
+        (retrieve-file path)
+        "{\"comments\" : {}}")))
+
+(provide save-review-comments)
+(define (save-review-comments class assignment stepName review-id reviewer reviewee data)
+  (let ((path (string-append class "/" assignment "/reviews/" stepName "/" review-id "/" reviewer "/" reviewee "/comments.json")))
+    (write-file path data)))
+
+(provide save-rubric)
+(define (save-rubric class assignment stepName review-id reviewer reviewee data)
+  (let ((path (string-append class "/" assignment "/reviews/"  stepName "/" review-id "/" reviewer "/" reviewee "/rubric.json")))
+    (write-file path data)))
+
+;;TODO Maybe store by hash-value?
+
+;; If a rubric exists, returns the rubric otherwise returns the default rubric
+(provide retrieve-rubric)
+(define (retrieve-rubric class assignment stepName review-id reviewer reviewee)
+  (let ((path (string-append class "/" assignment "/reviews/"  stepName "/" review-id "/" reviewer "/" reviewee "/rubric.json")))
+    (if (file-exists? path) (retrieve-file path) (retrieve-default-rubric class assignment stepName review-id))))
+         
 
 (provide retrieve-default-rubric)
 (define (retrieve-default-rubric class assignment stepName review-id)

@@ -73,6 +73,7 @@ RUN adduser --disabled-password --gecos "" admiraledu
 
 # Install Captain Teach Dependencies
 RUN su admiraledu -c 'cd ~/; raco planet install gh aws.plt 1 5'
+RUN su admiraledu -c 'cd ~/; raco planet install esilkensen yaml.plt 3 1'
 
 #
 # Install supervisord

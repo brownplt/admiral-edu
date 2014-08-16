@@ -23,6 +23,7 @@
     (display data out)
     (close-output-port out)
     (unarchive path)
+    ;;TODO This should be abstracted
     (submission:create assignment class step user)
     (delete-file (string-append path "/submission.tar"))))
 

@@ -69,4 +69,5 @@
          review:assign-instructor-solution
          review:select-reviews
          review:select-assigned-reviews
-         review:mark-complete)
+         review:mark-complete
+         review:hash)

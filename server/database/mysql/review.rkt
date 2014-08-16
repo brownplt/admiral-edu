@@ -66,7 +66,7 @@
                                          hash hash-type "," ;7
                                          review-id review-id-type "," ;8
                                          instructor-solution instructor-solution-type "," ;9
-                                         "PRIMARY KEY (" assignment-id "," class-id "," step-id "," reviewee-id "," reviewer-id "," review-id "))"))))
+                                         "PRIMARY KEY (" hash "))"))))
     (query-exec sql-conn drop)
     (query-exec sql-conn create)))
 

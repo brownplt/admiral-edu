@@ -49,11 +49,13 @@
          submission:time-stamp submission:time-stamp-type submission:record-time-stamp
          submission:create submission:list submission:count
          submission:exists?
-         submission:create-instructor-solution)
+         submission:create-instructor-solution
+         submission:times-reviewed)
 
 
 ;; Review Table
 (provide review:table
+         review:create
          review:record review:record? review:record-class-id 
          review:record-assignment-id review:record-step-id review:record-reviewee-id 
          review:record-reviewer-id review:record-completed review:record-review-id

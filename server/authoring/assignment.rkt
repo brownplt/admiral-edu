@@ -318,6 +318,7 @@
   (failure "YAML did not contain a valid assignment description."))
 
 
+;;TODO: Check to see where description.yaml is created
 (define (create-assignment assignment)
   (cond [(not (Assignment? assignment)) (raise-argument-error 'create-assignment "Assignment" assignment)]
         [else (let ((validation (validate-assignment assignment)))
@@ -381,6 +382,18 @@
     (cond
       [(MustReviewNext? next) (assign-reviews assignment-id next uid)])
     (Success "Assignment submitted.")))
+
+(define (step-id->step assignment-id step-id)
+  (lookup-step (assignment-id->assignment assignment-id) step-id))
+
+(define (lookup-step assignment step-id)
+  (printf "step-id: ~a\n" step-id)
+  (let* ((steps (Assignment-steps assignment))
+         (filter-f (lambda (step) (equal? step-id (Step-id step))))
+         (result (filter filter-f steps)))
+    (printf "~a\n" steps)
+    (printf "~a\n" result)
+    (car result)))
 
 (define (assign-reviews assignment-id next uid)
   (let* ((step (MustReviewNext-step next))

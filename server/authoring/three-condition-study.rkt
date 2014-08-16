@@ -48,42 +48,101 @@
                   ;;TODO: Notify users that they are in get-reviews
                   [(eq? group 'gets-reviews) #t])])))
 
+(provide three-do-submit-step)
 (define (three-do-submit-step assignment-id step-id uid data steps)
   ;(upload-submission class user assignment step data)
   (upload-submission class-name uid assignment-id step-id data)
   (let ((group (lookup-group assignment-id uid)))
     ;; TODO: look to see if there are any pending reviewers
-    (if (eq? group 'gets-reviewed) (check-pending-review assignment-id step-id) #f))
+    (if (eq? group 'gets-reviewed) (maybe-assign-reviewers assignment-id step-id uid) (printf "Skipping maybe-assign review. uid: ~a, group: ~a\n" uid group)))
   ;; Assign reviews to the student if applicable
-  (let ((next (next-action assignment-id steps uid)))
+  (let ((next (three-next-action assignment-id steps uid)))
+    (printf "Next Action for ~a is ~a\n" uid next)
     (cond
-      [(MustReviewNext? next) (assign-reviews assignment-id next uid)])
+      [(MustReviewNext? next) (three-assign-reviews assignment-id (MustReviewNext-step next) uid)])
     (Success "Assignment submitted.")))
 
-(define (check-pending-review assignment-id step-id)
-  (let* ((query (merge "SELECT" review:hash
+(define (maybe-assign-reviewers assignment-id step-id uid)
+  (let* ((step (step-id->step assignment-id step-id))
+         (reviews (Step-reviews step)))
+    (map (maybe-assign-reviewers-helper assignment-id step-id uid) reviews)))
+
+(define (maybe-assign-reviewers-helper assignment-id step-id uid)
+  (lambda (review)
+    (cond [(student-submission? review) (let* ((amount (student-submission-amount review))
+                                               (pending-reviews (get-pending-reviews assignment-id step-id amount)))
+                                          (map (assign-reviewer assignment-id step-id uid) pending-reviews))]
+          [else (error "Ooops should not be here.")])))
+
+(define (assign-reviewer assignment-id step-id uid)
+  (lambda (hash)
+    (let* ((q (merge "UPDATE" review:table
+                     "SET" review:reviewee-id "=?"
+                     "WHERE" review:hash "=?"))
+           (prep (prepare sql-conn q))
+           (result (query-exec prep uid hash)))
+      result)))                                                        
+
+(define (get-pending-reviews assignment-id step-id amount)
+  (let* ((query (merge "SELECT " review:hash
                        "FROM" review:table
                        "WHERE" review:assignment-id "=? AND"
                                review:class-id "=? AND"
                                review:step-id "=? AND"
                                review:reviewee-id "='HOLD'"
+                       "GROUP BY" review:reviewer-id
                        "ORDER BY" review:time-stamp "ASC"
-                       "LIMIT 1"))
+                       "LIMIT ?"))
          (prep (prepare sql-conn query))
-         (result (query-rows prepare sql-conn assignment-id class-name step-id)))
-    (cond [(null? result) #f]
-          [else (vector-ref (car result) 0)])))
-    
+         (result (query-rows sql-conn prep assignment-id class-name step-id amount)))
+    result))
 
-#|
-(provide table)
-(provide assignment-id assignment-id-type)
-(provide step-id step-id-type)
-(provide class-id class-id-type)
-(provide reviewee-id reviewee-id-type)
-(provide reviewer-id reviewer-id-type)
-(provide time-stamp time-stamp-type)
-(provide review-id review-id-type)
-(provide instructor-solution instructor-solution-type)
-(provide completed completed-type)
-|#
+(define (three-assign-reviews assignment-id step uid)
+  (let* ((reviews (Step-reviews step))
+         (step-id (Step-id step)))
+    (map (three-assign-review assignment-id step-id uid) reviews)))
+    
+;; Student is in the does-reviews group
+(define (three-assign-review assignment-id step-id uid)
+  (lambda (review)
+    (let ((review-id (getId review))
+          (amount (student-submission-amount review)))
+      (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id class-name step-id "instructor" uid review-id)]
+            [(student-submission? review) (assign-student-reviews assignment-id class-name step-id uid review-id amount)]))))
+
+(define (gets-reviewed-list assignment-id step-id)
+  ;;TODO Add to file storage API
+  (let* ((yaml-string (file->string (string-append assignment-id ".yaml")))
+         (yaml (string->yaml yaml-string))
+         (gets-reviewed (hash-ref yaml "gets-reviewed")))
+    gets-reviewed))
+
+(define (assign-student-reviews assignment-id class-name step-id uid review-id amount)
+  (let* ((students (gets-reviewed-list assignment-id step-id))
+         (student-commas (string-join (build-list (length students) (lambda (n) "?")) ","))
+         (q (merge "SELECT" submission:user-id
+                   "FROM" submission:table
+                   "WHERE" submission:user-id "IN (" student-commas ") AND"
+                           submission:assignment-id "=? AND"
+                           submission:class-id "=? AND"
+                           submission:step-id "=? AND"
+                           submission:times-reviewed "<=?"
+                   "ORDER BY" submission:time-stamp "ASC"
+                   "LIMIT ?"))
+         (prep (prepare sql-conn q))
+         (query-list (append (list sql-conn prep ) students (list assignment-id class-name step-id amount amount)))
+         (result (apply query-rows query-list))
+         (total-found (length result))
+         (hold-amount (- total-found amount)))
+    (map (assign-student-review assignment-id class-name step-id uid review-id) result)
+    (assign-student-hold assignment-id class-name step-id uid review-id hold-amount)))
+
+(define (assign-student-review assignment-id class-name step-id uid review-id)
+  (lambda (vec)
+    (let ((reviewee (vector-ref vec 0)))
+      (review:create assignment-id class-name step-id uid reviewee review-id))))
+
+(define (assign-student-hold assignment-id class-name step-id uid review-id n)
+  (if (<= n 0) #t
+      (begin (review:create assignment-id class-name step-id uid "HOLD" review-id)
+             (assign-student-hold assignment-id class-name step-id uid review-id (- n 1)))))

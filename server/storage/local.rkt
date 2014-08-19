@@ -107,6 +107,7 @@
 
 (provide retrieve-default-rubric)
 (define (retrieve-default-rubric class assignment stepName review-id)
+  (print "Retrieving default rubric.") (newline)
   (let ((path (string-append class "/" assignment "/reviews/"  stepName "/" review-id "/rubric.json")))
     (retrieve-file path)))
 

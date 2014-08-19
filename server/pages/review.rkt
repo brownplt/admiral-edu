@@ -16,14 +16,23 @@
     [(<= n 0) '()]
     [else (cons val (repeat val (- n 1)))]))
 
+;;TODO: Ensure that the hash being loaded is assigned to the person who is logged into
+;; this session
 (provide load)
 (define (load session role rest [message '()])
+  (let ((submit? (equal? "submit" (car rest))))
+    (if submit? 
+        (do-submit-review session role rest message)
+        (do-load session role rest message))))
+
+(define (do-load session role rest message)
   (let* ((r-hash (car rest))
          (review (review:select-by-hash r-hash))
          (assignment (review:record-assignment-id review))
          (step (review:record-step-id review))
          (updir (apply string-append (repeat "../" (+ (length rest) 1))))
-         [root-url updir]
+         (root-url updir)
+         [submit-url (string-append root-url "review/submit/" r-hash "/")]
          (updir-rubric (apply string-append (repeat "../" (- (length rest) 1))))
          [file-container (string-append updir "file-container/" (to-path rest))]
          [save-url (xexpr->string (string-append "\"" updir-rubric step "/save\""))]
@@ -35,6 +44,17 @@
         (let ([display-message "There are no reviews available for you at this time."])
           (include-template "html/message.html"))
         (include-template "html/review.html"))))
+
+(define (do-submit-review session role rest message)
+  (let* ((r-hash (cadr rest))
+         (review (review:select-by-hash r-hash))
+         (assignment (review:record-assignment-id review))
+         (step (review:record-step-id review))
+         (updir (apply string-append (repeat "../" (+ (length rest) 1))))
+         (root-url updir))
+    (review:mark-complete r-hash)
+    (string-append "<p>Review Submitted</p>"
+                   "<p><a href='" root-url "next/" assignment "/'>Continue</a></p>")))
 
 (provide post->review)
 (define (post->review session post-data rest)

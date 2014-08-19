@@ -40,7 +40,8 @@
          "pages/next.rkt"
          "pages/assignments.rkt"
          (prefix-in submit: "pages/submit.rkt")
-         (prefix-in dep: "pages/dependencies.rkt"))
+         (prefix-in dep: "pages/dependencies.rkt")
+         (prefix-in feedback: "pages/feedback.rkt"))
 
 ;; Defines how to process incomming requests are handled
 (provide ct-rules)
@@ -72,6 +73,7 @@
     [(cons "assignments" rest) (render-html session assignments rest)]
     [(cons "dependencies" rest) (if post (dep:post session rest bindings) (render-html session dep:dependencies rest))]
     [(cons "submit" rest) (if post (submit:submit session role rest bindings) #f)] ;;TODO Handle correctly when not a post
+    [(cons "feedback" rest) (if post (feedback:post session role rest post-data) (render-html session feedback:load rest))]
     [else (four-oh-four)]))
 
 (define (with-sudo post post-data uid session bindings path)

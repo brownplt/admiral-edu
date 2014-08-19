@@ -50,7 +50,10 @@
 
 ;; TODO Number these?
 (define (review-link hash)
-  (string-append "<p><a href='../../review/" hash "/'>Review</a></p>"))
+  (let* ((review (review:select-by-hash hash))
+         (completed (review:record-completed review)))
+    (if completed ""
+        (string-append "<p><a href='../../review/" hash "/'>Review</a></p>"))))
 
 (define (assignment-completed)
   "You have completed this assignment.")

@@ -59,6 +59,7 @@
          review:record review:record? review:record-class-id 
          review:record-assignment-id review:record-step-id review:record-reviewee-id 
          review:record-reviewer-id review:record-completed review:record-review-id
+         review:record-hash
          review:assignment-id review:assignment-id-type
          review:step-id review:step-id-type
          review:class-id review:class-id-type
@@ -72,4 +73,5 @@
          review:select-reviews
          review:select-assigned-reviews
          review:mark-complete
-         review:hash)
+         review:hash
+         review:select-feedback)

@@ -453,8 +453,10 @@
               [else (MustReviewNext step (review:select-assigned-reviews assignment-id class-name (Step-id step) uid))]))]))
 
 ;; Returns #t if the instructor solution has been reviewed and #f otherwise
+
 (define (check-instructor-solution assignment-id step instructor-solution uid)
   (let* ((id (instructor-solution-id instructor-solution))
+         ;;TODO: This query fails
          (count (review:completed? assignment-id class-name (Step-id step) uid id)))
     count))
 

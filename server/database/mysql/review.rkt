@@ -118,30 +118,48 @@
          record-review-id
          record-reviewee-id 
          record-reviewer-id 
-         record-completed)
-(struct record (class-id assignment-id step-id review-id reviewee-id reviewer-id completed) #:transparent)
+         record-completed
+         record-hash)
+(struct record (class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash) #:transparent)
 
+(define record-fields
+  (string-join (list class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash) ", "))
+
+(define (vector->record result)
+  (let* ((class-id (vector-ref result 0))
+         (assignment-id (vector-ref result 1))
+         (step-id (vector-ref result 2))
+         (review-id (vector-ref result 3))
+         (reviewee-id (vector-ref result 4))
+         (reviewer-id (vector-ref result 5))
+         (completed (= 1 (vector-ref result 6)))
+         (hash (vector-ref result 7))
+         (rec (record class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash)))
+    rec))
+
+(provide select-feedback)
+(define (select-feedback class assignment uid)
+  (let* ((query (merge "SELECT" record-fields
+                       "FROM" table
+                       "WHERE" class-id "=? AND"
+                               assignment-id "=? AND"
+                               reviewee-id "=? AND"
+                               completed "=true"
+                       "ORDER BY" time-stamp "ASC"))
+         (prep (prepare sql-conn query))
+         (result (query-rows sql-conn prep class assignment uid)))
+    (map vector->record result)))
+
+                       
 (provide select-by-hash)
 (define (select-by-hash the-hash)
-  (let* ((query (merge "SELECT" class-id "," assignment-id "," 
-                                step-id "," review-id ","
-                                reviewee-id "," reviewer-id ","
-                                completed
+  (let* ((query (merge "SELECT" record-fields
                        "FROM" table
                        "WHERE" hash "=? LIMIT 1"))
          (prep (prepare sql-conn query))
          (result (query-row sql-conn prep the-hash)))
-    (let* ((class-id (vector-ref result 0))
-          (assignment-id (vector-ref result 1))
-          (step-id (vector-ref result 2))
-          (review-id (vector-ref result 3))
-          (reviewee-id (vector-ref result 4))
-          (reviewer-id (vector-ref result 5))
-          (completed (vector-ref result 6))
-          (rec (record class-id assignment-id step-id review-id reviewee-id reviewer-id completed)))
-      (print (list "selected record" rec))
-      (newline)
-      rec)))
+    (vector->record result)))
+
       
                        
 (provide mark-complete)

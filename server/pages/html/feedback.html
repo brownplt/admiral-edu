@@ -5,13 +5,6 @@
 
     <script>
       function save(json, callback){
-          console.log("Attempting to save to " + @save-url);
-	  var xhr = new XMLHttpRequest();
-	  xhr.open("POST", @save-url, true);
-	  xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-	  var asString = JSON.stringify(json);
-	  xhr.send(asString);
-	  xhr.onloadend = callback;
       }
 
       function load(callback){
@@ -42,6 +35,6 @@
   </div>
   <div id="rubric" class="rubric"> 
   </div>
-  <div class="submit-button"><a href="@submit-url">Submit</a></div>
+  <div class="submit-button"><a href="#">Submit</a></div>
 </body>
 </html>

@@ -71,15 +71,20 @@
     (query-exec sql-conn create)))
 
 (provide create)
+(define (ok-reviewee assignment class step reviewee)
+  (or (string=? reviewee "HOLD") (submission:exists? assignment class step reviewee)))
 (define (create assignment class step reviewee reviewer id)
-  (if (not (submission:exists? assignment class step reviewee)) 'no-such-submission
-                                                      ;0 1 2 3 4     5     6 7 8     9 
-      (let* ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,false)"))
-             (prep (prepare sql-conn query)))
-                                  ; 0          1    2    3           4        7          8
-        (query-exec sql-conn prep assignment class step reviewee reviewer (random-hash) id)
-        ;; TODO: This is not concurrently safe.
-        (submission:increment-reviewed assignment class step reviewee))))
+  ;; TODO(joe): should this be an error?
+  (when (not (ok-reviewee assignment class step reviewee)) 'no-such-submission)
+                                                  ;0 1 2 3 4     5     6 7 8     9 
+  (let* ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,false)"))
+         (prep (prepare sql-conn query)))
+                              ; 0          1    2    3           4        7          8
+    (query-exec sql-conn prep assignment class step reviewee reviewer (random-hash) id)
+    ;; TODO: This is not concurrently safe.
+    (when (not (string=? reviewee "HOLD"))
+      (submission:increment-reviewed assignment class step reviewee))
+    #t))
 
 (define (count-assigned assignment class step uid review-id)
   (let* ((query (merge "SELECT COUNT(*)"

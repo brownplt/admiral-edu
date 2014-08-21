@@ -11,6 +11,8 @@
          (prefix-in machine: "progress-machine.rkt")
          "../database/mysql/common.rkt")
 
+(provide get-pending-reviews)
+
 ;; 3 different groups
 
 ;; assignment-id -> uid -> group
@@ -46,7 +48,8 @@
                   ;;TODO: Select from get-review students only
                   [(eq? group 'does-reviews) (check-reviews assignment-id step (Step-reviews step) uid)]
                   ;;TODO: Notify users that they are in get-reviews
-                  [(eq? group 'gets-reviews) #t])])))
+                  [(eq? group 'gets-reviewed) #t]
+                  [else (error (format "Unknown group type ~a" group))])])))
 
 (provide three-do-submit-step)
 (define (three-do-submit-step assignment-id step-id uid data steps)
@@ -71,7 +74,7 @@
   (lambda (review)
     (cond [(student-submission? review) (let* ((amount (student-submission-amount review))
                                                (pending-reviews (get-pending-reviews assignment-id step-id amount)))
-                                          (map (assign-reviewer assignment-id step-id uid) pending-reviews))]
+                                          (map (assign-reviewer assignment-id step-id uid) (map (lambda (v) (vector-ref v 0)) pending-reviews)))]
           [else (error "Ooops should not be here.")])))
 
 (define (assign-reviewer assignment-id step-id uid)
@@ -80,21 +83,23 @@
                      "SET" review:reviewee-id "=?"
                      "WHERE" review:hash "=?"))
            (prep (prepare sql-conn q))
-           (result (query-exec prep uid hash)))
+           (result (query-exec sql-conn prep uid hash)))
       result)))                                                        
 
 (define (get-pending-reviews assignment-id step-id amount)
-  (let* ((query (merge "SELECT " review:hash
+  (let* ((query (merge "SELECT " review:hash ", count(*) as C"
                        "FROM" review:table
                        "WHERE" review:assignment-id "=? AND"
                                review:class-id "=? AND"
                                review:step-id "=? AND"
                                review:reviewee-id "='HOLD'"
                        "GROUP BY" review:reviewer-id
-                       "ORDER BY" review:time-stamp "ASC"
+                       "ORDER BY" "C DESC,"
+                       review:time-stamp "ASC"
                        "LIMIT ?"))
          (prep (prepare sql-conn query))
          (result (query-rows sql-conn prep assignment-id class-name step-id amount)))
+    (printf "results of query: ~a\n" result)
     result))
 
 (define (three-assign-reviews assignment-id step uid)
@@ -127,22 +132,25 @@
                            submission:class-id "=? AND"
                            submission:step-id "=? AND"
                            submission:times-reviewed "<=?"
-                   "ORDER BY" submission:time-stamp "ASC"
+                   "ORDER BY" submission:times-reviewed "ASC," submission:time-stamp "ASC"
                    "LIMIT ?"))
          (prep (prepare sql-conn q))
          (query-list (append (list sql-conn prep ) students (list assignment-id class-name step-id amount amount)))
          (result (apply query-rows query-list))
          (total-found (length result))
-         (hold-amount (- total-found amount)))
+         (hold-amount (- amount total-found)))
+    (printf "Found ~a students to review, will hold ~a for later\n" total-found hold-amount)
     (map (assign-student-review assignment-id class-name step-id uid review-id) result)
     (assign-student-hold assignment-id class-name step-id uid review-id hold-amount)))
 
 (define (assign-student-review assignment-id class-name step-id uid review-id)
   (lambda (vec)
     (let ((reviewee (vector-ref vec 0)))
-      (review:create assignment-id class-name step-id uid reviewee review-id))))
+      (printf "Assigning review between ~a and ~a\n" reviewee uid)
+      (review:create assignment-id class-name step-id reviewee uid review-id))))
 
 (define (assign-student-hold assignment-id class-name step-id uid review-id n)
+  (printf "Assigning hold to ~a\n" uid)
   (if (<= n 0) #t
-      (begin (review:create assignment-id class-name step-id uid "HOLD" review-id)
+      (begin (review:create assignment-id class-name step-id "HOLD" uid review-id)
              (assign-student-hold assignment-id class-name step-id uid review-id (- n 1)))))

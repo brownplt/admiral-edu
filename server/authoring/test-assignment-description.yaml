@@ -7,7 +7,7 @@ steps:
     reviews:
       - student-submission:
           id: student-review
-          amount: 1
+          amount: 3
           rubric:
             - likert:
                 id: correctness

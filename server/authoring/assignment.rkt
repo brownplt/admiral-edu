@@ -334,7 +334,8 @@
         [else (let ((validation (validate-assignment assignment #f)))
                 (cond [validation validation]
                       [else (create-database-entries assignment)
-                            (create-base-rubrics assignment) #t]))]))
+                            (create-base-rubrics assignment)
+                            (check-no-reviews assignment) #t]))]))
 
 ;; TODO: check to see if assignment has the same name as before
 (define (save-assignment assignment)
@@ -342,7 +343,17 @@
         [else (let ((validation (validate-assignment assignment #t)))
                 (cond [validation validation]
                       [else ;; (create-database-entries assignment)
-                            (create-base-rubrics assignment) #t]))]))
+                            (create-base-rubrics assignment)
+                            (check-no-reviews assignment)#t]))]))
+
+(define (check-no-reviews assignment)
+  (let ((no-reviews (null? (filter (no-reviews? (Assignment-steps assignment)))))
+        (assignment-id (Assignment-id assignment)))
+    (if no-reviews (assignment:mark-ready assignment-id class-name) #f)))
+
+(define (no-reviews? step)
+  (null? (Step-reviews step)))
+    
 
 (define (create-database-entries assignment)
   (let ((id (Assignment-id assignment)))
@@ -421,8 +432,8 @@
 (define (assign-review assignment-id step-id uid)
   (lambda (review)
     (let ((review-id (getId review))
-          (amount (student-submission-amount review)))
-      (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id class-name step-id "instructor" uid review-id)]
+          (amount (if (student-submission? review) (student-submission-amount review) 1)))
+      (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id class-name step-id (default-submission review-id 1) uid review-id)]
             [(student-submission? review) (review:assign-student-reviews assignment-id class-name step-id uid review-id amount)]))))
 
 (define (next-action-error next)
@@ -473,9 +484,9 @@
 ;; Returns #t if the instructor solution has been reviewed and #f otherwise
 
 (define (check-instructor-solution assignment-id step instructor-solution uid)
-  (let* ((id (instructor-solution-id instructor-solution))
+  (let* ((review-id (instructor-solution-id instructor-solution))
          ;;TODO: This query fails
-         (count (review:completed? assignment-id class-name (Step-id step) uid id)))
+         (count (review:completed? assignment-id class-name (Step-id step) uid review-id)))
     count))
 
 (define (check-student-submission assignment-id step student-submission uid) 

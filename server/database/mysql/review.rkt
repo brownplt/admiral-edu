@@ -51,6 +51,10 @@
 (define hash "hash")
 (define hash-type "VARCHAR(255)")
 
+(provide flagged flagged-type)
+(define flagged "flagged")
+(define flagged-type "BOOL")
+
 ;; Initializes the review table.
 (provide init)
 (define (init)
@@ -66,6 +70,7 @@
                                          hash hash-type "," ;7
                                          review-id review-id-type "," ;8
                                          instructor-solution instructor-solution-type "," ;9
+                                         flagged flagged-type "," ; 10
                                          "PRIMARY KEY (" hash "))"))))
     (query-exec sql-conn drop)
     (query-exec sql-conn create)))
@@ -77,8 +82,8 @@
 (define (create assignment class step reviewee reviewer id)
   ;; TODO(joe): should this be an error?
   (when (not (ok-reviewee assignment class step reviewee)) 'no-such-submission)
-                                                  ;0 1 2 3 4     5     6 7 8     9 
-  (let* ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,false)"))
+                                                  ;0 1 2 3 4     5     6 7 8     9   10
+  (let* ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,false, false)"))
          (prep (prepare sql-conn query)))
                               ; 0          1    2    3           4        7          8
     (query-exec sql-conn prep assignment class step reviewee reviewer (random-hash) id)
@@ -116,7 +121,7 @@
   (create-instructor-review assignment class step reviewee reviewer review-id))
 
 (define (create-instructor-review assignment class step reviewee reviewer id)
-  (let* ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,true)"))
+  (let* ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,true,false)"))
          (prep (prepare sql-conn query)))
     (query-exec sql-conn prep assignment class step reviewee reviewer (random-hash) id)))
 
@@ -201,13 +206,14 @@
 
 (provide completed?)
 (define (completed? assignment class step reviewer id)
-  (let* ((query (merge "SELECT" completed
+  (let* ((query (merge "SELECT COUNT(" completed ")"
                        "FROM" table
                        "WHERE" assignment-id "=? AND"
                                class-id "=? AND"
                                step-id "=? AND"
                                reviewer-id "=? AND"
-                               review-id "=?"))
+                               review-id "=? AND"
+                               completed "=true"))
          (prep (prepare sql-conn query))
          (result (vector-ref (query-row sql-conn prep assignment class step reviewer id) 0)))
     (> result 0)))

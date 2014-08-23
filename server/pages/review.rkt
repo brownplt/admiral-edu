@@ -164,7 +164,6 @@
          [path (to-path-html (cdr rest))]
          (file (to-path (cdr rest)))
          (temp (list (print (list class assignment reviewee stepName file)) (newline)))
-         (test (print (list "test")))
          (test-prime (newline))
          (file-path (submission-file-path class reviewee assignment stepName file))
          (contents (if (is-directory? file-path) (render-directory prefix file-path) (render-file file-path))))

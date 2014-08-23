@@ -62,7 +62,10 @@
 (define (with-open-link id open)
   (let ((link-text (if open "Close" "Open"))
         (action (if open "close" "open")))
-    (string-append "<p>" id " - <a href=\"/" class-name "/assignments/" action "/" id "/\">" link-text "</a></p>")))
+    (string-append "<p>" id " - " (edit-assignment-link id) " - <a href=\"/" class-name "/assignments/" action "/" id "/\">" link-text "</a></p>")))
 
 (define (with-ready-link id)
-  (string-append "<p>" id ": This assignment is missing dependencies. <a href=\"/" class-name "/dependencies/" id "/\">Upload Dependencies</a></p>"))
+  (string-append "<p>" id " - "  (edit-assignment-link id) ": This assignment is missing dependencies. <a href=\"/" class-name "/dependencies/" id "/\">Upload Dependencies</a></p>"))
+
+(define (edit-assignment-link assignment-id)
+  (string-append "<a href='/" class-name "/author/edit/" assignment-id "/'>Edit Assignment</a>"))

@@ -73,6 +73,7 @@
 (provide create)
 (define (ok-reviewee assignment class step reviewee)
   (or (string=? reviewee "HOLD") (submission:exists? assignment class step reviewee)))
+
 (define (create assignment class step reviewee reviewer id)
   ;; TODO(joe): should this be an error?
   (when (not (ok-reviewee assignment class step reviewee)) 'no-such-submission)
@@ -102,8 +103,11 @@
         [else (assign-student-review assignment class step uid review-id)
               (assign-student-reviews assignment class step uid review-id (- amount 1))]))
 
+
 (define (assign-student-review assignment class step uid review-id)
-  (let ((reviewee (submission:select-least-reviewed assignment class step uid)))
+  ;; TODO(joe): Probably a performance hit to run this query in this way. Would be faster to just get all of them at once.
+  (let* ((not-users (map record-reviewee-id (map select-by-hash (select-assigned-reviews assignment class step uid)))) 
+         (reviewee (submission:select-least-reviewed assignment class step (cons uid not-users))))
     (cond [(eq? reviewee 'no-reviews) #f]
           [else (create assignment class step reviewee uid review-id)])))
 

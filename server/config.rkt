@@ -44,6 +44,7 @@
         (user:create "joe.politz@gmail.com")
         (user:create "joseph_politz@brown.edu")
         (user:create "test@student.edu")
+        (user:create "test2@student.edu")
         (roles:create instructor-role "Instructor" 1)
         (roles:create ta-role "Teaching Assistant" 1)
         (roles:create student-role "Student" 0)
@@ -52,5 +53,6 @@
         (role:associate class-name "shriram@gmail.com" instructor-role)
         (role:associate class-name "joe.politz@gmail.com" instructor-role)
         (role:associate class-name "joseph_politz@brown.edu" student-role)
-        (role:associate class-name "test@student.edu" student-role))))
+        (role:associate class-name "test@student.edu" student-role)
+        (role:associate class-name "test2@student.edu" student-role))))
       

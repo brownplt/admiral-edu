@@ -9,7 +9,7 @@
 (require "../ct-session.rkt"
          "../database/mysql.rkt"
          "../config.rkt"
-         "errors.rkt"
+         (prefix-in error: "errors.rkt")
          "../authoring/assignment.rkt")
 
 (define (repeat val n)
@@ -44,11 +44,12 @@
 (define (gen-reviews reviews) (gen-reviews-helper reviews 1))
 
 (define (gen-reviews-helper reviews cur)
-  (let* ((review (car reviews))
-         (hash (review:record-hash review))
-         (step (review:record-step-id review))
-         (rest (cdr reviews)))
-  (string-append "<p><a href='../view/" hash "/'>Review #" (number->string cur) ": " step "</a></p>")))
+  (if (null? reviews) ""
+      (let* ((review (car reviews))
+             (hash (review:record-hash review))
+             (step (review:record-step-id review))
+             (rest (cdr reviews)))
+        (string-append "<p><a href='../view/" hash "/'>Review #" (number->string cur) ": " step "</a></p>" (gen-reviews-helper rest (+ 1 cur))))))
          
 (define (do-view session role rest message)
   (let* ((r-hash (car rest))
@@ -63,7 +64,13 @@
          [load-url (xexpr->string (string-append "\"" updir-rubric step "/load\""))]
          (reviewer (ct-session-uid session))
          (class (ct-session-class session)))
-    (include-template "html/feedback.html")))
+    (if (not (validate review session)) (error:error "You are not authorized to see this page.")
+        (include-template "html/feedback.html"))))
+
+(define (validate review session)
+  (let ((uid (ct-session-uid session))
+        (reviewee (review:record-reviewee-id review)))
+    (equal? uid reviewee)))
 
 (define (do-file-container session role rest [message '()])
   (let* ((r-hash (car rest))
@@ -83,9 +90,10 @@
          (test-prime (newline))
          (file-path (submission-file-path class reviewee assignment stepName file))
          (contents (if (is-directory? file-path) (render-directory prefix file-path) (render-file file-path))))
-    (string-append (include-template "html/feedback-file-container-header.html")
-                   contents
-                   (include-template "html/file-container-footer.html"))))
+    (if (not (validate review session)) (error:error "You are not authorized to see this page.")
+        (string-append (include-template "html/feedback-file-container-header.html")
+                       contents
+                       (include-template "html/file-container-footer.html")))))
 
 (define (to-path-html input)
   (letrec ((helper (lambda (acc ls)
@@ -155,7 +163,8 @@
 (define (post->do-file-container session role rest post-data)
   (let* ((hash (car rest))
          (review (review:select-by-hash hash)))
-    (post->load session review)))
+    (if (not (validate review session)) (error:error "You are not authorized to see this page.")
+        (post->load session review))))
 
 (define (post->load session review)
   (let* ((class (ct-session-class session))
@@ -175,7 +184,8 @@
 (define (post->do-view session role rest post-data)
   (let* ((hash (car rest))
          (review (review:select-by-hash hash)))
-    (post->load-rubric session review)))
+    (if (not (validate review session)) (error:error "You are not authorized to see this page.")
+        (post->load-rubric session review))))
   
 (define (post->load-rubric session review)
   (let* ((class (ct-session-class session))

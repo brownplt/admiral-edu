@@ -54,7 +54,7 @@
 ;;TODO Add Instructor-solution field and mark true
 (provide create-instructor-solution)
 (define (create-instructor-solution assignment class step user)
-     (let* ((query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),0)"))
+     (let* ((query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),5000)"))
             (prep (prepare sql-conn query)))
        (query-exec sql-conn prep assignment class step user)
        #t))
@@ -137,17 +137,24 @@
     (query-exec sql-conn prep plusOne assignment class step user)))
 
 (provide select-least-reviewed)
-(define (select-least-reviewed assignment class step not-user)
-  (let* ((query (merge "SELECT" user-id
+(define (select-least-reviewed assignment class step not-users)
+  (print "In select-least-reviewed") (newline)
+  (let* ((user-commas (string-join (build-list (length not-users) (lambda (n) "?")) ","))
+         (query (merge "SELECT" user-id
                        "FROM" table
                        "WHERE" assignment-id "=? AND"
                                class-id "=? AND"
                                step-id "=? AND"
-                               user-id "!=?"
+                               user-id " NOT IN (" user-commas ")"
                        "ORDER BY" times-reviewed "ASC"
                        "LIMIT 1"))
+         (test (printf "Query:~a\n" query))
          (prep (prepare sql-conn query))
-         (result (query-row sql-conn prep assignment class step not-user)))
+         (test (printf "Query prepped.\n"))
+         (arg-list (append `(,sql-conn ,prep ,assignment ,class ,step) not-users))
+         (test (printf "Arg-list:~a\n" arg-list))
+         (test (printf "Selecting Least Reviewed.\nQuery:~a\n Argument list:~a\n" query arg-list))
+         (result (apply query-row arg-list)))
     (vector-ref result 0)))
 
 ;; Given an assignment, class, step, and user, returns the number of entries that have been created

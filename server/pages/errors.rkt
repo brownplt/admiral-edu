@@ -8,6 +8,16 @@
          xml
          json)
 
+(provide not-authorized)
+(define (not-authorized)
+  (let ([display-message "You are not authorized to access this page."])
+    (include-template "html/error.html")))
+
+(provide error)
+(define (error message)
+  (let ([display-message message])
+    (include-template "html/error.html")))
+
 (provide error-not-registered)
 (define (error-not-registered session)
   `(html 

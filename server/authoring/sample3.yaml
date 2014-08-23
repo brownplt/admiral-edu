@@ -1,0 +1,51 @@
+name: Clocks
+id: clocks
+description: Students develop functions representing an alarm clock.
+steps: 
+  - id: tests
+    instructions: Submit your test cases. Do not submit any implementation details.
+    reviews:
+      - student-submission:
+          id: student-review
+          amount: 3
+          rubric:
+            - likert:
+                id: correctness
+                text: These tests are correct.
+                min-label: Disagree
+                max-label: Agree
+                granularity: 9
+            - instruction: Provide feedback on tests that are not correct by clicking on the line number and adding a comment.
+            - likert:
+                id: coverage
+                text: These tests cover the possible inputs.
+                min-label: Disagree
+                max-label: Agree
+                granularity: 9
+            - free-form:
+                id: not-covered
+                text: If applicable, provide inputs that are not covered by the tests.
+  - id: implementation
+    instructions: Submit all of your test cases and your clock implementation
+    reviews:
+      - student-submission:
+          id: student-review
+          amount: 3
+          rubric:
+            - likert:
+                id: behavior
+                text: This code correctly implements the desired behavior.
+                min-label: "False"
+                max-label: "True"
+                granularity: 5
+            - instruction: If applicable, leave inline feedback where the incorrect behaviors exist.
+            - likert:
+                id: structure
+                text: This code is structured well.
+                min-label: Disagree
+                max-label: Agree
+                granularity: 5
+            - instruction: If applicable, leave inline feedback where the code is not structured well.
+            - free-form:
+                id: feedback
+                text: Additional Comments

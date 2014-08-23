@@ -9,7 +9,7 @@
 (require "../ct-session.rkt"
          "../database/mysql.rkt"
          "../config.rkt"
-         "errors.rkt")
+         (prefix-in error: "errors.rkt"))
 
 (define (repeat val n)
   (cond
@@ -40,10 +40,16 @@
          (reviewer (ct-session-uid session))
          (class (ct-session-class session))
          (r (review:select-by-hash r-hash)))
-    (if (equal? r 'no-reviews)
-        (let ([display-message "There are no reviews available for you at this time."])
-          (include-template "html/message.html"))
-        (include-template "html/review.html"))))
+    (if (not (validate review session)) (error:error "You are not authorized to see this page.")
+        (if (equal? r 'no-reviews)
+            (let ([display-message "There are no reviews available for you at this time."])
+              (include-template "html/message.html"))
+            (include-template "html/review.html")))))
+
+(define (validate review session)
+  (let ((uid (ct-session-uid session))
+        (reviewer (review:record-reviewer-id review)))
+    (equal? uid reviewer)))
 
 (define (do-submit-review session role rest message)
   (let* ((r-hash (cadr rest))
@@ -60,10 +66,11 @@
 (define (post->review session post-data rest)
   (let* ((r-hash (car rest))
          (review (review:select-by-hash r-hash)))
-    (cond
-      [(equal? (last rest) "save") (post->save-rubric session post-data review)]
-      [(equal? (last rest) "load") (post->load-rubric session review)]
-      [else (four-oh-four)])))
+    (if (not (validate review session)) (error:error "You are not authorized to see this page.")
+        (cond
+          [(equal? (last rest) "save") (post->save-rubric session post-data review)]
+          [(equal? (last rest) "load") (post->load-rubric session review)]
+          [else (error:four-oh-four)]))))
 
 (define (post->save-rubric session post-data review)
   (let ((data (jsexpr->string (bytes->jsexpr post-data)))
@@ -73,12 +80,14 @@
         (reviewee (review:record-reviewee-id review))
         (reviewer (ct-session-uid session))
         (review-id (review:record-review-id review)))
-    (save-rubric class assignment stepName review-id reviewer reviewee data)
-    (response/full
-     200 #"Okay"
-     (current-seconds) #"application/json; charset=utf-8"
-     empty
-     (list (string->bytes/utf-8 "Success")))))
+    (if (not (validate review session)) (error:error "You are not authorized to see this page.")
+        (begin
+          (save-rubric class assignment stepName review-id reviewer reviewee data)
+          (response/full
+           200 #"Okay"
+           (current-seconds) #"application/json; charset=utf-8"
+           empty
+           (list (string->bytes/utf-8 "Success")))))))
   
 (define (post->load-rubric session review)
   (let* ((class (ct-session-class session))
@@ -88,20 +97,22 @@
          (reviewer (ct-session-uid session))
          (review-id (review:record-review-id review))
          (data (retrieve-rubric class assignment stepName review-id reviewer reviewee)))
-    (response/full
-     200 #"Okay"
-     (current-seconds) #"application/json; charset=utf-8"
-     empty
-     (list (string->bytes/utf-8 data)))))
+    (if (not (validate review session)) (error:error "You are not authorized to see this page.")
+        (response/full
+         200 #"Okay"
+         (current-seconds) #"application/json; charset=utf-8"
+         empty
+         (list (string->bytes/utf-8 data))))))
 
 (provide push->file-container)
 (define (push->file-container session post-data rest)
   (let* ((r-hash (car rest))
          (review (review:select-by-hash r-hash)))
-    (cond 
-      [(equal? (last rest) "save") (push->save session post-data review)]
-      [(equal? (last rest) "load") (push->load session review)]
-      [else (four-oh-four)])))
+    (if (not (validate review session)) (error:error "You are not authorized to see this page.")
+        (cond 
+          [(equal? (last rest) "save") (push->save session post-data review)]
+          [(equal? (last rest) "load") (push->load session review)]
+          [else (error:four-oh-four)]))))
 
 (define (push->save session post-data review)
   (let ((data (jsexpr->string (bytes->jsexpr post-data)))
@@ -111,12 +122,14 @@
         (reviewee (review:record-reviewee-id review))
         (reviewer (ct-session-uid session))
         (review-id (review:record-review-id review)))
-    (save-review-comments class assignment stepName review-id reviewer reviewee data)
-    (response/full
-     200 #"Okay"
-     (current-seconds) #"application/json; charset=utf-8"
-     empty
-     (list (string->bytes/utf-8 "Success")))))
+    (if (not (validate review session)) (error:error "You are not authorized to see this page.")
+        (begin
+          (save-review-comments class assignment stepName review-id reviewer reviewee data)
+          (response/full
+           200 #"Okay"
+           (current-seconds) #"application/json; charset=utf-8"
+           empty
+           (list (string->bytes/utf-8 "Success")))))))
 
 (define (push->load session review)
   (let* ((class (ct-session-class session))
@@ -126,11 +139,12 @@
          (reviewer (ct-session-uid session))
          (review-id (review:record-review-id review))
          (data (load-review-comments class assignment stepName review-id reviewer reviewee)))
-    (response/full
-     200 #"Okay"
-     (current-seconds) #"application/json; charset=utf-8"
-     empty
-     (list (string->bytes/utf-8 data)))))
+    (if (not (validate review session)) (error:error "You are not authorized to see this page.")
+        (response/full
+         200 #"Okay"
+         (current-seconds) #"application/json; charset=utf-8"
+         empty
+         (list (string->bytes/utf-8 data))))))
   
 (provide file-container)
 (define (file-container session role rest [message '()])
@@ -154,9 +168,11 @@
          (test-prime (newline))
          (file-path (submission-file-path class reviewee assignment stepName file))
          (contents (if (is-directory? file-path) (render-directory prefix file-path) (render-file file-path))))
-    (string-append (include-template "html/file-container-header.html")
-                   contents
-                   (include-template "html/file-container-footer.html"))))
+    (if (not (validate review session)) (error:error "You are not authorized to see this page.")
+        (if (not (validate review session)) (error:error "You are not authorized to see this page.")
+            (string-append (include-template "html/file-container-header.html")
+                           contents
+                           (include-template "html/file-container-footer.html"))))))
 
 (define (prepare-url word rest)
   (let* ((last-el (last rest))

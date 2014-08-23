@@ -23,7 +23,7 @@
 (require "pages/index.rkt"
          (prefix-in review: "pages/review.rkt")
          "pages/errors.rkt"
-         "pages/author.rkt"
+         (prefix-in author: "pages/author.rkt")
          "pages/next.rkt"
          "pages/assignments.rkt"
          (prefix-in submit: "pages/submit.rkt")
@@ -54,7 +54,7 @@
     [(cons "review" rest) (if post (review:post->review session post-data rest) (render-html session review:load rest))]
     [(cons "file-container" rest) (if post (review:push->file-container session post-data rest) (render-html session review:file-container rest))]
     [(cons "su" (cons uid rest)) (with-sudo post post-data uid session bindings rest)]
-    [(cons "author" rest) (if post (post->validate session post-data rest) (render-html session authoring rest))]
+    [(cons "author" rest) (if post (author:post->validate session post-data rest) (render-html session author:load rest))]
     [(cons "next" rest) (render-html session next rest)]
     [(cons "assignments" rest) (render-html session assignments rest)]
     [(cons "dependencies" rest) (if post (dep:post session rest bindings) (render-html session dep:dependencies rest))]

@@ -23,15 +23,15 @@
 ;; Initializes the assignment table.
 (provide init)
 (define (init)
-  (let ((drop (prepare sql-conn (merge "DROP TABLE IF EXISTS" table)))
-        (create (prepare sql-conn (merge "CREATE TABLE" table "(" 
+  (let ((drop (prepare (sql-conn) (merge "DROP TABLE IF EXISTS" table)))
+        (create (prepare (sql-conn) (merge "CREATE TABLE" table "(" 
                                          assignment-id assignment-id-type ","
                                          class-id class-id-type ","
                                          assignment-open assignment-open-type ","
                                          assignment-ready assignment-ready-type ","
                                          "PRIMARY KEY (" assignment-id "," class-id "))"))))
-    (query-exec sql-conn drop)
-    (query-exec sql-conn create)))
+    (query-exec (sql-conn) drop)
+    (query-exec (sql-conn) create)))
 
 ;; Tries to create the specified assignment for the specified class
 ;; Returns one of the following
@@ -45,29 +45,29 @@
     [(exists? assignment class) 'duplicate-assignment]
     [else
      (let* ((query (merge "INSERT INTO" table "VALUES(?,?,0,0)"))
-            (prep (prepare sql-conn query)))
-       (query-exec sql-conn prep assignment class) 
+            (prep (prepare (sql-conn) query)))
+       (query-exec (sql-conn) prep assignment class) 
        #t)]))
 
 ;; Checks if a particular assignment, class pair exists
 (provide exists?)
 (define (exists? assignment class)
   (let* ((query (merge "SELECT COUNT(*) FROM" table "WHERE" assignment-id "=? AND" class-id "=? LIMIT 1"))
-         (prep (prepare sql-conn query))
-         (result (vector-ref (query-row sql-conn prep assignment class) 0)))
+         (prep (prepare (sql-conn) query))
+         (result (vector-ref (query-row (sql-conn) prep assignment class) 0)))
     (= 1 result)))
 
 (provide all)
 (define (all)
   (let* ((query (merge "SELECT * FROM" table))
-         (prep (prepare sql-conn query)))
-    (query-rows sql-conn prep)))
+         (prep (prepare (sql-conn) query)))
+    (query-rows (sql-conn) prep)))
 
 (define (set-column column-name value)
   (lambda (assignment class)
     (let* ((query (merge "UPDATE" table "SET" column-name "=? WHERE" assignment-id "=? AND" class-id "=?"))
-           (prep (prepare sql-conn query)))
-      (query-exec sql-conn prep value assignment class))))
+           (prep (prepare (sql-conn) query)))
+      (query-exec (sql-conn) prep value assignment class))))
 
 (provide open)
 (define open (set-column assignment-open 1))
@@ -90,8 +90,8 @@
     [(not (class:exists? class)) 'no-such-class]
     [else
      (let* ((query (merge "SELECT" class-id "," assignment-id "," assignment-open "," assignment-ready "FROM" table "WHERE" class-id "=? ORDER BY" assignment-id "ASC"))
-            (prep (prepare sql-conn query))
-            (results (query-rows sql-conn prep class)))
+            (prep (prepare (sql-conn) query))
+            (results (query-rows (sql-conn) prep class)))
        (map result->record results))]))
 
 (define (result->record result)

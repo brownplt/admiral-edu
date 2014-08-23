@@ -28,8 +28,8 @@
                        "FROM information_schema.tables "
                        "WHERE table_schema = 'captain_teach'"
                        "AND table_name = ?;"))
-         (prep (prepare sql-conn query))
-         (result (query-row sql-conn prep review:table))
+         (prep (prepare (sql-conn) query))
+         (result (query-row (sql-conn) prep review:table))
          (count (vector-ref result 0)))
     (> count 0)))
 

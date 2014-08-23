@@ -82,8 +82,8 @@
     (let* ((q (merge "UPDATE" review:table
                      "SET" review:reviewee-id "=?"
                      "WHERE" review:hash "=?"))
-           (prep (prepare sql-conn q))
-           (result (query-exec sql-conn prep uid hash)))
+           (prep (prepare (sql-conn) q))
+           (result (query-exec (sql-conn) prep uid hash)))
       result)))                                                        
 
 (define (get-pending-reviews assignment-id step-id amount)
@@ -97,8 +97,8 @@
                        "ORDER BY" "C DESC,"
                        review:time-stamp "ASC"
                        "LIMIT ?"))
-         (prep (prepare sql-conn query))
-         (result (query-rows sql-conn prep assignment-id class-name step-id amount)))
+         (prep (prepare (sql-conn) query))
+         (result (query-rows (sql-conn) prep assignment-id class-name step-id amount)))
     (printf "results of query: ~a\n" result)
     result))
 
@@ -134,8 +134,8 @@
                            submission:times-reviewed "<=?"
                    "ORDER BY" submission:times-reviewed "ASC," submission:time-stamp "ASC"
                    "LIMIT ?"))
-         (prep (prepare sql-conn q))
-         (query-list (append (list sql-conn prep ) students (list assignment-id class-name step-id amount amount)))
+         (prep (prepare (sql-conn) q))
+         (query-list (append (list (sql-conn) prep ) students (list assignment-id class-name step-id amount amount)))
          (result (apply query-rows query-list))
          (total-found (length result))
          (hold-amount (- amount total-found)))

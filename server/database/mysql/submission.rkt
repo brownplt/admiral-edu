@@ -38,8 +38,8 @@
 ;; Initializes the assignment table.
 (provide init)
 (define (init)
-  (let ((drop (prepare sql-conn (merge "DROP TABLE IF EXISTS" table)))
-        (create (prepare sql-conn (merge "CREATE TABLE" table "(" 
+  (let ((drop (prepare (sql-conn) (merge "DROP TABLE IF EXISTS" table)))
+        (create (prepare (sql-conn) (merge "CREATE TABLE" table "(" 
                                          assignment-id assignment-id-type ","
                                          class-id class-id-type ","
                                          step-id step-id-type ","
@@ -47,16 +47,16 @@
                                          time-stamp time-stamp-type ","
                                          times-reviewed times-reviewed-type ","
                                          "PRIMARY KEY (" assignment-id "," class-id "," step-id "," user-id "))"))))
-    (query-exec sql-conn drop)
-    (query-exec sql-conn create)))
+    (query-exec (sql-conn) drop)
+    (query-exec (sql-conn) create)))
 
 
 ;;TODO Add Instructor-solution field and mark true
 (provide create-instructor-solution)
 (define (create-instructor-solution assignment class step user)
      (let* ((query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),5000)"))
-            (prep (prepare sql-conn query)))
-       (query-exec sql-conn prep assignment class step user)
+            (prep (prepare (sql-conn) query)))
+       (query-exec (sql-conn) prep assignment class step user)
        #t))
 
 ;; Creates a record for the specified assignment, class, step, and user.
@@ -76,8 +76,8 @@
     [(not (role:exists? class user)) 'no-such-user-in-class]
     [else
      (let* ((query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),0)"))
-            (prep (prepare sql-conn query)))
-       (query-exec sql-conn prep assignment class step user)
+            (prep (prepare (sql-conn) query)))
+       (query-exec (sql-conn) prep assignment class step user)
        #t)]))
 
 (provide record record? record-assignment record-class record-step record-user record-time-stamp)
@@ -106,8 +106,8 @@
                                   step-id "=? AND"
                                   user-id "=?"
                           "ORDER BY" time-stamp "DESC"))
-            (prep (prepare sql-conn query))
-            (result (query-rows sql-conn prep assignment class step user))
+            (prep (prepare (sql-conn) query))
+            (result (query-rows (sql-conn) prep assignment class step user))
             (to-record (lambda (vec) (record assignment class step user (vector-ref vec 0)))))
        (map to-record result))]))
 
@@ -119,8 +119,8 @@
                                class-id "=? AND"
                                step-id "=? AND"
                                user-id "=? LIMIT 1"))
-         (prep (prepare sql-conn query))
-         (result (query-row sql-conn prep assignment class step user)))
+         (prep (prepare (sql-conn) query))
+         (result (query-row (sql-conn) prep assignment class step user)))
     (vector-ref result 0)))
 
 (provide increment-reviewed)
@@ -133,8 +133,8 @@
                                class-id "=? AND"
                                step-id "=? AND"
                                user-id "=?"))
-         (prep (prepare sql-conn query)))
-    (query-exec sql-conn prep plusOne assignment class step user)))
+         (prep (prepare (sql-conn) query)))
+    (query-exec (sql-conn) prep plusOne assignment class step user)))
 
 (provide select-least-reviewed)
 (define (select-least-reviewed assignment class step not-users)
@@ -149,9 +149,9 @@
                        "ORDER BY" times-reviewed "ASC"
                        "LIMIT 1"))
          (test (printf "Query:~a\n" query))
-         (prep (prepare sql-conn query))
+         (prep (prepare (sql-conn) query))
          (test (printf "Query prepped.\n"))
-         (arg-list (append `(,sql-conn ,prep ,assignment ,class ,step) not-users))
+         (arg-list (append `(,(sql-conn) ,prep ,assignment ,class ,step) not-users))
          (test (printf "Arg-list:~a\n" arg-list))
          (test (printf "Selecting Least Reviewed.\nQuery:~a\n Argument list:~a\n" query arg-list))
          (result (apply query-row arg-list)))
@@ -179,8 +179,8 @@
                                   step-id "=? AND"
                                   user-id "=?"
                           "LIMIT 1"))
-            (prep (prepare sql-conn query))
-            (result (vector-ref (query-row sql-conn prep assignment class step user) 0)))
+            (prep (prepare (sql-conn) query))
+            (result (vector-ref (query-row (sql-conn) prep assignment class step user) 0)))
        result)]))
 
 (provide exists?)
@@ -192,6 +192,6 @@
                                       step-id "=? AND"
                                       user-id "=?"
                               "LIMIT 1"))
-                (prep (prepare sql-conn query))
-                (result (vector-ref (query-row sql-conn prep assignment class step user) 0)))
+                (prep (prepare (sql-conn) query))
+                (result (vector-ref (query-row (sql-conn) prep assignment class step user) 0)))
            (> result 0)))

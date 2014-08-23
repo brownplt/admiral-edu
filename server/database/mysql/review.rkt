@@ -58,8 +58,8 @@
 ;; Initializes the review table.
 (provide init)
 (define (init)
-  (let ((drop (prepare sql-conn (merge "DROP TABLE IF EXISTS" table)))
-        (create (prepare sql-conn (merge "CREATE TABLE" table "("
+  (let ((drop (prepare (sql-conn) (merge "DROP TABLE IF EXISTS" table)))
+        (create (prepare (sql-conn) (merge "CREATE TABLE" table "("
                                          assignment-id assignment-id-type "," ; 0
                                          class-id class-id-type "," ;1
                                          step-id step-id-type "," ;2
@@ -72,8 +72,8 @@
                                          instructor-solution instructor-solution-type "," ;9
                                          flagged flagged-type "," ; 10
                                          "PRIMARY KEY (" hash "))"))))
-    (query-exec sql-conn drop)
-    (query-exec sql-conn create)))
+    (query-exec (sql-conn) drop)
+    (query-exec (sql-conn) create)))
 
 (provide create)
 (define (ok-reviewee assignment class step reviewee)
@@ -84,9 +84,9 @@
   (when (not (ok-reviewee assignment class step reviewee)) 'no-such-submission)
                                                   ;0 1 2 3 4     5     6 7 8     9   10
   (let* ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,false, false)"))
-         (prep (prepare sql-conn query)))
+         (prep (prepare (sql-conn) query)))
                               ; 0          1    2    3           4        7          8
-    (query-exec sql-conn prep assignment class step reviewee reviewer (random-hash) id)
+    (query-exec (sql-conn)n) prep assignment class step reviewee reviewer (random-hash) id)
     ;; TODO: This is not concurrently safe.
     (when (not (string=? reviewee "HOLD"))
       (submission:increment-reviewed assignment class step reviewee))
@@ -99,7 +99,7 @@
                                class-id "=? AND"
                                step-id "=? AND"
                                reviewer-id "=?"))
-         (prep (prepare sql-conn query)))
+         (prep (prepare (sql-conn) query)))
     #t))
 
 (provide assign-student-reviews)
@@ -122,8 +122,8 @@
 
 (define (create-instructor-review assignment class step reviewee reviewer id)
   (let* ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,true,false)"))
-         (prep (prepare sql-conn query)))
-    (query-exec sql-conn prep assignment class step reviewee reviewer (random-hash) id)))
+         (prep (prepare (sql-conn) query)))
+    (query-exec (sql-conn) prep assignment class step reviewee reviewer (random-hash) id)))
 
 (provide record record? 
          record-class-id 
@@ -160,8 +160,8 @@
                                reviewee-id "=? AND"
                                completed "=true"
                        "ORDER BY" time-stamp "ASC"))
-         (prep (prepare sql-conn query))
-         (result (query-rows sql-conn prep class assignment uid)))
+         (prep (prepare (sql-conn)n) query))
+         (result (query-rows (sql-conn) prep class assignment uid)))
     (map vector->record result)))
 
                        
@@ -170,8 +170,8 @@
   (let* ((query (merge "SELECT" record-fields
                        "FROM" table
                        "WHERE" hash "=? LIMIT 1"))
-         (prep (prepare sql-conn query))
-         (result (query-row sql-conn prep the-hash)))
+         (prep (prepare (sql-conn) query))
+         (result (query-row (sql-conn) prep the-hash)))
     (vector->record result)))
 
       
@@ -181,14 +181,14 @@
   (let* ((query (merge "UPDATE" table
                        "SET" completed "=1"
                        "WHERE" hash "=?"))
-         (prep (prepare sql-conn query)))
-    (query-exec sql-conn prep the-hash)))
+         (prep (prepare (sql-conn) query)))
+    (query-exec (sql-conn) prep the-hash)))
 
 (provide select-reviews)
 (define (select-reviews reviewee)
   (let* ((query (merge "SELECT" hash "FROM" table "WHERE" reviewee-id "=?"))
-         (prep (prepare sql-conn query))
-         (result (query-rows sql-conn prep reviewee)))
+         (prep (prepare (sql-conn) query))
+         (result (query-rows (sql-conn) prep reviewee)))
     (flatten (map vector->list result))))
 
 (provide select-assigned-reviews)
@@ -199,8 +199,8 @@
                                assignment-id "=? AND"
                                step-id "=? AND"
                                reviewer-id "=?"))
-         (prep (prepare sql-conn query))
-         (result (query-rows sql-conn prep class assignment step uid)))
+         (prep (prepare (sql-conn) query))
+         (result (query-rows (sql-conn) prep class assignment step uid)))
     (flatten (map vector->list result))))
     
 
@@ -214,8 +214,8 @@
                                reviewer-id "=? AND"
                                review-id "=? AND"
                                completed "=true"))
-         (prep (prepare sql-conn query))
-         (result (vector-ref (query-row sql-conn prep assignment class step reviewer id) 0)))
+         (prep (prepare (sql-conn) query))
+         (result (vector-ref (query-row (sql-conn) prep assignment class step reviewer id) 0)))
     (> result 0)))
 
 (provide count-completed)
@@ -228,8 +228,8 @@
                                reviewer-id "=? AND"
                                completed "=1 AND"
                                review-id "=?"))
-         (prep (prepare sql-conn query))
-         (result (vector-ref (query-row sql-conn prep assignment class step reviewer id) 0)))
+         (prep (prepare (sql-conn) query))
+         (result (vector-ref (query-row (sql-conn) prep assignment class step reviewer id) 0)))
     result))
 
 (provide count)
@@ -240,8 +240,8 @@
                                class-id "=? AND"
                                step-id "=? AND"
                                reviewee-id "=?"))
-         (prep (prepare sql-conn query))
-         (result (vector-ref (query-row sql-conn prep assignment class step reviewee) 0)))
+         (prep (prepare (sql-conn) query))
+         (result (vector-ref (query-row (sql-conn) prep assignment class step reviewee) 0)))
     result))
 
 (define (random-hash)

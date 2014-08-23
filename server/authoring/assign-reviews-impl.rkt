@@ -17,7 +17,7 @@
             [(student-submission? review) (review:assign-student-reviews assignment-id class-name step-id uid review-id amount)]))))
 
 (provide select-least-reviewed)
-(define (select-least-reviewed-gets-reviewed sql-conn assignment class step not-user)
+(define (select-least-reviewed-gets-reviewed (sql-conn) assignment class step not-user)
   (let* ((query (merge "SELECT" user-id
                        "FROM" table
                        "WHERE" assignment-id "=? AND"
@@ -26,6 +26,6 @@
                                user-id "!=?"
                        "ORDER BY" times-reviewed "ASC"
                        "LIMIT 1"))
-         (prep (prepare sql-conn query))
-         (result (query-row sql-conn prep assignment class step not-user)))
+         (prep (prepare (sql-conn) query))
+         (result (query-row (sql-conn) prep assignment class step not-user)))
     (vector-ref result 0)))

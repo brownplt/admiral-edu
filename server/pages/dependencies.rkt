@@ -41,11 +41,11 @@
     (let* ((sid (assign:dependency-step-id dep))
            (rid (assign:dependency-review-id dep))
            (inst (if (assign:dependency-instructor-solution dep) " - <b>Instructor Solution</b>" ""))
-           (a-start (if (assign:dependency-met dep) "" (string-append "<a href=\"" base-url assignment-id "/" sid "/" rid "/\">")))
-           (a-end (if (assign:dependency-met dep) " - Ready" " - Dependencies Missing</a>")))
+           (a-start (string-append "<a href=\"" base-url assignment-id "/" sid "/" rid "/\">"))
+           (a-end (if (assign:dependency-met dep) " - Ready" " - Dependencies Missing")))
       (string-append "<li>" 
                      a-start
-                     sid ":" rid inst 
+                     sid ":" rid inst  "</a>"
                      a-end 
                      "</li>"))))
   
@@ -53,7 +53,7 @@
   (let* ((dep (car (assign:find-dependencies assignment step review-id)))
          (met (assign:dependency-met dep))
          [load-url (xexpr->string (string-append "\"" base-url (string-join rest "/") "/load\""))]
-         [dependency-form (if met (dependency-met assignment step review-id) (generate-dependency-form assignment step review-id))])
+         [dependency-form (generate-dependency-form assignment step review-id)]) ;;(if met (dependency-met assignment step review-id) (generate-dependency-form assignment step review-id))])
     (include-template "html/dependency.html")))
 
 (define (dependency-met assignment-id step-id review-id)

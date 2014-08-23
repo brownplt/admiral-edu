@@ -344,15 +344,16 @@
                 (cond [validation validation]
                       [else ;; (create-database-entries assignment)
                             (create-base-rubrics assignment)
-                            (check-no-reviews assignment)#t]))]))
+                            (check-no-reviews assignment) #t]))]))
 
 (define (check-no-reviews assignment)
-  (let ((no-reviews (null? (filter (no-reviews? (Assignment-steps assignment)))))
+  (printf "Checking reviews: ~a\n\n" assignment)
+  (let ((no-reviews (null? (filter no-reviews? (Assignment-steps assignment))))
         (assignment-id (Assignment-id assignment)))
-    (if no-reviews (assignment:mark-ready assignment-id class-name) #f)))
+    (if no-reviews (assignment:mark-ready assignment-id class-name) (assignment:mark-not-ready assignment-id class-name))))
 
 (define (no-reviews? step)
-  (null? (Step-reviews step)))
+  (not (null? (Step-reviews step))))
     
 
 (define (create-database-entries assignment)

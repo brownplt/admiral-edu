@@ -4,6 +4,8 @@
          "dispatch.rkt"
          "config.rkt")
 
+(initialize)
+
 (define stop
   (serve #:dispatch (dispatch/servlet ct-rules)
          #:port ct-port))

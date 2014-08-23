@@ -12,7 +12,7 @@
          (prefix-in assign: "../authoring/assignment.rkt")
          "errors.rkt")
 
-(define base-url "/ct/dependencies/")
+(define base-url (string-append "/" class-name "/dependencies/"))
 
 (define (repeat val n)
   (cond
@@ -30,7 +30,7 @@
   (cond [(not (assignment:exists? assignment-id class-name)) (error-page "The assignment id '" assignment-id "' was not found.")]
         [else (let* ((deps (assign:assignment-id->assignment-dependencies assignment-id))
                      [assignment-id assignment-id]
-                     [dependency-list (string-append "<p><a href='/ct/assignments/'>Back to Assignments</a></p>"
+                     [dependency-list (string-append "<p><a href='/" class-name "/assignments/'>Back to Assignments</a></p>"
                                                      (string-join (map (dep->html assignment-id) deps) "\n"))]
                      [message-text (if message message "")])
                 (include-template "html/dependency-list.html"))]))

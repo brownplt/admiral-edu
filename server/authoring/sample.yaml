@@ -7,7 +7,7 @@ steps:
     reviews:
       - student-submission:
           id: student-review
-          amount: 1
+          amount: 3
           rubric:
             - likert:
                 id: correctness
@@ -30,21 +30,21 @@ steps:
     reviews:
       - student-submission:
           id: student-review
-          amount: 1
+          amount: 3
           rubric:
             - likert:
                 id: behavior
                 text: This code correctly implements the desired behavior.
-                min-label: Disagree
-                max-label: Agree
-                granularity: 9
+                min-label: "False"
+                max-label: "True"
+                granularity: 5
             - instruction: If applicable, leave inline feedback where the incorrect behaviors exist.
             - likert:
                 id: structure
                 text: This code is structured well.
                 min-label: Disagree
                 max-label: Agree
-                granularity: 9
+                granularity: 5
             - instruction: If applicable, leave inline feedback where the code is not structured well.
             - free-form:
                 id: feedback

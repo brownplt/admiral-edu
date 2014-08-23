@@ -8,7 +8,8 @@ ENV = -e ClientID=$(ClientID) \
 	-e RedirectUri=$(RedirectUri) \
 	-e BaseUrl=$(BaseUrl) \
 	-e CryptoPassphrase=$(CryptoPassphrase) \
-	-e AdminEmail=$(AdminEmail)
+	-e AdminEmail=$(AdminEmail) \
+	-e ClassName=$(ClassName)
 
 all:
 	docker build -t $(TAG) .

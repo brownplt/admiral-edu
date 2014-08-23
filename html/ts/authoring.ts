@@ -3,6 +3,7 @@
 
 declare function save(content, callback);
 declare function load(callback) : string;
+declare function getClassName() : string;
 
 module Authoring {
 
@@ -111,7 +112,7 @@ var instance;
 function handleResponse(response){
     var response = response.currentTarget.response;
     if(response === "Success"){
-	window.location.href = "/ct/assignments/";
+	window.location.href = "/" + getClassName() + "/assignments/";
     }else{
 	alert(response);
     }

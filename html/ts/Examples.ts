@@ -25,7 +25,7 @@ module Authoring {
 	fields : Field[];
 	desc: string[];
 	usages : string[];
-	hidden : bool;
+	hidden : boolean;
 	
 	constructor(name : string){
 	    this.name = name;

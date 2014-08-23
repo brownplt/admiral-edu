@@ -20,19 +20,6 @@
 (define (applicative xs ls)
   (map (lambda (f) (map f xs)) ls))
 
-(define (run-initialize)
-  (initialize)
-  (delete-file "files/")
-  (let ((users (map (lambda (vec) (vector-ref vec 0)) (user:all)))
-        (assignments '(("clock" "cmpsi220") ("tic-tac-toe" "cmpsci220")))
-        (steps '("tests" "implementation")))
-    (map ((erase-directory '("clock" "cmpsci220")) "tests") users )
-    (map ((erase-directory '("clock" "cmpsci220")) "implementation") users )
-    #t))
-    
-;; Resets the database to a fresh configuration
-(run-initialize)
-
 (require "pages/index.rkt"
          (prefix-in review: "pages/review.rkt")
          "pages/errors.rkt"
@@ -63,7 +50,6 @@
   (print (list post path)) (newline)
   (match path
     ['() (if post (post->render session post->index bindings) (render session index))]
-    [(cons "initialize" rest) ((lambda () (run-initialize) (render session initialization)))]
     [(list "") (if post (post->render session post->index bindings) (render session index))]
     [(cons "review" rest) (if post (review:post->review session post-data rest) (render-html session review:load rest))]
     [(cons "file-container" rest) (if post (review:push->file-container session post-data rest) (render-html session review:file-container rest))]

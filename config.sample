@@ -5,8 +5,9 @@ ClientID = very-long-string.apps.googleusercontent.com
 ClientSecret = shorter-string
 
 # This the URL where the site is hosted (no trailing slash)
-# Upon authentication, Google will redirect to BaseUrl/ct/redirect
+# Upon authentication, Google will redirect to BaseUrl/ClassName/redirect
 BaseUrl = https://localhost
+ClassName = ct
 
 CryptoPassphrase = aBetterPassword
 

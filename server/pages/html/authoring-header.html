@@ -10,6 +10,11 @@
     <link rel="stylesheet" href="/css/authoring.css">
 
     <script>
+      
+      function getClassName(){
+	  return "@class-name";
+      }
+
       function save(content, callback){
           console.log("Attempting to save to " + @save-url);
 	  var xhr = new XMLHttpRequest();

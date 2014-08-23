@@ -22,6 +22,7 @@
 (define (authoring session role rest [message '()])
   (let* ([save-url "\"validate\""]
          [load-url "test"]
+         [class-name class-name]
          (contents ""))
     (string-append (include-template "html/authoring-header.html")
                    contents

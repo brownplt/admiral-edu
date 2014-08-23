@@ -1,6 +1,7 @@
 #lang racket
 
 (require "mysql/common.rkt"
+         db
          (prefix-in class: "mysql/class.rkt") 
          (prefix-in user: "mysql/user.rkt")
          (prefix-in role: "mysql/role.rkt")
@@ -19,6 +20,18 @@
   (assignment:init)
   (submission:init)
   (review:init))
+
+;; Returns #t if init-db has been called and #f otherwise
+(provide init-db?)
+(define (init-db?)
+  (let* ((query (merge "SELECT COUNT(*)"
+                       "FROM information_schema.tables "
+                       "WHERE table_schema = 'captain_teach'"
+                       "AND table_name = ?;"))
+         (prep (prepare sql-conn query))
+         (result (query-row sql-conn prep review:table))
+         (count (vector-ref result 0)))
+    (> count 0)))
 
 
 ;; User Table

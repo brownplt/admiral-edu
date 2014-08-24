@@ -47,8 +47,7 @@
            (bindings (request-bindings req))
            (post-data (request-post-data/raw req))
            (clean-path (filter (lambda (x) (not (equal? "" x))) path))
-           (result (handlerPrime post post-data session bindings clean-path)))
-      (printf "Done.\n")
+           (result (with-handlers ([any? error:exception-occurred]) (handlerPrime post post-data session bindings clean-path))))
       result)))
       ;(with-handlers ([any? error:exception-occurred]) (handlerPrime post post-data session bindings clean-path)))))
 

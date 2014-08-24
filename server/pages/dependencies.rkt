@@ -10,7 +10,7 @@
          "../database/mysql.rkt"
          "../config.rkt"
          (prefix-in assign: "../authoring/assignment.rkt")
-         "errors.rkt")
+         (prefix-in error: "errors.rkt"))
 
 (define base-url (string-append "/" class-name "/dependencies/"))
 
@@ -27,7 +27,7 @@
           [(> len 2) (dependencies-form (car rest) (cadr rest) (caddr rest) rest)])))
 
 (define (assignment-dependencies assignment-id [message #f])
-  (cond [(not (assignment:exists? assignment-id class-name)) (error-page "The assignment id '" assignment-id "' was not found.")]
+  (cond [(not (assignment:exists? assignment-id class-name)) (error:error-page "The assignment id '" assignment-id "' was not found.")]
         [else (let* ((deps (assign:assignment-id->assignment-dependencies assignment-id))
                      [assignment-id assignment-id]
                      [dependency-list (string-append "<p><a href='/" class-name "/assignments/'>Back to Assignments</a></p>"
@@ -88,23 +88,25 @@
 
 (define (upload-submissions class assignment-id step-id review-id bindings)
   (let* ((dep (car (assign:find-dependencies assignment-id step-id review-id)))
-         (amount (assign:dependency-amount dep)))
-    (run-submissions class assignment-id step-id review-id bindings amount) 
+         (amount (assign:dependency-amount dep))
+         (result (run-submissions class assignment-id step-id review-id bindings amount) ))
     (response/full
      200 #"Okay"
      (current-seconds) TEXT/HTML-MIME-TYPE
      empty
-     (list (string->bytes/utf-8 (assignment-dependencies assignment-id "<p>Dependencies uploaded.</p>"))))))
+     (list (string->bytes/utf-8 result)))))
 
 (define (run-submissions class assignment stepName review-id bindings amount)
   (letrec ((helper (lambda (n)
-                     (if (<= n 0) #t
+                     (if (<= n 0) (assignment-dependencies assignment "<p>Dependencies uploaded.</p>")
                          (let* ((sym (string->symbol (string-append "file-" (number->string n))))
                                 (uname (assign:default-submission review-id n))
                                 (data (extract-binding/single sym bindings)))
-                           (upload-instructor-solution class uname assignment stepName data)
-                           (assign:check-ready assignment)
-                           (helper (- n 1)))))))
+                           (let ((result (upload-instructor-solution class uname assignment stepName data)))
+                             (if (not result) (error:error (string-append "Failed to upload dependency for " stepName ". This is most likely because the file provided was not a zip archive."))
+                                 (begin
+                                   (assign:check-ready assignment)
+                                   (helper (- n 1))))))))))
     (helper amount)))
 
 ;(struct dependency (step-id review-id amount instructor-solution) #:transparent)

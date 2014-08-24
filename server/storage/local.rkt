@@ -3,6 +3,7 @@
 (require "../database/mysql.rkt")
 (require "common.rkt")
 
+; Returns #t if successful and #f if failute
 (provide upload-instructor-solution)
 (define (upload-instructor-solution class user assignment step data)
   (let* ((path (create-directory class assignment user step))
@@ -12,24 +13,26 @@
     (map delete-file files)
     (map delete-file subs)
 ;    (printf "After delete: ~a\n\n" (map (lambda (x) (string-append path "/" x)) (sub-directories-of path)))
-    (let ((out (open-output-file (string-append path "/submission.tar") #:exists 'replace)))
+    (let ((out (open-output-file (string-append path "/submission.zip") #:exists 'replace)))
 ;      (print (list "Creating instructor submission" path)) (newline)
       (display data out)
       (close-output-port out)
-      (unarchive path)
-      (when (not (submission:exists? assignment class step user)) (submission:create-instructor-solution assignment class step user))
-      (delete-file (string-append path "/submission.tar")))))
-
+      (let ((result (unarchive path)))
+        (when result (when (not (submission:exists? assignment class step user)) (submission:create-instructor-solution assignment class step user)))
+        (delete-file (string-append path "/submission.zip"))
+        result))))
+      
+; Returns #t if successful and #f if failute
 (provide upload-submission)
 (define (upload-submission class user assignment step data)
   (let* ((path (create-directory class assignment user step))
-         (out (open-output-file (string-append path "/submission.tar") #:exists 'replace)))
+         (out (open-output-file (string-append path "/submission.zip") #:exists 'replace)))
     (display data out)
     (close-output-port out)
-    (unarchive path)
-    ;;TODO This should be abstracted
-    (submission:create assignment class step user)
-    (delete-file (string-append path "/submission.tar"))))
+    (let ((result (unarchive path)))
+      (when result (submission:create assignment class step user))
+      (delete-file (string-append path "/submission.zip"))
+      result)))
 
 (provide export-assignment)
 (define (export-assignment class assignment)

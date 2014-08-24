@@ -46,4 +46,4 @@
 ;; This also needs to be able to handle invalid file types
 (provide unarchive)
 (define (unarchive path)
-  (system (string-append "tar -xf " path "/submission.tar -C " path)))
+  (system (string-append "unzip " path "/submission.zip -d " path)))

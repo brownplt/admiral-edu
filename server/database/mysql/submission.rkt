@@ -38,8 +38,9 @@
 ;; Initializes the assignment table.
 (provide init)
 (define (init)
-  (let ((drop (prepare (sql-conn) (merge "DROP TABLE IF EXISTS" table)))
-        (create (prepare (sql-conn) (merge "CREATE TABLE" table "(" 
+  (let* ((conn (make-sql-conn))
+         (drop (prepare conn (merge "DROP TABLE IF EXISTS" table)))
+        (create (prepare conn (merge "CREATE TABLE" table "(" 
                                          assignment-id assignment-id-type ","
                                          class-id class-id-type ","
                                          step-id step-id-type ","
@@ -47,16 +48,19 @@
                                          time-stamp time-stamp-type ","
                                          times-reviewed times-reviewed-type ","
                                          "PRIMARY KEY (" assignment-id "," class-id "," step-id "," user-id "))"))))
-    (query-exec (sql-conn) drop)
-    (query-exec (sql-conn) create)))
+    (query-exec conn drop)
+    (query-exec conn create)
+    (release conn)))
 
 
 ;;TODO Add Instructor-solution field and mark true
 (provide create-instructor-solution)
 (define (create-instructor-solution assignment class step user)
-     (let* ((query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),5000)"))
-            (prep (prepare (sql-conn) query)))
-       (query-exec (sql-conn) prep assignment class step user)
+     (let* ((conn (make-sql-conn))
+            (query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),5000)"))
+            (prep (prepare conn query)))
+       (query-exec conn prep assignment class step user)
+       (release conn)
        #t))
 
 ;; Creates a record for the specified assignment, class, step, and user.
@@ -75,9 +79,11 @@
     [(not (user:exists? user)) 'no-such-user]
     [(not (role:exists? class user)) 'no-such-user-in-class]
     [else
-     (let* ((query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),0)"))
-            (prep (prepare (sql-conn) query)))
-       (query-exec (sql-conn) prep assignment class step user)
+     (let* ((conn (make-sql-conn))
+            (query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),0)"))
+            (prep (prepare conn query)))
+       (query-exec conn prep assignment class step user)
+       (release conn)
        #t)]))
 
 (provide record record? record-assignment record-class record-step record-user record-time-stamp)
@@ -99,33 +105,38 @@
     [(not (user:exists? user)) 'no-such-user]
     [(not (role:exists? class user)) 'no-such-user-in-class]
     [else
-     (let* ((query (merge "SELECT" time-stamp
+     (let* ((conn (make-sql-conn))
+            (query (merge "SELECT" time-stamp
                           "FROM" table 
                           "WHERE" assignment-id "=? AND"
                                   class-id "=? AND"
                                   step-id "=? AND"
                                   user-id "=?"
                           "ORDER BY" time-stamp "DESC"))
-            (prep (prepare (sql-conn) query))
-            (result (query-rows (sql-conn) prep assignment class step user))
+            (prep (prepare conn query))
+            (result (query-rows conn prep assignment class step user))
             (to-record (lambda (vec) (record assignment class step user (vector-ref vec 0)))))
+       (release conn)
        (map to-record result))]))
 
 (provide reviewed)
 (define (reviewed assignment class step user)
-  (let* ((query (merge "SELECT" times-reviewed
+  (let* ((conn (make-sql-conn))
+         (query (merge "SELECT" times-reviewed
                        "FROM" table
                        "WHERE" assignment-id "=? AND"
                                class-id "=? AND"
                                step-id "=? AND"
                                user-id "=? LIMIT 1"))
-         (prep (prepare (sql-conn) query))
-         (result (query-row (sql-conn) prep assignment class step user)))
+         (prep (prepare conn query))
+         (result (query-row conn prep assignment class step user)))
+    (release conn)
     (vector-ref result 0)))
 
 (provide increment-reviewed)
 (define (increment-reviewed assignment class step user)
-  (let* ((current (reviewed assignment class step user))
+  (let* ((conn (make-sql-conn))
+         (current (reviewed assignment class step user))
          (plusOne (+ current 1))
          (query (merge "UPDATE" table
                        "SET" times-reviewed "=?"
@@ -133,13 +144,15 @@
                                class-id "=? AND"
                                step-id "=? AND"
                                user-id "=?"))
-         (prep (prepare (sql-conn) query)))
-    (query-exec (sql-conn) prep plusOne assignment class step user)))
+         (prep (prepare conn query)))
+    (query-exec conn prep plusOne assignment class step user)
+    (release conn)))
 
 (provide select-least-reviewed)
 (define (select-least-reviewed assignment class step not-users)
   (print "In select-least-reviewed") (newline)
-  (let* ((user-commas (string-join (build-list (length not-users) (lambda (n) "?")) ","))
+  (let* ((conn (make-sql-conn))
+         (user-commas (string-join (build-list (length not-users) (lambda (n) "?")) ","))
          (query (merge "SELECT" user-id
                        "FROM" table
                        "WHERE" assignment-id "=? AND"
@@ -149,12 +162,13 @@
                        "ORDER BY" times-reviewed "ASC"
                        "LIMIT 1"))
          (test (printf "Query:~a\n" query))
-         (prep (prepare (sql-conn) query))
+         (prep (prepare conn query))
          (test (printf "Query prepped.\n"))
-         (arg-list (append `(,(sql-conn) ,prep ,assignment ,class ,step) not-users))
+         (arg-list (append `(,conn ,prep ,assignment ,class ,step) not-users))
          (test (printf "Arg-list:~a\n" arg-list))
          (test (printf "Selecting Least Reviewed.\nQuery:~a\n Argument list:~a\n" query arg-list))
          (result (apply query-row arg-list)))
+    (release conn)
     (vector-ref result 0)))
 
 ;; Given an assignment, class, step, and user, returns the number of entries that have been created
@@ -172,26 +186,30 @@
     [(not (user:exists? user)) 'no-such-user]
     [(not (role:exists? class user)) 'no-such-user-in-class]
     [else
-     (let* ((query (merge "SELECT COUNT(*)"
+     (let* ((conn (make-sql-conn))
+            (query (merge "SELECT COUNT(*)"
                           "FROM" table 
                           "WHERE" assignment-id "=? AND"
                                   class-id "=? AND"
                                   step-id "=? AND"
                                   user-id "=?"
                           "LIMIT 1"))
-            (prep (prepare (sql-conn) query))
-            (result (vector-ref (query-row (sql-conn) prep assignment class step user) 0)))
+            (prep (prepare conn query))
+            (result (vector-ref (query-row conn prep assignment class step user) 0)))
+       (release conn)
        result)]))
 
 (provide exists?)
 (define (exists? assignment class step user)
-         (let* ((query (merge "SELECT COUNT(*)"
+         (let* ((conn (make-sql-conn))
+                (query (merge "SELECT COUNT(*)"
                               "FROM" table
                               "WHERE" assignment-id "=? AND"
                                       class-id "=? AND"
                                       step-id "=? AND"
                                       user-id "=?"
                               "LIMIT 1"))
-                (prep (prepare (sql-conn) query))
-                (result (vector-ref (query-row (sql-conn) prep assignment class step user) 0)))
+                (prep (prepare conn query))
+                (result (vector-ref (query-row conn prep assignment class step user) 0)))
+           (release conn)
            (> result 0)))

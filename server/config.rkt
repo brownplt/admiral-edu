@@ -1,6 +1,6 @@
 #lang racket
 
-(require "storage/local.rkt")
+(require "storage/google-cloud-storage.rkt")
 (require "database/mysql.rkt")
 
 (provide ct-port)
@@ -11,7 +11,7 @@
 
 (provide upload-submission)
 (provide retrieve-submission-file retrieve-file submission-file-path)
-(provide (all-from-out "storage/local.rkt"))
+(provide (all-from-out "storage/google-cloud-storage.rkt"))
 (provide sub-directories-of list-files)
 (provide is-directory?)
 (provide is-file?)

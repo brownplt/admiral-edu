@@ -159,6 +159,11 @@ ADD rubrics/implementation-rubric.json /home/admiraledu/reviews/cmpsci220/clock/
 ADD rubrics/tests-rubric.json /home/admiraledu/reviews/cmpsci220/clock/tests/rubric.json
 
 #
+# Copy Cloud Keys
+#
+ADD .cloud-keys /home/admiraledu/.cloud-keys
+
+#
 # Run AdmiralEdu
 #
 

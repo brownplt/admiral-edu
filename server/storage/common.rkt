@@ -13,13 +13,13 @@
         '() ls))))
 
 (provide root)
-(define root '("home" "admiraledu"))
+(define root '())
 
 (define path-delim "/")
 
 (provide to-path)
 (define (to-path ls)
-  (foldr string-append "" (cons path-delim (intercalate path-delim ls))))
+  (substring (foldr string-append "" (cons path-delim (intercalate path-delim ls))) 1))
 
 (define (create-path-list class assignment user step)
   (append root (list class assignment user step)))
@@ -36,8 +36,9 @@
                           ;; Could be improved to O(n). However, n is a constant so in practice
                           ;; this shouldn't be an issue.
                      (let ((path (to-path (reverse acc))))
-                       (if (not (directory-exists? path)) 
-                           (make-directory path) '())
+                       (when (not (equal? "" path))
+                         (if (not (directory-exists? path)) 
+                             (make-directory path) '()))
                        (if (null? rest) path (helper (cons (car rest) acc) (cdr rest)))))))
     (helper (reverse root) path-list)))
 

@@ -21,16 +21,18 @@
 ;; Initializes the role table.
 (provide init)
 (define (init)
-  (let* ((drop-query (merge "DROP TABLE IF EXISTS" table))
-         (drop (prepare (sql-conn) drop-query))
+  (let* ((conn (make-sql-conn))
+         (drop-query (merge "DROP TABLE IF EXISTS" table))
+         (drop (prepare conn drop-query))
          (create-query (merge "CREATE TABLE" table "(" 
                                          class-id class-id-type ","
                                          user-id user-id-type ","
                                          role-id role-id-type ","
                                          "PRIMARY KEY (" class-id "," user-id "))"))
-         (create (prepare (sql-conn) create-query)))
-    (query-exec (sql-conn) drop)
-    (query-exec (sql-conn) create)))
+         (create (prepare conn create-query)))
+    (query-exec conn drop)
+    (query-exec conn create)
+    (release conn)))
 
 ;; Retrieve a roles:role for a class/user
 (provide select)
@@ -45,8 +47,10 @@
                                table "." class-id "=? AND"
                                table "." user-id "=?" 
                        "LIMIT 1"))
-         (prep (prepare (sql-conn) query))
-         (result (try-with-default #f query-row (sql-conn) prep class uid)))
+         (conn (make-sql-conn))
+         (prep (prepare conn query))
+         (result (try-with-default #f query-row conn prep class uid)))
+    (release conn)
     (if (not result) result
         (let ((id (vector-ref result 0))
               (name (vector-ref result 1))
@@ -56,27 +60,35 @@
 ;; Returns #t if the class, user combination exists and #f otherwise
 (provide exists?)
 (define (exists? class user)
-  (let* ((query (merge "SELECT COUNT(*) FROM" table "WHERE" class-id "=? AND" user-id "=? LIMIT 1"))
-         (prep (prepare (sql-conn) query))
-         (result (vector-ref (query-row (sql-conn) prep class user) 0)))
+  (let* ((conn (make-sql-conn))
+         (query (merge "SELECT COUNT(*) FROM" table "WHERE" class-id "=? AND" user-id "=? LIMIT 1"))
+         (prep (prepare conn query))
+         (result (vector-ref (query-row conn prep class user) 0)))
+    (release conn)
     (= 1 result)))
     
 ;; Associates a class and user id with the specified role id. Returns #t if successful and #f otherwise.
 (provide associate)
 (define (associate class uid role-id)
   ;; TODO: Validate that the class, uid, and role exist
-  (let ((create (prepare (sql-conn) (merge "INSERT INTO" table "values(?,?,?)"))))
-    (if (eq? #f (try-with-default #f query-exec (sql-conn) create class uid role-id)) #f #t)))
+  (let* ((conn (make-sql-conn))
+         (create (prepare conn (merge "INSERT INTO" table "values(?,?,?)")))
+         (result (if (eq? #f (try-with-default #f query-exec conn create class uid role-id)) #f #t)))
+    (release conn)
+    result))
 
 ;; Retrieve all students for a class
 (provide in-class)
 (define (in-class class s-role limit page)
-  (let* ((lower (* limit page))
+  (let* ((conn (make-sql-conn))
+         (lower (* limit page))
          (upper (+ lower limit))
          (query (merge "SELECT" user-id "FROM" table "WHERE" class-id "=? AND" role-id "=? LIMIT ?, ?"))
-         (prepped (prepare (sql-conn) query))
-         (to-record (lambda (result) (user (vector-ref result 0) class 0))))
-    (map to-record (query-rows (sql-conn) query class s-role lower upper))))
+         (prepped (prepare conn query))
+         (to-record (lambda (result) (user (vector-ref result 0) class 0)))
+         (result (map to-record (query-rows conn query class s-role lower upper))))
+    (release conn)
+    result))
 
 (provide user user-uid user-class user-role)
 (struct user (uid class role) #:transparent)

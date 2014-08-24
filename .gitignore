@@ -6,3 +6,5 @@ cs220-server
 sample
 *.bak
 config
+
+.cloud-keys

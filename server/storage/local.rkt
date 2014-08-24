@@ -56,6 +56,7 @@
     (display contents out)
     (close-output-port out)))
 
+(provide ensure-path-exists)
 (define (ensure-path-exists path)
   (let* ((split (string-split path "/"))
          (withoutFile (take split (- (length split) 1)))

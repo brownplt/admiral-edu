@@ -12,28 +12,37 @@
 ;; Initializes the class table.
 (provide init)
 (define (init)
-  (let ((drop (prepare (sql-conn) (merge "DROP TABLE IF EXISTS" table)))
-        (create (prepare (sql-conn) (merge "CREATE TABLE" table "(" id id-type "unique)"))))
-    (query-exec (sql-conn) drop)
-    (query-exec (sql-conn) create)))
+  (let* ((conn (make-sql-conn))
+        (drop (prepare conn (merge "DROP TABLE IF EXISTS" table)))
+        (create (prepare conn (merge "CREATE TABLE" table "(" id id-type "unique)"))))
+    (query-exec conn drop)
+    (query-exec conn create)
+    (release conn)))
 
 ;; Retrieve all classes
 (provide all)
 (define (all)
-  (let ((query (prepare (sql-conn) (merge "SELECT * FROM" table))))
-    (query-rows (sql-conn) query)))
+  (let* ((conn (make-sql-conn))
+         (query (prepare conn (merge "SELECT * FROM" table)))
+         (result (query-rows conn query)))
+    (release conn)
+    result))
 
 ;; Creates a record in the class table
 (provide create)
 (define (create id)
-  (let ((create (prepare (sql-conn) (merge "INSERT INTO" table "values(?)"))))
-    (query-exec (sql-conn) create id)))
+  (let* ((conn (make-sql-conn))
+         (create (prepare conn (merge "INSERT INTO" table "values(?)"))))
+    (query-exec conn create id)
+    (release conn)))
 
 ;; Checks that a class exists
 (provide exists?)
 (define (exists? class)
-  (let* ((query (merge "SELECT COUNT(*) FROM" table "WHERE" id "=? LIMIT 1"))
-         (prepped (prepare (sql-conn) query))
-         (result (vector-ref (query-row (sql-conn) prepped class) 0)))
+  (let* ((conn (make-sql-conn))
+         (query (merge "SELECT COUNT(*) FROM" table "WHERE" id "=? LIMIT 1"))
+         (prepped (prepare conn query))
+         (result (vector-ref (query-row conn prepped class) 0)))
+    (release conn)
     (= 1 result)))
          

@@ -58,8 +58,9 @@
 ;; Initializes the review table.
 (provide init)
 (define (init)
-  (let ((drop (prepare (sql-conn) (merge "DROP TABLE IF EXISTS" table)))
-        (create (prepare (sql-conn) (merge "CREATE TABLE" table "("
+  (let* ((conn (make-sql-conn))
+         (drop (prepare conn (merge "DROP TABLE IF EXISTS" table)))
+         (create (prepare conn (merge "CREATE TABLE" table "("
                                          assignment-id assignment-id-type "," ; 0
                                          class-id class-id-type "," ;1
                                          step-id step-id-type "," ;2
@@ -72,8 +73,9 @@
                                          instructor-solution instructor-solution-type "," ;9
                                          flagged flagged-type "," ; 10
                                          "PRIMARY KEY (" hash "))"))))
-    (query-exec (sql-conn) drop)
-    (query-exec (sql-conn) create)))
+    (query-exec conn drop)
+    (query-exec conn create)
+    (release conn)))
 
 (provide create)
 (define (ok-reviewee assignment class step reviewee)
@@ -83,24 +85,19 @@
   ;; TODO(joe): should this be an error?
   (when (not (ok-reviewee assignment class step reviewee)) 'no-such-submission)
                                                   ;0 1 2 3 4     5     6 7 8     9   10
-  (let* ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,false, false)"))
-         (prep (prepare (sql-conn) query)))
+  (let* ((conn (make-sql-conn))
+         (query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,false, false)"))
+         (prep (prepare conn query)))
                               ; 0           1     2    3           4        7         8
-    (query-exec (sql-conn) prep assignment class step reviewee reviewer (random-hash) id)
+    (query-exec conn prep assignment class step reviewee reviewer (random-hash) id)
+    (release conn)
     ;; TODO: This is not concurrently safe.
     (when (not (string=? reviewee "HOLD"))
       (submission:increment-reviewed assignment class step reviewee))
+    
     #t))
 
-(define (count-assigned assignment class step uid review-id)
-  (let* ((query (merge "SELECT COUNT(*)"
-                       "FROM" table
-                       "WHERE" assignment-id "=? AND"
-                               class-id "=? AND"
-                               step-id "=? AND"
-                               reviewer-id "=?"))
-         (prep (prepare (sql-conn) query)))
-    #t))
+
 
 (provide assign-student-reviews)
 (define (assign-student-reviews assignment class step uid review-id amount)
@@ -111,7 +108,8 @@
 
 (define (assign-student-review assignment class step uid review-id)
   ;; TODO(joe): Probably a performance hit to run this query in this way. Would be faster to just get all of them at once.
-  (let* ((not-users (map record-reviewee-id (map select-by-hash (select-assigned-reviews assignment class step uid)))) 
+  (let* (
+         (not-users (map record-reviewee-id (map select-by-hash (select-assigned-reviews assignment class step uid)))) 
          (reviewee (submission:select-least-reviewed assignment class step (cons uid not-users))))
     (cond [(eq? reviewee 'no-reviews) #f]
           [else (create assignment class step reviewee uid review-id)])))
@@ -121,9 +119,11 @@
   (create-instructor-review assignment class step reviewee reviewer review-id))
 
 (define (create-instructor-review assignment class step reviewee reviewer id)
-  (let* ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,true,false)"))
-         (prep (prepare (sql-conn) query)))
-    (query-exec (sql-conn) prep assignment class step reviewee reviewer (random-hash) id)))
+  (let* ((conn (make-sql-conn))
+         (query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,true,false)"))
+         (prep (prepare conn query)))
+    (query-exec conn prep assignment class step reviewee reviewer (random-hash) id)
+    (release conn)))
 
 (provide record record? 
          record-class-id 
@@ -140,7 +140,8 @@
   (string-join (list class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash) ", "))
 
 (define (vector->record result)
-  (let* ((class-id (vector-ref result 0))
+  (let* (
+         (class-id (vector-ref result 0))
          (assignment-id (vector-ref result 1))
          (step-id (vector-ref result 2))
          (review-id (vector-ref result 3))
@@ -153,60 +154,71 @@
 
 (provide select-feedback)
 (define (select-feedback class assignment uid)
-  (let* ((query (merge "SELECT" record-fields
+  (let* ((conn (make-sql-conn))
+         (query (merge "SELECT" record-fields
                        "FROM" table
                        "WHERE" class-id "=? AND"
                                assignment-id "=? AND"
                                reviewee-id "=? AND"
                                completed "=true"
                        "ORDER BY" time-stamp "ASC"))
-         (prep (prepare (sql-conn) query))
-         (result (query-rows (sql-conn) prep class assignment uid)))
+         (prep (prepare conn query))
+         (result (query-rows conn prep class assignment uid)))
+    (release conn)
     (map vector->record result)))
 
                        
 (provide select-by-hash)
 (define (select-by-hash the-hash)
-  (let* ((query (merge "SELECT" record-fields
+  (let* ((conn (make-sql-conn))
+         (query (merge "SELECT" record-fields
                        "FROM" table
                        "WHERE" hash "=? LIMIT 1"))
-         (prep (prepare (sql-conn) query))
-         (result (query-row (sql-conn) prep the-hash)))
+         (prep (prepare conn query))
+         (result (query-row conn prep the-hash)))
+    (release conn)
     (vector->record result)))
 
       
                        
 (provide mark-complete)
 (define (mark-complete the-hash)
-  (let* ((query (merge "UPDATE" table
+  (let* ((conn (make-sql-conn))
+         (query (merge "UPDATE" table
                        "SET" completed "=1"
                        "WHERE" hash "=?"))
-         (prep (prepare (sql-conn) query)))
-    (query-exec (sql-conn) prep the-hash)))
+         (prep (prepare conn query)))
+    (query-exec conn prep the-hash)
+    (release conn)))
 
 (provide select-reviews)
 (define (select-reviews reviewee)
-  (let* ((query (merge "SELECT" hash "FROM" table "WHERE" reviewee-id "=?"))
-         (prep (prepare (sql-conn) query))
-         (result (query-rows (sql-conn) prep reviewee)))
+  (let* ((conn (make-sql-conn))
+         (query (merge "SELECT" hash "FROM" table "WHERE" reviewee-id "=?"))
+         (prep (prepare conn query))
+         (result (query-rows conn prep reviewee)))
+    (release conn)
     (flatten (map vector->list result))))
 
 (provide select-assigned-reviews)
 (define (select-assigned-reviews assignment class step uid)
-  (let* ((query (merge "SELECT" hash
+  (let* ((conn (make-sql-conn))
+         (query (merge "SELECT" hash
                        "FROM" table
                        "WHERE" class-id "=? AND"
                                assignment-id "=? AND"
                                step-id "=? AND"
                                reviewer-id "=?"))
-         (prep (prepare (sql-conn) query))
-         (result (query-rows (sql-conn) prep class assignment step uid)))
+         (prep (prepare conn query))
+         (result (query-rows conn prep class assignment step uid)))
+    (release conn)
     (flatten (map vector->list result))))
     
 
 (provide completed?)
 (define (completed? assignment class step reviewer id)
-  (let* ((query (merge "SELECT COUNT(" completed ")"
+  (let* ((conn (make-sql-conn))
+         (query (merge "SELECT COUNT(" completed ")"
                        "FROM" table
                        "WHERE" assignment-id "=? AND"
                                class-id "=? AND"
@@ -214,13 +226,15 @@
                                reviewer-id "=? AND"
                                review-id "=? AND"
                                completed "=true"))
-         (prep (prepare (sql-conn) query))
-         (result (vector-ref (query-row (sql-conn) prep assignment class step reviewer id) 0)))
+         (prep (prepare conn query))
+         (result (vector-ref (query-row conn prep assignment class step reviewer id) 0)))
+    (release conn)
     (> result 0)))
 
 (provide count-completed)
 (define (count-completed assignment class step reviewer id)
-  (let* ((query (merge "SELECT COUNT(*)"
+  (let* ((conn (make-sql-conn))
+         (query (merge "SELECT COUNT(*)"
                        "FROM" table
                        "WHERE" assignment-id "=? AND"
                                class-id "=? AND"
@@ -228,20 +242,23 @@
                                reviewer-id "=? AND"
                                completed "=1 AND"
                                review-id "=?"))
-         (prep (prepare (sql-conn) query))
-         (result (vector-ref (query-row (sql-conn) prep assignment class step reviewer id) 0)))
+         (prep (prepare conn query))
+         (result (vector-ref (query-row conn prep assignment class step reviewer id) 0)))
+    (release conn)
     result))
 
 (provide count)
 (define (count assignment class step reviewee)
-  (let* ((query (merge "SELECT COUNT(*)"
+  (let* ((conn (make-sql-conn))
+         (query (merge "SELECT COUNT(*)"
                        "FROM" table
                        "WHERE" assignment-id "=? AND"
                                class-id "=? AND"
                                step-id "=? AND"
                                reviewee-id "=?"))
-         (prep (prepare (sql-conn) query))
-         (result (vector-ref (query-row (sql-conn) prep assignment class step reviewee) 0)))
+         (prep (prepare conn query))
+         (result (vector-ref (query-row conn prep assignment class step reviewee) 0)))
+    (release conn)
     result))
 
 (define (random-hash)

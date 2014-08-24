@@ -24,13 +24,15 @@
 ;; Returns #t if init-db has been called and #f otherwise
 (provide init-db?)
 (define (init-db?)
-  (let* ((query (merge "SELECT COUNT(*)"
+  (let* ((conn (make-sql-conn))
+         (query (merge "SELECT COUNT(*)"
                        "FROM information_schema.tables "
                        "WHERE table_schema = 'captain_teach'"
                        "AND table_name = ?;"))
-         (prep (prepare (sql-conn) query))
-         (result (query-row (sql-conn) prep review:table))
+         (prep (prepare conn query))
+         (result (query-row conn prep review:table))
          (count (vector-ref result 0)))
+    (release conn)
     (> count 0)))
 
 

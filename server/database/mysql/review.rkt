@@ -85,8 +85,8 @@
                                                   ;0 1 2 3 4     5     6 7 8     9   10
   (let* ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,false, false)"))
          (prep (prepare (sql-conn) query)))
-                              ; 0          1    2    3           4        7          8
-    (query-exec (sql-conn)n) prep assignment class step reviewee reviewer (random-hash) id)
+                              ; 0           1     2    3           4        7         8
+    (query-exec (sql-conn) prep assignment class step reviewee reviewer (random-hash) id)
     ;; TODO: This is not concurrently safe.
     (when (not (string=? reviewee "HOLD"))
       (submission:increment-reviewed assignment class step reviewee))
@@ -160,7 +160,7 @@
                                reviewee-id "=? AND"
                                completed "=true"
                        "ORDER BY" time-stamp "ASC"))
-         (prep (prepare (sql-conn)n) query))
+         (prep (prepare (sql-conn) query))
          (result (query-rows (sql-conn) prep class assignment uid)))
     (map vector->record result)))
 

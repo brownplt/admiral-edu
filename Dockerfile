@@ -80,6 +80,11 @@ RUN su admiraledu -c 'cd ~/; raco planet install esilkensen yaml.plt 3 1'
 #
 RUN apt-get install -y supervisor
 
+#
+# Install zip / unzip utilities
+#
+RUN apt-get install -y zip unzip
+
 #######################################################################
 # Add captain-teach apache configuration file
 # This file specifies how the user is authenticated

@@ -25,7 +25,7 @@
          "pages/errors.rkt"
          (prefix-in author: "pages/author.rkt")
          "pages/next.rkt"
-         "pages/assignments.rkt"
+         (prefix-in assignments: "pages/assignments.rkt")
          (prefix-in submit: "pages/submit.rkt")
          (prefix-in dep: "pages/dependencies.rkt")
          (prefix-in feedback: "pages/feedback.rkt"))
@@ -56,10 +56,11 @@
     [(cons "su" (cons uid rest)) (with-sudo post post-data uid session bindings rest)]
     [(cons "author" rest) (if post (author:post->validate session post-data rest) (render-html session author:load rest))]
     [(cons "next" rest) (render-html session next rest)]
-    [(cons "assignments" rest) (render-html session assignments rest)]
+    [(cons "assignments" rest) (render-html session assignments:assignments rest)]
     [(cons "dependencies" rest) (if post (dep:post session rest bindings) (render-html session dep:dependencies rest))]
     [(cons "submit" rest) (if post (submit:submit session role rest bindings) #f)] ;;TODO Handle correctly when not a post
     [(cons "feedback" rest) (if post (feedback:post session role rest post-data) (render-html session feedback:load rest))]
+    [(cons "export" rest) (assignments:export session (role session) rest)]
     [else (four-oh-four)]))
 
 (define (with-sudo post post-data uid session bindings path)

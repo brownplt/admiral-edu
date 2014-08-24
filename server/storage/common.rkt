@@ -13,7 +13,7 @@
         '() ls))))
 
 (provide root)
-(define root '("home" "admiraledu" "files"))
+(define root '("home" "admiraledu"))
 
 (define path-delim "/")
 

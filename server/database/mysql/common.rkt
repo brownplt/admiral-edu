@@ -25,13 +25,19 @@
 
 (provide sql-conn)
 (define (sql-conn)
-  (if internal-sql-conn internal-sql-conn
+  (if internal-sql-conn (check-connection)
       (begin
-        (set! internal-sql-conn (mysql-connect #:user username
-                                               #:database password
-                                               #:password database
-                                               #:server "127.0.0.1"))
+        (connect)
         internal-sql-conn)))
+
+(define (check-connection)
+  (if (connected? internal-sql-conn) internal-sql-conn (connect)))
+
+(define (connect)
+  (set! internal-sql-conn (mysql-connect #:user username
+                                         #:database password
+                                         #:password database
+                                         #:server "127.0.0.1")))
 
 (provide try-with-default)
 (define (try-with-default default f . args)

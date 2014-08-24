@@ -10,7 +10,7 @@
 (require "../ct-session.rkt"
          "../database/mysql.rkt"
          "../config.rkt"
-         "errors.rkt"
+         (prefix-in error: "errors.rkt")
          "../authoring/assignment.rkt")
 
 (define (repeat val n)
@@ -62,10 +62,32 @@
 (define (with-open-link id open)
   (let ((link-text (if open "Close" "Open"))
         (action (if open "close" "open")))
-    (string-append "<p>" id " - " (edit-assignment-link id) " - <a href=\"/" class-name "/assignments/" action "/" id "/\">" link-text "</a></p>")))
+    (string-append "<p>" id " - " (edit-assignment-link id) " - <a href=\"/" class-name "/assignments/" action "/" id "/\">" link-text "</a> - "
+                   "<a href='/" class-name "/export/" id "/" id ".zip'>Export Assignment Data</a>"
+                   "</p>")))
 
 (define (with-ready-link id)
   (string-append "<p>" id " - "  (edit-assignment-link id) ": This assignment is missing dependencies. <a href=\"/" class-name "/dependencies/" id "/\">Upload Dependencies</a></p>"))
 
 (define (edit-assignment-link assignment-id)
   (string-append "<a href='/" class-name "/author/edit/" assignment-id "/'>Edit Assignment</a>"))
+
+(provide export)
+(define (export session role rest)
+  (let ((assignment-id (car rest)))
+    (if (not (roles:role-can-edit role)) (fail-auth)
+        (let ((data (export-assignment class-name assignment-id)))
+          (response/full
+           200 #"Okay"
+           (current-seconds) #"application/octet-stream; charset=ISO-8859-1"
+           empty
+           (list data))))))
+
+(define (fail-auth)
+  (response/full
+         200 #"Okay"
+         (current-seconds) TEXT/HTML-MIME-TYPE
+         empty
+         (list (string->bytes/utf-8 (error:error "You are not authorized to see this page.")))))
+  
+

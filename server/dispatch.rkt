@@ -22,7 +22,7 @@
 
 (require "pages/index.rkt"
          (prefix-in review: "pages/review.rkt")
-         "pages/errors.rkt"
+         (prefix-in error: "pages/errors.rkt")
          (prefix-in author: "pages/author.rkt")
          "pages/next.rkt"
          (prefix-in assignments: "pages/assignments.rkt")
@@ -30,13 +30,16 @@
          (prefix-in dep: "pages/dependencies.rkt")
          (prefix-in feedback: "pages/feedback.rkt"))
 
+(define (any? x)
+  #t)
+
 ;; Defines how to process incomming requests are handled
 (provide ct-rules)
 (define-values (ct-rules mk-url)
   (dispatch-rules
    [((string-arg) ...) (handler #f)]
    [((string-arg) ...) #:method "post" (handler #t)]
-   [else four-oh-four]))
+   [else error:four-oh-four]))
 
 (define (handler post)
   (lambda (req path)
@@ -44,7 +47,7 @@
           (bindings (request-bindings req))
           (post-data (request-post-data/raw req))
           (clean-path (filter (lambda (x) (not (equal? "" x))) path)))
-      (handlerPrime post post-data session bindings clean-path))))
+      (with-handlers ([any? error:exception-occurred]) (handlerPrime post post-data session bindings clean-path)))))
 
 (define (handlerPrime post post-data session bindings path)
   (print (list post path)) (newline)
@@ -61,13 +64,26 @@
     [(cons "submit" rest) (if post (submit:submit session role rest bindings) #f)] ;;TODO Handle correctly when not a post
     [(cons "feedback" rest) (if post (feedback:post session role rest post-data) (render-html session feedback:load rest))]
     [(cons "export" rest) (assignments:export session (role session) rest)]
-    [else (four-oh-four)]))
+    [(cons "exception" rest) (error "Test an exception occurring.")]
+    [(cons "reset-db" rest) (require-auth session run-init)]
+    [else (error:four-oh-four)]))
+
+(define (run-init)
+  (force-initialize)
+  (response/xexpr
+   `(html
+     `(p "Database reset."))))
+
+(define (require-auth session f)
+  (let* ((user-role (role session))
+         (can-sudo (if user-role (roles:role-can-edit user-role) #f)))
+    (if can-sudo (f) (error:not-authorized))))
 
 (define (with-sudo post post-data uid session bindings path)
   (let* ((user-role (role session))
          (can-sudo (if user-role (roles:role-can-edit user-role) #f))
          (new-session (ct-session (ct-session-class session) uid)))
-    (if (not can-sudo) (four-oh-four)
+    (if (not can-sudo) (error:four-oh-four)
         (handlerPrime post post-data new-session bindings path))))
 
 
@@ -94,13 +110,13 @@
   (let ((valid-role (role session)))
     (response/xexpr
      (if (not valid-role) 
-         (error-not-registered session)
+         (error:error-not-registered session)
          (page session valid-role)))))
 
 (define (render-html session page rest)
   (let ((valid-role (role session)))
     (if (not valid-role)
-        (response/xexpr (error-not-registered session))
+        (response/xexpr (error:error-not-registered session))
         (response/full
          200 #"Okay"
          (current-seconds) TEXT/HTML-MIME-TYPE
@@ -113,7 +129,7 @@
   (lambda (req . rest)
     (let ((session (get-session req)))
       (if (eq? session 'invalid-session) 
-          (response/xexpr error-invalid-session)
+          (response/xexpr error:error-invalid-session)
           (render-html session page rest)))))
     
 ;; If the session is valid, tries to render the specified page. Othewise,
@@ -122,7 +138,7 @@
   (lambda (req)
     (let ((session (get-session req)))
       (if (eq? session 'invalid-session) 
-          (response/xexpr error-invalid-session)
+          (response/xexpr error:error-invalid-session)
           (render session page)))))
 
 ;; If the session has a valid role, renders the specified page with the specified bindings. 
@@ -131,7 +147,7 @@
   (let ((valid-role (role session)))
     (response/xexpr
      (if (not valid-role) 
-         (error-not-registered session)
+         (error:error-not-registered session)
          (page session valid-role bindings)))))
 
 ;; If the session is valid, tries to render the specified page with any 
@@ -141,5 +157,5 @@
     (let ((session (get-session req))
           (bindings (request-bindings req)))
       (if (eq? session 'invalid-session)
-          (response/xexpr error-invalid-session)
+          (response/xexpr error:error-invalid-session)
           (post->render session page bindings)))))

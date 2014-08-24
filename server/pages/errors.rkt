@@ -13,6 +13,17 @@
   (let ([display-message "You are not authorized to access this page."])
     (include-template "html/error.html")))
 
+(provide exception-occurred)
+(define (exception-occurred exn)
+  (printf "Exception Caught: ~a\n\n" exn)
+  ;; TODO Recursively print out exception information
+  ;; TODO Send email with exception output to self.
+  (response/full
+   200 #"Okay"
+   (current-seconds) TEXT/HTML-MIME-TYPE
+   empty
+   (list (string->bytes/utf-8 "An error occurred while processing your request. This has been reported. Please try again later."))))
+
 (provide error)
 (define (error message)
   (let ([display-message message])

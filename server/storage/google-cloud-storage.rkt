@@ -155,6 +155,16 @@
          (at-path (map last (remove-duplicates (map (lambda (x) (take-up-to x (+ at-len 1))) split-files)))))
     at-path))
 
+(provide list-only-files)
+(define (list-only-files path)
+  (let* ((files (ls (string-append bucket path)))
+         (split-path (string-split path "/"))
+         (split (lambda (x) (string-split x "/")))
+         (split-files (map split files))
+         (at-len (length split-path))
+         (at-path (map last (filter (lambda (x) (= (length x) (+ at-len 1))) split-files))))
+    at-path))
+
 (define (take-up-to ls n)
   (cond [(> (- (length ls) n) 0) (take ls n)]
         [else ls]))

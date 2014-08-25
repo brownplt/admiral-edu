@@ -139,7 +139,7 @@
 
 (define (render-directory prefix dir-path)
   (let ((dirs (sub-directories-of dir-path))
-        (files (list-files dir-path)))
+        (files (list-only-files dir-path)))
     (string-append
      "<div id=\"directory\" class=\"browser\">"
      "<ul>"

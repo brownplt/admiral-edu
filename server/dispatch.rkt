@@ -6,9 +6,7 @@
 
 (require 
   "auth/google-openidc.rkt"
-  "config.rkt"
-  "ct-session.rkt"
-  "database/mysql.rkt")
+  "base.rkt")
 
 (define erase-directory
     (lambda (assignment)

@@ -6,9 +6,7 @@
          xml
          json)
 
-(require "../ct-session.rkt"
-         "../database/mysql.rkt"
-         "../config.rkt"
+(require "../base.rkt"
          (prefix-in assign: "../authoring/assignment.rkt")
          (prefix-in error: "errors.rkt"))
 

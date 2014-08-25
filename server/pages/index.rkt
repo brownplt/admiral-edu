@@ -2,9 +2,7 @@
 
 (require web-server/http/bindings)
 
-(require "../ct-session.rkt"
-         "../database/mysql.rkt"
-         "../config.rkt")
+(require "../base.rkt")
 
 (provide index)
 (define (index session role [message '()])

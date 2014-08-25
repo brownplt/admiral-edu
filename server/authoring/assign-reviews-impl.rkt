@@ -4,8 +4,7 @@
          json
          "assignment-structs.rkt"
          "util.rkt"
-         "../database/mysql.rkt"
-         "../config.rkt"
+         "../base.rkt"
          (prefix-in machine: "progress-machine.rkt")
          "assignment.rkt")
 

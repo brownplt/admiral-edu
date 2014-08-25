@@ -2,7 +2,7 @@
 (require web-server/servlet-dispatch
          web-server/web-server
          "dispatch.rkt"
-         "config.rkt")
+         "base.rkt")
 
 (initialize)
 

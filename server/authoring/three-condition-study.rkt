@@ -3,11 +3,10 @@
 (require db
          (planet esilkensen/yaml:3:1)
          json
+         "../base.rkt"
          "assignment.rkt"
          "assignment-structs.rkt"
          "util.rkt"
-         "../database/mysql.rkt"
-         "../config.rkt"
          (prefix-in machine: "progress-machine.rkt")
          "../database/mysql/common.rkt")
 

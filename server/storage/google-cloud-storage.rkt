@@ -1,13 +1,14 @@
 #lang racket
 
 (require (planet gh/aws:1:5))
+
 (require "../database/mysql.rkt")
+(require "../configuration.rkt")
 (require "common.rkt")
 (require (prefix-in local: "local.rkt"))
-(require "../configuration.rkt")
 
 (s3-host "storage.googleapis.com")
-(read-keys ".cloud-keys")
+(read-keys s3-keys)
 
 
 (provide retrieve-default-rubric)

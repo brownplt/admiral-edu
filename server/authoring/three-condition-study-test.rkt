@@ -1,11 +1,10 @@
 #lang racket
 
-(require "../database/mysql.rkt"
+(require "../base.rkt"
          "../database/mysql/common.rkt"
          "assignment.rkt"
          "three-condition-study.rkt"
          (planet esilkensen/yaml:3:1)
-         "../config.rkt"
          db
          rackunit)
 

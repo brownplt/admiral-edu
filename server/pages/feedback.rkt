@@ -6,9 +6,7 @@
          json
          (planet esilkensen/yaml:3:1))
 
-(require "../ct-session.rkt"
-         "../database/mysql.rkt"
-         "../config.rkt"
+(require "../base.rkt"
          (prefix-in error: "errors.rkt")
          "../authoring/assignment.rkt")
 

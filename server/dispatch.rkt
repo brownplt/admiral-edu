@@ -67,7 +67,7 @@
     [(cons "feedback" rest) (if post (feedback:post session role rest post-data) (render-html session feedback:load rest))]
     [(cons "export" rest) (assignments:export session (role session) rest)]
     [(cons "exception" rest) (error "Test an exception occurring.")]
-    [(cons "reset-db" rest) (require-auth session run-init)]
+    ;[(cons "reset-db" rest) (require-auth session run-init)]
     [else (error:four-oh-four)]))
 
 (define (run-init)

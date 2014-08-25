@@ -57,6 +57,8 @@
          (subs (map (lambda (x) (string-append path "/" x)) (local:sub-directories-of path))))
 ;    (printf "Files: ~a\n\n" subs)
     (map local:delete-file files)
+    ;; Remove any previous files
+    (map delete-files (map remove-leading-slash files))
     (map local:delete-file subs)
 ;    (printf "After delete: ~a\n\n" (map (lambda (x) (string-append path "/" x)) (sub-directories-of path)))
     (let ((out (open-output-file (string-append path "/submission.zip") #:exists 'replace)))

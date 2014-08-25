@@ -125,15 +125,7 @@
     (query-exec conn prep assignment class step reviewee reviewer (random-hash) id)
     (release conn)))
 
-(provide record record? 
-         record-class-id 
-         record-assignment-id 
-         record-step-id 
-         record-review-id
-         record-reviewee-id 
-         record-reviewer-id 
-         record-completed
-         record-hash)
+(provide (struct-out record))
 (struct record (class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash) #:transparent)
 
 (define record-fields

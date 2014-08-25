@@ -39,28 +39,34 @@
   
   (if (connected? conn) 
       (begin
-        (set! counter (- counter 1))
         (disconnect conn))
       #f))
 
-(define counter 0)
-
 (define (connect)
-  (set! counter (+ counter 1))
   (let ((new-conn (mysql-connect #:user username
                                  #:database password
                                  #:password database
                                  #:server db-address)))
-    
-    ;;TODO: Really bad hack that prevents too many sql connections error
-    ;(thread (lambda ()
-    ;          (sleep 30) (release new-conn)))
+
     new-conn))
 
 (define pool (connection-pool connect))
 
-;(define internal-conn (virtual-connection pool))
-
 (provide try-with-default)
 (define (try-with-default default f . args)
   (with-handlers ([exn:fail? (lambda (exn) default)]) (apply f args)))
+
+(define (test required . optional)
+  (printf "required:~a\n\noptional:~a\n\n" required optional))
+
+(provide run)
+(define (run query-func q . args)
+  (let* ((conn (make-sql-conn))
+         (query-args (prepare-statement conn q args))
+         (result (apply query-func query-args)))
+    (release conn)
+    result))
+
+(define (prepare-statement conn q args)
+    (append (list conn (prepare conn q)) args))
+

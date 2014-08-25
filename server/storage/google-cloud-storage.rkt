@@ -37,8 +37,8 @@
     (write-file path data)))
 
 (provide save-review-comments)
-(define (save-review-comments class assignment stepName review-id reviewer reviewee data)
-  (let ((path (string-append class "/" assignment "/reviews/" stepName "/" review-id "/" reviewer "/" reviewee "/comments.json")))
+(define (save-review-comments class assignment stepName review-id reviewer reviewee file-path data)
+  (let ((path (string-append class "/" assignment "/reviews/" stepName "/" review-id "/" reviewer "/" reviewee "/" (remove-leading-slash file-path) ".comments.json")))
     (write-file path data)))
 
 (provide submission-file-path)
@@ -163,8 +163,8 @@
   (file-exists-in-cloud? path))
 
 (provide load-review-comments)
-(define (load-review-comments class assignment stepName review-id reviewer reviewee)
-  (let ((path (string-append class "/" assignment "/reviews/" stepName "/" review-id "/" reviewer "/" reviewee "/comments.json")))
+(define (load-review-comments class assignment stepName review-id reviewer reviewee file-path)
+  (let ((path (string-append class "/" assignment "/reviews/" stepName "/" review-id "/" reviewer "/" reviewee "/" (remove-leading-slash file-path) ".comments.json")))
     (if (file-exists-in-cloud? path)
         (retrieve-file path)
         "{\"comments\" : {}}")))

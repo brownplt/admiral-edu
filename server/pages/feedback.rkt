@@ -162,18 +162,20 @@
 
 (define (post->do-file-container session role rest post-data)
   (let* ((hash (car rest))
+         (path (string-join (take (cdr rest) (- (length rest) 2))  "/"))
          (review (review:select-by-hash hash)))
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
-        (post->load session review))))
+        (post->load session path review))))
 
-(define (post->load session review)
-  (let* ((class (ct-session-class session))
+(define (post->load session path review)
+  (let* (
+         (class (ct-session-class session))
          (assignment (review:record-assignment-id review))
          (stepName (review:record-step-id review))
          (reviewer (review:record-reviewer-id review))
          (reviewee (ct-session-uid session))
          (review-id (review:record-review-id review))
-         (data (load-review-comments class assignment stepName review-id reviewer reviewee)))
+         (data (load-review-comments class assignment stepName review-id reviewer reviewee path)))
     (response/full
      200 #"Okay"
      (current-seconds) #"application/json; charset=utf-8"

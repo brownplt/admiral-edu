@@ -107,14 +107,16 @@
 (provide push->file-container)
 (define (push->file-container session post-data rest)
   (let* ((r-hash (car rest))
+         (path (string-join (take (cdr rest) (- (length rest) 2))  "/"))
          (review (review:select-by-hash r-hash)))
+    (printf "Looking up file.\n\n rest: ~a\n\n path: ~a\n\n" rest path)
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
         (cond 
-          [(equal? (last rest) "save") (push->save session post-data review)]
-          [(equal? (last rest) "load") (push->load session review)]
+          [(equal? (last rest) "save") (push->save session post-data path review)]
+          [(equal? (last rest) "load") (push->load session path review)]
           [else (error:four-oh-four)]))))
 
-(define (push->save session post-data review)
+(define (push->save session post-data path review)
   (let ((data (jsexpr->string (bytes->jsexpr post-data)))
         (class (ct-session-class session))
         (assignment (review:record-assignment-id review))
@@ -124,21 +126,21 @@
         (review-id (review:record-review-id review)))
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
         (begin
-          (save-review-comments class assignment stepName review-id reviewer reviewee data)
+          (save-review-comments class assignment stepName review-id reviewer reviewee path data)
           (response/full
            200 #"Okay"
            (current-seconds) #"application/json; charset=utf-8"
            empty
            (list (string->bytes/utf-8 "Success")))))))
 
-(define (push->load session review)
+(define (push->load session path review)
   (let* ((class (ct-session-class session))
          (assignment (review:record-assignment-id review))
          (stepName (review:record-step-id review))
          (reviewee (review:record-reviewee-id review))
          (reviewer (ct-session-uid session))
          (review-id (review:record-review-id review))
-         (data (load-review-comments class assignment stepName review-id reviewer reviewee)))
+         (data (load-review-comments class assignment stepName review-id reviewer reviewee path)))
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
         (response/full
          200 #"Okay"

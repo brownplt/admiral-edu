@@ -28,9 +28,12 @@
          (review (review:select-by-hash r-hash))
          (assignment (review:record-assignment-id review))
          (step (review:record-step-id review))
+         (completed (review:record-completed review))
          (updir (apply string-append (repeat "../" (+ (length rest) 1))))
          (root-url updir)
-         [submit-url (string-append root-url "review/submit/" r-hash "/")]
+         [no-modifications (if completed "<p>This review has already been submitted. Modifications will not be saved.</p>" "")]
+         [submit-hidden (if completed "hidden" "")]
+         [submit-url (if completed "#" (string-append root-url "review/submit/" r-hash "/"))]
          (updir-rubric (apply string-append (repeat "../" (- (length rest) 1))))
          [file-container (string-append updir "file-container/" (to-path rest))]
          [save-url (xexpr->string (string-append "\"" updir-rubric step "/save\""))]
@@ -80,7 +83,7 @@
         (review-id (review:record-review-id review)))
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
         (begin
-          (save-rubric class assignment stepName review-id reviewer reviewee data)
+          (when (not (review:record-completed review)) (save-rubric class assignment stepName review-id reviewer reviewee data))
           (response/full
            200 #"Okay"
            (current-seconds) #"application/json; charset=utf-8"
@@ -124,7 +127,7 @@
         (review-id (review:record-review-id review)))
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
         (begin
-          (save-review-comments class assignment stepName review-id reviewer reviewee path data)
+          (when (not (review:record-completed review)) (save-review-comments class assignment stepName review-id reviewer reviewee path data))
           (response/full
            200 #"Okay"
            (current-seconds) #"application/json; charset=utf-8"

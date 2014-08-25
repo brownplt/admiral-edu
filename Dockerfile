@@ -161,7 +161,7 @@ ADD rubrics/tests-rubric.json /home/admiraledu/reviews/cmpsci220/clock/tests/rub
 #
 # Copy Cloud Keys
 #
-ADD .cloud-keys /home/admiraledu/.cloud-keys
+ADD docker/.cloud-keys /home/admiral-edu/.cloud-keys
 
 #
 # Run AdmiralEdu

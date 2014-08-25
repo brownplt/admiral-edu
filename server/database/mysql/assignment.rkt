@@ -78,14 +78,14 @@
 (define mark-not-ready (set-column assignment-ready 0))
   
 (provide (struct-out record))
-(struct record (class assignment-id open ready) #:transparent)
+(struct record (class id open ready) #:transparent)
 
 (define record-details (merge class-id "," assignment-id "," assignment-open "," assignment-ready))
 (define (row->record vec)
   (let ((class-id (vector-ref vec 0))
         (assignment-id (vector-ref vec 1))
-        (open (vector-ref vec 2))
-        (ready (vector-ref vec 3)))
+        (open (= 1(vector-ref vec 2)))
+        (ready (= 1 (vector-ref vec 3))))
     (record class-id assignment-id open ready)))
 
 (provide select)
@@ -95,7 +95,7 @@
                   "WHERE" class-id "=? AND"
                           assignment-id "=?"
                   "LIMIT 1")))
-    (row->record (run query-row class assignment))))
+    (row->record (run query-row q class assignment))))
     
 (provide list)
 (define (list class)

@@ -404,15 +404,18 @@
               [else (failure "Could not submit to the step '" step-id "'." (next-action-error next))]))]))
 
 (define (do-submit-step assignment-id step-id uid data steps)
-  ;(upload-submission class user assignment step data)
-  (let ((result (upload-submission class-name uid assignment-id step-id data)))
-    (if (not result) (Failure "The submission failed. This is most likely because the file uploaded was not a zip archive.")
-        (begin
-          ;; Assign reviews to the student if applicable
-          (let ((next (next-action assignment-id steps uid)))
-            (cond
-              [(MustReviewNext? next) (assign-reviews assignment-id next uid)])
-            (Success "Assignment submitted."))))))
+  (let* ((assignment (assignment:select class-name assignment-id))
+         (is-open (assignment:record-open assignment)))
+    (if (not is-open) (Failure "This assignment is currently closed.")
+        ;(upload-submission class user assignment step data)
+        (let ((result (upload-submission class-name uid assignment-id step-id data)))
+          (if (not result) (Failure "The submission failed. This is most likely because the file uploaded was not a zip archive.")
+              (begin
+                ;; Assign reviews to the student if applicable
+                (let ((next (next-action assignment-id steps uid)))
+                  (cond
+                    [(MustReviewNext? next) (assign-reviews assignment-id next uid)])
+                  (Success "Assignment submitted."))))))))
 
 (define (step-id->step assignment-id step-id)
   (lookup-step (assignment-id->assignment assignment-id) step-id))

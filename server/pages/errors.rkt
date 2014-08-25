@@ -13,6 +13,10 @@
   (let ([display-message "You are not authorized to access this page."])
     (include-template "html/error.html")))
 
+(provide assignment-closed)
+(define (assignment-closed)
+  "<p>The assignment you were attempting to access is currently closed.</p>")
+
 (provide exception-occurred)
 (define (exception-occurred exn)
   (printf "Exception Caught: ~a\n\n" exn)

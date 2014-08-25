@@ -8,7 +8,7 @@
          (planet esilkensen/yaml:3:1))
 
 (require "../base.rkt"
-         "errors.rkt"
+         (prefix-in error: "errors.rkt")
          "../authoring/assignment.rkt")
 
 (define (repeat val n)
@@ -18,13 +18,18 @@
 
 (provide next)
 (define (next session role rest [message '()])
-  (let* ((uid (ct-session-uid session))
-         (assignment (car rest))     
-         (do-next (next-step assignment uid)))
-    (cond 
-      [(MustSubmitNext? do-next) (handle-submit-next assignment do-next)]
-      [(MustReviewNext? do-next) (handle-review-next do-next)]
-      [(eq? #t do-next) (assignment-completed)])))
+  (let* ((assignment-id (car rest))
+         (assignment-record (assignment:select class-name assignment-id))
+         (is-open (assignment:record-open assignment-record)))
+    (printf "Checking next action.\n\nassignment-record:~a\n\nis-open:~a\n\n" assignment-record is-open)
+    (if (not is-open) (error:assignment-closed)
+        (let* ((uid (ct-session-uid session))
+               (assignment (car rest))     
+               (do-next (next-step assignment-id uid)))
+          (cond 
+            [(MustSubmitNext? do-next) (handle-submit-next assignment do-next)]
+            [(MustReviewNext? do-next) (handle-review-next do-next)]
+            [(eq? #t do-next) (assignment-completed)])))))
 
 (define (handle-submit-next assignment-id action)
   (let* ((step (MustSubmitNext-step action))

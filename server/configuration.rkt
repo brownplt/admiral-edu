@@ -2,7 +2,7 @@
 
 (provide (all-defined-out))
 
-(define db-address "127.0.0.1")
+(define db-address "173.194.254.129")
 (define s3-keys "/home/admiral-edu/.cloud-keys")
 
 ;; File containing:
@@ -15,5 +15,5 @@
 (define smtp:tls #t)
 
 (define bucket "test-class/")
-(define class-name "umass-cmpsci220")
+(define class-name "test-class")
 (define ct-port 8080)

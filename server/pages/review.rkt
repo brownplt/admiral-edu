@@ -188,8 +188,9 @@
    
 
 (define (render-directory prefix dir-path)
+  (printf "rendering-directory. prefix: ~a\n\n dir-path:~a\n\n" prefix dir-path)
   (let ((dirs (sub-directories-of dir-path))
-        (files (list-files dir-path)))
+        (files (filter is-file? (list-files dir-path))))
     (string-append
      "<div id=\"directory\" class=\"browser\">"
      "<ul>"

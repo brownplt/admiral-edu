@@ -8,3 +8,4 @@ sample
 config
 
 .cloud-keys
+.smtp-credentials

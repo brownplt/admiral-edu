@@ -7,6 +7,7 @@
          json)
 
 (require "../base.rkt"
+         "../email/email.rkt"
          (prefix-in error: "errors.rkt"))
 
 (define (repeat val n)
@@ -58,10 +59,25 @@
          (assignment (review:record-assignment-id review))
          (step (review:record-step-id review))
          (updir (apply string-append (repeat "../" (+ (length rest) 1))))
-         (root-url updir))
-    (review:mark-complete r-hash)
-    (string-append "<p>Review Submitted</p>"
-                   "<p><a href='" root-url "next/" assignment "/'>Continue</a></p>")))
+         (root-url updir)
+         (completed (review:record-completed review)))
+    (cond [completed (error:error "The review you were trying to submit has already been submitted. You may not submit it again.")]
+          [else
+           (begin
+             
+             (review:mark-complete r-hash)
+             (send-review-ready-email review)
+             (string-append "<p>Review Submitted</p>"
+                            "<p><a href='" root-url "next/" assignment "/'>Continue</a></p>"))])))
+
+(define (send-review-ready-email review)
+  (let* ((uid (review:record-reviewee-id review))
+         [assignment-id (review:record-assignment-id review)]
+         [step-id (review:record-step-id review)]
+         [access-url (string-append "https://" sub-domain server-name "/" class-name "/feedback/" assignment-id "/")]
+         (message (include-template "../email/templates/review-ready.txt")))
+    (send-email uid "Someone has completed a review of your work." message)))
+    
 
 (provide post->review)
 (define (post->review session post-data rest)
@@ -110,7 +126,6 @@
   (let* ((r-hash (car rest))
          (path (string-join (take (cdr rest) (- (length rest) 2))  "/"))
          (review (review:select-by-hash r-hash)))
-    (printf "Looking up file.\n\n rest: ~a\n\n path: ~a\n\n" rest path)
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
         (cond 
           [(equal? (last rest) "save") (push->save session post-data path review)]
@@ -189,7 +204,6 @@
    
 
 (define (render-directory prefix dir-path)
-  (printf "rendering-directory. prefix: ~a\n\n dir-path:~a\n\n" prefix dir-path)
   (let ((dirs (sub-directories-of dir-path))
         (files (list-only-files dir-path)))
     (string-append

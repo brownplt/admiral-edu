@@ -9,6 +9,7 @@
 ;; username=XXXX
 ;; password=XXX
 (define server-name "captain-teach.org")
+(define sub-domain "www.")
 (define smtp:credentials-file "/home/admiral-edu/.smtp-credentials")
 (define smtp:server-address "email-smtp.us-east-1.amazonaws.com")
 (define smtp:port 465)

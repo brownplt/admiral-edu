@@ -170,9 +170,7 @@
          (result (query-row conn prep the-hash)))
     (release conn)
     (vector->record result)))
-
-      
-                       
+                   
 (provide mark-complete)
 (define (mark-complete the-hash)
   (let* ((conn (make-sql-conn))
@@ -182,6 +180,13 @@
          (prep (prepare conn query)))
     (query-exec conn prep the-hash)
     (release conn)))
+
+(provide mark-incomplete)
+(define (mark-incomplete the-hash)
+  (let* ((q (merge "UPDATE" table
+                   "SET" completed "=0"
+                   "WHERE" hash "=?")))
+    (run query-exec q the-hash)))
 
 (provide select-reviews)
 (define (select-reviews reviewee)

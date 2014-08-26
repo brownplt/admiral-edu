@@ -4,8 +4,8 @@
          net/head
          openssl)
 
-(require "configuration.rkt"
-         "util/config-file-reader.rkt")
+(require "../configuration.rkt"
+         "../util/config-file-reader.rkt")
 
 (define username 'nil)
 (define password 'nil)
@@ -24,22 +24,33 @@
                     (set! password (hash-ref conf "password"))
                     #t)]))]))
 
+(check-credentials)
+
 (define (lines string)
   (string-split string "\n"))
 
+(provide send-email)
 (define (send-email uid subject message)
   (let* ((from (string-append "tech@" server-name))
          (to (list uid))
          (header (standard-message-header from to '() '() subject))
          (split-message (lines message)))
-    (check-credentials)
-    (smtp-send-message 
-       smtp:server-address 
-       from 
-       to 
-       header 
-       split-message
-       #:auth-user username
-       #:auth-passwd password
-       #:tls-encode ports->ssl-ports)))
-       
+    (cond [(email-okay uid) (begin
+                              (check-credentials)
+                              (smtp-send-message 
+                               smtp:server-address 
+                               from 
+                               to 
+                               header 
+                               split-message
+                               #:auth-user username
+                               #:auth-passwd password
+                               #:tls-encode ports->ssl-ports)
+                              #t)]
+          [else #f])))
+
+;; TODO: Provide file / database entries
+(define (email-okay uid)
+  (let* ((no-email-regexp "[.]*@student.edu")
+         (check (regexp-match no-email-regexp uid)))
+    (not check)))

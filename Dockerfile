@@ -131,11 +131,6 @@ ADD code-mirror/mode /var/www/html/mode
 ADD code-mirror/lib /var/www/html/lib
 
 #
-# Copy AdmiralEdu to container
-#
-ADD server /home/admiraledu/server
-
-#
 # Configure Supervisor
 #
 ADD docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -162,6 +157,13 @@ ADD rubrics/tests-rubric.json /home/admiraledu/reviews/cmpsci220/clock/tests/rub
 # Copy Cloud Keys
 #
 ADD docker/.cloud-keys /home/admiral-edu/.cloud-keys
+ADD docker/.smtp-credentials /home/admiral-edu/.smtp-credentials
+
+#
+# Copy AdmiralEdu to container
+#
+ADD server /home/admiraledu/server
+
 
 #
 # Run AdmiralEdu

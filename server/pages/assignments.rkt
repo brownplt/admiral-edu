@@ -36,13 +36,16 @@
                                        (assignment:close id class-name))]))
 
 (define (show-open-assignments)
-  (let ((assign-list (assignment:list class-name)))
+  (let* ((assign-list (filter assignment:record-open (assignment:list class-name)))
+         (assign-rendered (if (null? assign-list) 
+                              "<p>There are currently no open assignments.</p>"
+                              (apply string-append (map open-record->html assign-list)))))
+                             
     (string-append "<h1>Assignments</h1>"
-                   (apply string-append (map open-record->html assign-list)))))
+                   assign-rendered)))
 
 (define (open-record->html record)
   (let ((id (assignment:record-id record))
-        (ready (assignment:record-ready record))
         (open (assignment:record-open record)))
     (cond [open (what-next-link id)]
           [else ""])))

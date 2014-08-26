@@ -25,7 +25,6 @@
 
 (provide post)
 (define (post session role rest bindings post-data)
-  (printf "bindings:~a\n\n" bindings)
   (let ((action (car rest))
         (submit? (exists-binding? 'feedback bindings)))
     (cond [submit? (post->do-feedback-submit session (cadr rest) bindings )]
@@ -108,8 +107,6 @@
          (prefix (if (equal? last-path "") "" (string-append last-path "/")))
          [path (to-path-html (cdr rest))]
          (file (to-path (cdr rest)))
-         (temp (list (print (list class assignment reviewee stepName file)) (newline)))
-         (test (print (list "test")))
          (test-prime (newline))
          (file-path (submission-file-path class reviewee assignment stepName file))
          (contents (if (is-directory? file-path) (render-directory prefix file-path) (render-file file-path))))

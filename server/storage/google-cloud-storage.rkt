@@ -13,7 +13,6 @@
 
 (provide retrieve-default-rubric)
 (define (retrieve-default-rubric class assignment stepName review-id)
-  ;(print "Retrieving default rubric.") (newline)
   (let ((path (string-append class "/" assignment "/reviews/"  stepName "/" review-id "/rubric.json")))
     (retrieve-file path)))
 
@@ -57,15 +56,11 @@
          (files (map (lambda (x) (string-append path "/" x)) (list-files path)))
          (local-files (map (lambda (x) (string-append path "/" x)) (local:list-files path)))
          (subs (map (lambda (x) (string-append path "/" x)) (local:sub-directories-of path))))
-;    (printf "Files: ~a\n\n" subs)
     (map local:delete-file local-files)
     ;; Remove any previous files
-    (printf "Removing previous files: ~a\n\n" files)
     (map delete-file files)
     (map local:delete-file subs)
-;    (printf "After delete: ~a\n\n" (map (lambda (x) (string-append path "/" x)) (sub-directories-of path)))
     (let ((out (open-output-file (string-append path "/submission.zip") #:exists 'replace)))
-;      (print (list "Creating instructor submission" path)) (newline)
       (display data out)
       (close-output-port out)
       (let ((result (unarchive path)))
@@ -75,7 +70,6 @@
                 ;; remove-leading-slash is a hack fix
                 (upload-f (lambda (p) (put/file (string-append bucket (remove-leading-slash p)) (string->path p)))))
             (when (not (submission:exists? assignment class step user)) (submission:create-instructor-solution assignment class step user))
-            (printf "Uploading instructor submission files: ~a\n\n" files)
             (map upload-f files)            
             (local:delete-file path)))
         result))))

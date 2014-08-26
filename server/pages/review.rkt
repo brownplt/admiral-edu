@@ -166,8 +166,6 @@
   
 (provide file-container)
 (define (file-container session role rest [message '()])
-  (print "in file-container") (newline)
-  (print (list "rest" rest)) (newline)
   (let* ((r-hash (car rest))
          (review (review:select-by-hash r-hash))
          (class (ct-session-class session))
@@ -181,7 +179,6 @@
          (prefix (if (equal? last-path "") "" (string-append last-path "/")))
          [path (to-path-html (cdr rest))]
          (file (to-path (cdr rest)))
-         (temp (list (print (list class assignment reviewee stepName file)) (newline)))
          (test-prime (newline))
          (file-path (submission-file-path class reviewee assignment stepName file))
          (contents (if (is-directory? file-path) (render-directory prefix file-path) (render-file file-path))))

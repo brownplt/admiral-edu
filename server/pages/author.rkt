@@ -58,7 +58,6 @@
 
 (define (validate session post-data)
   (let ((result (yaml-bytes->create-assignment post-data)))
-    (print "Recieved new assignment. Responding with: ") (print result) (newline)
     (response/full
      200 #"Okay"
      (current-seconds) #"application/json; charset=utf-8"

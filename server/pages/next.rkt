@@ -21,7 +21,6 @@
   (let* ((assignment-id (car rest))
          (assignment-record (assignment:select class-name assignment-id))
          (is-open (assignment:record-open assignment-record)))
-    (printf "Checking next action.\n\nassignment-record:~a\n\nis-open:~a\n\n" assignment-record is-open)
     (if (not is-open) (error:assignment-closed)
         (let* ((uid (ct-session-uid session))
                (assignment (car rest))     

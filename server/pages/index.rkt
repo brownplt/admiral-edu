@@ -37,7 +37,6 @@
     (index session role '((p "Your submission has been accepted.")))))
 
 (define (could-not-create-user exn)
-  (print exn)
   '((p "Unable to create user")))
 
 (define (create-new-user class new-uid new-role)
@@ -116,7 +115,6 @@
 
 (define (completed-reviews session)
   (let* ((hashes (review:select-reviews (ct-session-uid session))))
-    (print hashes) (newline)
     (append '((h3 "Available Reviews"))
     (map (lambda (hash) `(p (a ((href ,(string-append "view-review/" hash))) "View Review"))) hashes))))
       

@@ -346,7 +346,6 @@
                             (check-no-reviews assignment) #t]))]))
 
 (define (check-no-reviews assignment)
-  (printf "Checking reviews: ~a\n\n" assignment)
   (let ((no-reviews (null? (filter no-reviews? (Assignment-steps assignment))))
         (assignment-id (Assignment-id assignment)))
     (if no-reviews (assignment:mark-ready assignment-id class-name) (assignment:mark-not-ready assignment-id class-name))))
@@ -421,12 +420,9 @@
   (lookup-step (assignment-id->assignment assignment-id) step-id))
 
 (define (lookup-step assignment step-id)
-  (printf "step-id: ~a\n" step-id)
   (let* ((steps (Assignment-steps assignment))
          (filter-f (lambda (step) (equal? step-id (Step-id step))))
          (result (filter filter-f steps)))
-    (printf "~a\n" steps)
-    (printf "~a\n" result)
     (car result)))
 
 (define (assign-reviews assignment-id next uid)
@@ -531,7 +527,6 @@
                (dependency step-id (getId review) n #f (met n)))]))))
 
 (define (default-submission review-id n)
-  (print "Called default-submission") (newline)
   (string-append "default-submission-" review-id "-" (number->string n)))
 
 (define (check-upload assignment-id step-id review-id n)

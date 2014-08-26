@@ -9,12 +9,9 @@
   (let* ((path (create-directory class assignment user step))
          (files (map (lambda (x) (string-append path "/" x)) (list-files path)))
          (subs (map (lambda (x) (string-append path "/" x)) (sub-directories-of path))))
-;    (printf "Files: ~a\n\n" subs)
     (map delete-file files)
     (map delete-file subs)
-;    (printf "After delete: ~a\n\n" (map (lambda (x) (string-append path "/" x)) (sub-directories-of path)))
     (let ((out (open-output-file (string-append path "/submission.zip") #:exists 'replace)))
-;      (print (list "Creating instructor submission" path)) (newline)
       (display data out)
       (close-output-port out)
       (let ((result (unarchive path)))
@@ -126,7 +123,6 @@
 
 (provide retrieve-default-rubric)
 (define (retrieve-default-rubric class assignment stepName review-id)
-  ;(print "Retrieving default rubric.") (newline)
   (let ((path (string-append class "/" assignment "/reviews/"  stepName "/" review-id "/rubric.json")))
     (retrieve-file path)))
 

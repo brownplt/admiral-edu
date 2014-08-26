@@ -10,7 +10,7 @@
 ;; password=XXX
 (define server-name "captain-teach.org")
 (define smtp:credentials-file "/home/admiral-edu/.smtp-credentials")
-(define smtp:server-address "email-smtp.us-west-2.amazonaws.com")
+(define smtp:server-address "email-smtp.us-east-1.amazonaws.com")
 (define smtp:port 465)
 (define smtp:tls #t)
 

@@ -19,7 +19,7 @@
 
 (provide exception-occurred)
 (define (exception-occurred exn)
-  (printf "Exception Caught: ~a\n\n" exn)
+  (if (exn? exn) (log-exception exn) (begin (printf "Caught: ~a\n" exn) (flush-output)))
   ;; TODO Recursively print out exception information
   ;; TODO Send email with exception output to self.
   (response/full
@@ -27,6 +27,18 @@
    (current-seconds) TEXT/HTML-MIME-TYPE
    empty
    (list (string->bytes/utf-8 "An error occurred while processing your request. This has been reported. Please try again later."))))
+
+(define (log-exception exn)
+  (let* ((message (exn-message exn))
+         (marks (exn-continuation-marks exn))
+         (stack (if (continuation-mark-set? marks) (continuation-mark-set->context marks) #f)))
+    (printf "Caught Exception: ~a\n" exn)
+    (printf "Message: ~a\n" message)
+    (when stack (map print-stack-elem stack))
+    (flush-output)))
+                 
+(define (print-stack-elem elem) (printf "~a - ~a\n" (car elem) (srcloc->string (cdr elem))))
+                
 
 (provide response-error)
 (define (response-error message)

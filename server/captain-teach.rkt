@@ -12,6 +12,7 @@
 
 (print "Server Started. Type `stop` to kill the server.")
 (newline)
+(flush-output)
 
 (define (block)
   (let ((input (read)))

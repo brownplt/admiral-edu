@@ -50,7 +50,7 @@
       ;(with-handlers ([any? error:exception-occurred]) (handlerPrime post post-data session bindings clean-path)))))
 
 (define (handlerPrime post post-data session bindings path)
-  (print (list post path)) (newline) ;;TODO Proper log
+  (print (list post path)) (newline) (flush-output);;TODO Proper log
   (match path
     ['() (if post (post->render session post->index bindings) (render session index))]
     [(list "") (if post (post->render session post->index bindings) (render session index))]

@@ -135,3 +135,9 @@ a:hover {
         overflow: hidden;
         resize: none;
 }
+
+.syntax-menu p {
+	margin-top: 5px;
+	margin-right: 20px;
+	float: right;
+}

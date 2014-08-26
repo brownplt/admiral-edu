@@ -126,10 +126,10 @@
     (release conn)))
 
 (provide (struct-out record))
-(struct record (class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash) #:transparent)
+(struct record (class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged) #:transparent)
 
 (define record-fields
-  (string-join (list class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash) ", "))
+  (string-join (list class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged) ", "))
 
 (define (vector->record result)
   (let* (
@@ -141,7 +141,8 @@
          (reviewer-id (vector-ref result 5))
          (completed (= 1 (vector-ref result 6)))
          (hash (vector-ref result 7))
-         (rec (record class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash)))
+         (flagged (= 1(vector-ref result 8)))
+         (rec (record class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged)))
     rec))
 
 (provide select-feedback)
@@ -187,6 +188,14 @@
                    "SET" completed "=0"
                    "WHERE" hash "=?")))
     (run query-exec q the-hash)))
+
+(provide set-flagged)
+(define (set-flagged the-hash flag)
+  (let* ((set-to (if flag 1 0))
+         (q (merge "UPDATE" table
+                   "SET" flagged "=?"
+                   "WHERE" hash "=?")))
+    (run query-exec q set-to the-hash)))
 
 (provide select-reviews)
 (define (select-reviews reviewee)

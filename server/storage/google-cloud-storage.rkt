@@ -177,6 +177,27 @@
 (define (is-file? path)
   (file-exists-in-cloud? path))
 
+(define (get-review-path review)
+  (let* ((class (review:record-class-id review))
+         (assignment (review:record-assignment-id review))
+         (step (review:record-step-id review))
+         (review-id (review:record-review-id review))
+         (reviewer (review:record-reviewer-id review))
+         (reviewee (review:record-reviewee-id review)))
+    (string-append class "/" assignment "/reviews/" step "/" review-id "/" reviewer "/" reviewee "/")))
+
+(provide save-review-feedback)
+(define (save-review-feedback review feedback)
+  (let* ((file-name "feedback.txt")
+         (path (string-append (get-review-path review) file-name)))
+    (write-file path feedback)))
+
+(provide load-review-feedback)
+(define (load-review-feedback review)
+  (let* ((file-name "feedback.txt")
+         (path (string-append (get-review-path review) file-name)))
+    (if (file-exists-in-cloud? path) (retrieve-file path) "")))
+
 (provide load-review-comments)
 (define (load-review-comments class assignment stepName review-id reviewer reviewee file-path)
   (let ((path (string-append class "/" assignment "/reviews/" stepName "/" review-id "/" reviewer "/" reviewee "/" (remove-leading-slash file-path) ".comments.json")))

@@ -4,6 +4,7 @@
          web-server/http/response-structs
          xml
          json
+         web-server/http/bindings
          (planet esilkensen/yaml:3:1))
 
 (require "../base.rkt"
@@ -18,18 +19,39 @@
 (provide load)
 (define (load session role rest [message '()])
   (let ((action (car rest)))
-    (cond [(equal? "view" action) (do-view session role (cdr rest) message)]
+    (cond [(equal? "view" action) (do-view session (cdr rest) message)]
           [(equal? "file-container" action) (do-file-container session role (cdr rest) message)]
           [else (do-default session role rest message)])))
 
 (provide post)
-(define (post session role rest post-data)
-  (let ((action (car rest)))
-    (cond [(equal? "file-container" action) (post->do-file-container session role (cdr rest) post-data)]
-          [(equal? "view" action) (post->do-view session role (cdr rest) post-data)]
-          [else (error "This shouldn't happen.")])))
+(define (post session role rest bindings post-data)
+  (printf "bindings:~a\n\n" bindings)
+  (let ((action (car rest))
+        (submit? (exists-binding? 'feedback bindings)))
+    (cond [submit? (post->do-feedback-submit session (cadr rest) bindings )]
+          [(equal? "file-container" action) (post->do-file-container session role (cdr rest) post-data)]
+          [(equal? "view" action) (post->do-view session (cdr rest) post-data)]
+          [else (error "You are not authorized to perform this action.")])))
 
+(define (post->do-feedback-submit session review-hash bindings)
+  (let* ((review (review:select-by-hash review-hash))
+         (uid (ct-session-uid session))
+         (reviewee (review:record-reviewee-id review))
+         (match (equal? uid reviewee))
+         (feedback (if (exists-binding? 'feedback bindings) (extract-binding/single 'feedback bindings) ""))
+         (flag (if (exists-binding? 'flag bindings) #t #f)))
+    (cond [(not match) (response-with (error:not-authorized))]
+          [else (begin
+                  (review:set-flagged review-hash flag)
+                  (save-review-feedback review feedback)
+                  (response-with (do-view session (list review-hash) "<p>Feedback submitted.</p>")))])))
 
+(define (response-with resp)
+  (response/full
+   200 #"Okay"
+   (current-seconds) TEXT/HTML-MIME-TYPE
+   empty
+   (list (string->bytes/utf-8 resp))))
 
 (define (do-default session role rest message)
   (let* ((uid (ct-session-uid session))
@@ -49,13 +71,16 @@
              (rest (cdr reviews)))
         (string-append "<p><a href='../view/" hash "/'>Review #" (number->string cur) ": " step "</a></p>" (gen-reviews-helper rest (+ 1 cur))))))
          
-(define (do-view session role rest message)
+(define (do-view session rest message)
   (let* ((r-hash (car rest))
          (review (review:select-by-hash r-hash))
          (assignment (review:record-assignment-id review))
          (step (review:record-step-id review))
          (updir (apply string-append (repeat "../" (+ (length rest) 1))))
          (root-url updir)
+         [display-message message]
+         [review-feedback (load-review-feedback review)]
+         [review-flagged (if (review:record-flagged review) "CHECKED" "")]
          [submit-url (string-append root-url "review/submit/" r-hash "/")]
          (updir-rubric (apply string-append (repeat "../" (- (length rest) 1))))
          [file-container (string-append updir "file-container/" (to-path rest))]
@@ -181,7 +206,7 @@
      (list (string->bytes/utf-8 data)))))
 
 
-(define (post->do-view session role rest post-data)
+(define (post->do-view session rest post-data)
   (let* ((hash (car rest))
          (review (review:select-by-hash hash)))
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")

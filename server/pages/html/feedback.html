@@ -33,18 +33,23 @@
   <div class="container">
     <iframe src="@file-container" scrolling="no" class="file-frame"></iframe>
   </div>
+  <div id="message" class="message">
+    @display-message
+  </div>
   <div id="rubric" class="rubric"> 
   </div>
   <div id="feedback" class="rubric">
+    <form method="post">
     <div class="rubric-item instruction">
-      <p>Flag this review: <input type="checkbox"></p>
+      <p>Flag this review: <input type="checkbox" name="flag" @review-flagged ></p>
     </div>
     <div class="rubric-item free-response question">
       <p>Leave feedback about what was useful / not useful on this review.</p>
-      <textarea style="height: 40px;"></textarea>
+      <textarea style="height: 40px;" name="feedback">@review-feedback </textarea>
     </div>
     </div>
   </div>
-  <div class="submit-button"><a href="#">Submit</a></div>
+  <div class="submit-button"><input type="submit" value="Submit"></div>
+  </form>
 </body>
 </html>

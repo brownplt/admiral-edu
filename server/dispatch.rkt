@@ -62,7 +62,7 @@
     [(cons "assignments" rest) (render-html session assignments:assignments rest)]
     [(cons "dependencies" rest) (if post (dep:post session rest bindings) (render-html session dep:dependencies rest))]
     [(cons "submit" rest) (if post (submit:submit session role rest bindings) #f)] ;;TODO Handle correctly when not a post
-    [(cons "feedback" rest) (if post (feedback:post session role rest post-data) (render-html session feedback:load rest))]
+    [(cons "feedback" rest) (if post (feedback:post session role rest bindings post-data) (render-html session feedback:load rest))]
     [(cons "export" rest) (assignments:export session (role session) rest)]
     [(cons "exception" rest) (error "Test an exception occurring.")]
     ;[(cons "reset-db" rest) (require-auth session run-init)]

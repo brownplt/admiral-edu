@@ -28,6 +28,14 @@
    empty
    (list (string->bytes/utf-8 "An error occurred while processing your request. This has been reported. Please try again later."))))
 
+(provide response-error)
+(define (response-error message)
+  (response/full
+   200 #"Okay"
+   (current-seconds) TEXT/HTML-MIME-TYPE
+   empty
+   (list (string->bytes/utf-8 (error message)))))
+
 (provide error)
 (define (error message)
   (let ([display-message message])

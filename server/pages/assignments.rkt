@@ -50,8 +50,9 @@
     (cond [open (what-next-link id)]
           [else ""])))
 
+;; TODO: This should be slightly more sophisticated so that closed assignments still show up
 (define (what-next-link id)
-  (string-append "<a href='../next/" id "/'/'>" id "</a>"))
+  (string-append "<p>" id " : <a href='../next/" id "/'>Next Step</a> - <a href='../feedback/" id "/'>Assignment Feedback</a></p>"))
 
 (define (record->html record)
   (let ((id (assignment:record-id record))

@@ -8,6 +8,7 @@
 
 (require "../base.rkt"
          "../email/email.rkt"
+         "../util/file-extension-type.rkt"
          (prefix-in error: "errors.rkt"))
 
 (define (repeat val n)
@@ -170,6 +171,7 @@
          (review (review:select-by-hash r-hash))
          (class (ct-session-class session))
          [assignment (review:record-assignment-id review)]
+         [default-mode (determine-mode-from-filename (last rest))]
          (stepName (review:record-step-id review))
          (reviewee (review:record-reviewee-id review))
          [save-url (prepare-save-url rest)]
@@ -187,6 +189,11 @@
             (string-append (include-template "html/file-container-header.html")
                            contents
                            (include-template "html/file-container-footer.html"))))))
+
+(define (determine-mode-from-filename filename)
+  (let* ((split (string-split filename "."))
+         (ext (if (null? split) "" (last split))))
+    (extension->file-type ext)))
 
 (define (prepare-url word rest)
   (let* ((last-el (last rest))

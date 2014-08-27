@@ -4,9 +4,18 @@ var CaptainTeach;
 (function (CaptainTeach) {
     var CodeMirrorBuilder = (function () {
         function CodeMirrorBuilder() {
-            this._mode = "markdown";
+            this._mode = "Markdown";
             this._readOnly = false;
+            this.cm = null;
         }
+        CodeMirrorBuilder.prototype.getMode = function () {
+            return this._mode;
+        };
+
+        CodeMirrorBuilder.prototype.getCM = function () {
+            return this.cm;
+        };
+
         CodeMirrorBuilder.prototype.mode = function (mode) {
             this._mode = mode;
             return this;
@@ -24,6 +33,7 @@ var CaptainTeach;
                 gutters: ["comments"],
                 mode: this._mode,
                 readOnly: this._readOnly });
+            this.cm = cm;
             return cm;
         };
         return CodeMirrorBuilder;

@@ -5,36 +5,47 @@ declare module CodeMirror {
 }
 
 module CaptainTeach {
-			 
-		export	class CodeMirrorBuilder {
 
-				_mode: string;
-				_readOnly;
-				
-				constructor(){
-						this._mode = "markdown";
-						this._readOnly = false;
-				}
-				
-				mode(mode : string){
-						this._mode = mode;
-						return this;
-				}
-				
-				readOnly(readOnly){
-						this._readOnly = readOnly;
-						return this;
-				}
-				
-				build(attach){
-						var cm: any = CodeMirror.fromTextArea(attach, {
-								lineNumbers: true,
-								lineWrapping: true,
-								gutters: ["comments"],
-								mode: this._mode,
-								readOnly: this._readOnly});
-						return cm;
-				}
-    
-		}
+    export class CodeMirrorBuilder {
+	
+	_mode: string;
+	_readOnly;
+	cm;
+	
+	constructor(){
+	    this._mode = "Markdown";
+	    this._readOnly = false;
+	    this.cm = null;
+	}
+
+	getMode(){
+	    return this._mode;
+	}
+
+	getCM(){
+	    return this.cm;
+	}
+
+	mode(mode : string){
+	    this._mode = mode;
+	    return this;
+	}
+	
+	readOnly(readOnly){
+	    this._readOnly = readOnly;
+	    return this;
+	}
+	
+	build(attach){
+	    var cm: any = CodeMirror.fromTextArea(attach, {
+		lineNumbers: true,
+		lineWrapping: true,
+		gutters: ["comments"],
+		mode: this._mode,
+		readOnly: this._readOnly});
+	    this.cm = cm;
+	    return cm;
+	}
+	
+    }
 }

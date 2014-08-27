@@ -4,6 +4,8 @@
     <title>Captain Teach - File Container</title>
 
     <script>
+      var defaultMode = "Scala";
+
       function save(json, callback){
 	  callback();
       }
@@ -11,12 +13,10 @@
       function load(callback){
 	  callback("{ \"comments\" : {} }");
       }
-
     </script>
     
     <script src="lib/codemirror.js"></script>
-    <script src="mode/clike/clike.js"></script>
-    <script src="mode/markdown/markdown.js"></script>
+    <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.10.1.min.js"></script>
     <script src="bin/review.js"></script>
     <link rel="stylesheet" href="lib/codemirror.css">
     <link rel="stylesheet" href="css/file-container.css">
@@ -32,12 +32,6 @@
 					<a href="#">to</a> / 
 					File.extension</h1>
 				<div id="syntax-menu" class="syntax-menu">
-				  <p>Syntax Mode:
-				    <select id="syntax">
-				      <option>Scala</option>
-				      <option>Scheme</option>
-				    </select>
-				  </p>
 				</div>
 			</div>
 			<textarea id="file" class="file">

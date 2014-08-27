@@ -4,9 +4,18 @@ var CaptainTeach;
 (function (CaptainTeach) {
     var CodeMirrorBuilder = (function () {
         function CodeMirrorBuilder() {
-            this._mode = "markdown";
+            this._mode = "Markdown";
             this._readOnly = false;
+            this.cm = null;
         }
+        CodeMirrorBuilder.prototype.getMode = function () {
+            return this._mode;
+        };
+
+        CodeMirrorBuilder.prototype.getCM = function () {
+            return this.cm;
+        };
+
         CodeMirrorBuilder.prototype.mode = function (mode) {
             this._mode = mode;
             return this;
@@ -24,6 +33,7 @@ var CaptainTeach;
                 gutters: ["comments"],
                 mode: this._mode,
                 readOnly: this._readOnly });
+            this.cm = cm;
             return cm;
         };
         return CodeMirrorBuilder;
@@ -31,6 +41,99 @@ var CaptainTeach;
     CaptainTeach.CodeMirrorBuilder = CodeMirrorBuilder;
 })(CaptainTeach || (CaptainTeach = {}));
 /// <reference path="CodeMirrorBuilder.ts" />
+/// <reference path="jquery.d.ts" />
+var CaptainTeach;
+(function (CaptainTeach) {
+    var SyntaxMenu = (function () {
+        function SyntaxMenu(builder) {
+            this.builder = builder;
+            SyntaxMenu.loadMode(builder.getMode(), builder.getCM());
+        }
+        SyntaxMenu.initModeMaps = function () {
+            if (SyntaxMenu.modeToJS == null) {
+                SyntaxMenu.modeToJS = {};
+                SyntaxMenu.modeToMime = {};
+                for (var i in SyntaxMenu.modes) {
+                    var mode = SyntaxMenu.modes[i];
+                    SyntaxMenu.modeToJS[mode[0]] = SyntaxMenu.prefix + mode[1];
+                    SyntaxMenu.modeToMime[mode[0]] = mode[2];
+                }
+            }
+        };
+
+        SyntaxMenu.buildMenu = function (select, selected) {
+            for (var i in SyntaxMenu.modes) {
+                var mode = SyntaxMenu.modes[i][0];
+                var option = document.createElement('option');
+                if (mode === selected)
+                    option.selected = true;
+                option.innerHTML = mode;
+                select.appendChild(option);
+            }
+        };
+
+        SyntaxMenu.loadMode = function (mode, cm) {
+            SyntaxMenu.initModeMaps();
+            var js = SyntaxMenu.modeToJS[mode];
+            if (!(js in SyntaxMenu.loadedJS)) {
+                SyntaxMenu.loadedJS[js] = true;
+                $.getScript(js, function (script, status, xhr) {
+                    SyntaxMenu.setMode(mode, cm);
+                });
+            } else {
+                SyntaxMenu.setMode(mode, cm);
+            }
+        };
+
+        SyntaxMenu.setMode = function (mode, cm) {
+            var mime = SyntaxMenu.modeToMime[mode];
+            cm.setOption("mode", mime);
+        };
+
+        SyntaxMenu.prototype.attach = function (divElement) {
+            var label = document.createElement('p');
+            label.innerHTML = "Syntax Mode: ";
+
+            var menu = document.createElement('select');
+            var selected = this.builder.getMode();
+
+            SyntaxMenu.buildMenu(menu, selected);
+
+            var _this = this;
+            menu.onchange = function (e) {
+                var mode = menu.value;
+                SyntaxMenu.loadMode(mode, _this.builder.getCM());
+            };
+
+            label.appendChild(menu);
+            divElement.appendChild(label);
+        };
+        SyntaxMenu.loadedJS = {};
+        SyntaxMenu.modeToJS = null;
+        SyntaxMenu.modeToMime = null;
+        SyntaxMenu.modes = [
+            ["APL", "apl/apl.js", "text/apl"],
+            ["Asterisk", "asterisk/asterisk.js", "text/x-asterisk"],
+            ["C", "clike/clike.js", "text/x-csrc"],
+            ["C++", "clike/clike.js", "text/x-c++src"],
+            ["C#", "clike/clike.js", "text/x-csharp"],
+            ["Java", "clike/clike.js", "text/x-java"],
+            ["javascript", "javascript/javascript.js", "text/x-javascript"],
+            ["json", "javascript/javascript.js", "text/x-json"],
+            ["Markdown", "markdown/markdown.js", "text/x-markdown"],
+            ["Pyret", "pyret/pyret.js", "text/x-pyret"],
+            ["Scala", "clike/clike.js", "text/x-scala"],
+            ["Scheme", "scheme/scheme.js", "text/x-scheme"],
+            ["YAML", "yaml/yaml.js", "text/x-yaml"]
+        ];
+
+        SyntaxMenu.prefix = "https://www.captain-teach.org/mode/";
+        return SyntaxMenu;
+    })();
+    CaptainTeach.SyntaxMenu = SyntaxMenu;
+})(CaptainTeach || (CaptainTeach = {}));
+/// <reference path="CodeMirrorBuilder.ts" />
+/// <reference path="SyntaxMenu.ts" />
 
 var CaptainTeach;
 (function (CaptainTeach) {
@@ -205,13 +308,15 @@ var CaptainTeach;
 
     window.onload = function () {
         var builder = new CaptainTeach.CodeMirrorBuilder();
-        builder.mode("text/x-scala").readOnly(true);
+        builder.mode(defaultMode).readOnly(true);
 
         var callback = function (data) {
             var review = ReviewFile.fromJson(data);
             var file = document.getElementById('file');
             var cm = review.attach(file, builder);
             cm.className += " file";
+            var menu = new CaptainTeach.SyntaxMenu(builder);
+            menu.attach(document.getElementById('syntax-menu'));
         };
         load(callback);
     };

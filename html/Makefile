@@ -13,7 +13,7 @@ $(bin)/author.js:$(src)/author.ts
 $(bin)/captain-teach.js:$(src)/CodeMirrorBuilder.ts
 	$(CC) --out $(bin)/captain-teach.js $(src)/CodeMirrorBuilder.ts
 
-$(bin)/review.js: $(src)/review.ts $(bin)/captain-teach.js
+$(bin)/review.js: $(src)/review.ts $(src)/SyntaxMenu.ts $(src)/CodeMirrorBuilder.ts $(src)/jquery.d.ts
 	$(CC) --out $(bin)/review.js $(src)/review.ts
 
 $(bin)/rubric.js: $(src)/rubric.ts

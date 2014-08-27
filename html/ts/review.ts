@@ -1,6 +1,8 @@
 /// <reference path="CodeMirrorBuilder.ts" />
+/// <reference path="SyntaxMenu.ts" />
 declare function save(json, callback);
 declare function load(callback) : string;
+declare var defaultMode : string;
 
 module CaptainTeach {
     
@@ -178,13 +180,17 @@ module CaptainTeach {
     window.onload = function() {
 	
 	var builder : CodeMirrorBuilder = new CodeMirrorBuilder();
-	builder.mode("text/x-scala").readOnly(true);
+	builder.mode(defaultMode).readOnly(true);
+
+		
 
 	var callback = function (data) {
 	    var review : ReviewFile = ReviewFile.fromJson(data);
 	    var file = document.getElementById('file');
 	    var cm = review.attach(file, builder);
 	    cm.className += " file";
+	    var menu : SyntaxMenu = new SyntaxMenu(builder);
+	    menu.attach(document.getElementById('syntax-menu'));
 	}
 	load(callback);
 

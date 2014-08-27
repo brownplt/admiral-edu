@@ -4,6 +4,9 @@
     <title>Captain Teach - File Container</title>
 
     <script>
+
+      var defaultMode = "@default-mode";
+
       function save(json, callback){
 	  var xhr = new XMLHttpRequest();
 	  xhr.open("POST", @save-url, true);
@@ -26,8 +29,7 @@
     </script>
 
     <script src="/lib/codemirror.js"></script>
-    <script src="/mode/clike/clike.js"></script>
-    <script src="/mode/markdown/markdown.js"></script>
+    <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.10.1.min.js"></script>
     <script src="/bin/review.js"></script>
     <link rel="stylesheet" href="/lib/codemirror.css">
     <link rel="stylesheet" href="/css/file-container.css">
@@ -42,4 +44,6 @@
 					@step / 
 					@path
 				</h1>
+				<div id="syntax-menu" class="syntax-menu">
+				</div>
 			</div>

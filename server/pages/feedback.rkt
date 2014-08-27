@@ -9,6 +9,7 @@
 
 (require "../base.rkt"
          (prefix-in error: "errors.rkt")
+         "../util/file-extension-type.rkt"
          "../authoring/assignment.rkt")
 
 (define (repeat val n)
@@ -101,6 +102,7 @@
          [assignment (review:record-assignment-id review)]
          (stepName (review:record-step-id review))
          (reviewee (review:record-reviewee-id review))
+         [default-mode (determine-mode-from-filename (last rest))]
          [load-url (prepare-load-url rest)]
          [step (to-step-link stepName (- (length rest) 2))]
          (last-path (last rest))
@@ -114,6 +116,11 @@
         (string-append (include-template "html/feedback-file-container-header.html")
                        contents
                        (include-template "html/file-container-footer.html")))))
+
+(define (determine-mode-from-filename filename)
+  (let* ((split (string-split filename "."))
+         (ext (if (null? split) "" (last split))))
+    (extension->file-type ext)))
 
 (define (to-path-html input)
   (letrec ((helper (lambda (acc ls)

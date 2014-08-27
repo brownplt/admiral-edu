@@ -6,15 +6,18 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
   
   const pyret_indent_regex = new RegExp("^[a-zA-Z_][a-zA-Z0-9$_\\-]*");
   const pyret_keywords = 
-    wordRegexp(["fun", "method", "var", "when", "import", "provide", 
-                "data", "end", "except", "for", "from", 
-                "and", "or", "not", "as", "if", "else", "cases"]);
+    wordRegexp(["fun", "lam", "method", "var", "when", "import", "provide", "type", "newtype",
+                "data", "end", "for", "from", "lazy",
+                "and", "or", "as", "if", "else", "cases", "is", "satisfies", "raises",
+                "check", "examples"]);
+  const pyret_keywords_hyphen =
+    wordRegexp(["provide-types", "type-let"]);
   const pyret_keywords_colon = 
-    wordRegexp(["doc", "try", "ask", "otherwise", "then", "with", "sharing", "where", "check", "graph", "block"]);
+    wordRegexp(["doc", "try", "ask", "otherwise", "then", "with", "sharing", "where", "graph", "block"]);
   const pyret_single_punctuation = 
-    new RegExp("^([" + ["\\:", "\\.", "<", ">", ",", "^", 
-                        ";", "|", "=", "+", "*", "/", "\\", // NOTE: No minus
-                        "\\(", "\\)", "{", "}", "\\[", "\\]"].join('') + "])");
+    new RegExp("^([" + [":", ".", "<", ">", ",", "^", 
+                        ";", "|", "=", "+", "*", "/", "\\\\", // NOTE: No minus
+                        "(", ")", "{", "}", "\\[", "\\]"].join('') + "])");
   const pyret_double_punctuation = 
     new RegExp("^((" + ["::", "==", ">=", "<=", "=>", "->", ":=", "<>"].join(")|(") + "))");
   const initial_operators = { "-": true, "+": true, "*": true, "/": true, "<": true, "<=": true,
@@ -43,25 +46,55 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
     if (stream.match(/^[0-9]+(\.[0-9]+)?/))
       return ret(state, 'number', stream.current(), 'number');
     
-    if (ch === '"') {
-      state.tokenizer = tokenStringDouble;
-      state.lastToken = '"';
-      stream.eat('"');
+    // if (ch === '"') {
+    //   state.tokenizer = tokenStringDouble;
+    //   state.lastToken = '"';
+    //   stream.eat('"');
+    //   return state.tokenizer(stream, state);
+    // }
+    // if (ch === "'") {
+    //   state.tokenizer = tokenStringSingle;
+    //   state.lastToken = "'";
+    //   stream.eat("'");
+    //   return state.tokenizer(stream, state);
+    // }
+    const dquot_str = 
+      new RegExp("^\"(?:" +
+                 "\\\\[01234567]{1,3}" +
+                 "|\\\\x[0-9a-fA-F]{1,2}" + 
+                 "|\\\\u[0-9a-fA-f]{1,4}" + 
+                 "|\\\\[\\\\nrt\"\']" + 
+                 "|[^\\\\\"\n\r])*\"");
+    const squot_str = 
+      new RegExp("^\'(?:" +
+                 "\\\\[01234567]{1,3}" +
+                 "|\\\\x[0-9a-fA-F]{1,2}" + 
+                 "|\\\\u[0-9a-fA-f]{1,4}" + 
+                 "|\\\\[\\\\nrt\"\']" + 
+                 "|[^\\\\\'\n\r])*\'");
+    const unterminated_string = new RegExp("^[\"\'].*");
+
+    var match;
+    if (match = stream.match(dquot_str, true)) {
+      return ret(state, 'string', match[0], 'string');
+    } else if (match = stream.match(squot_str, true)) {
+      return ret(state, 'string', match[0], 'string');
+    } else if (stream.match(/^```/, true)) {
+      state.tokenizer = tokenStringTriple;
+      state.lastToken = '```';
       return state.tokenizer(stream, state);
-    }
-    if (ch === "'") {
-      state.tokenizer = tokenStringSingle;
-      state.lastToken = "'";
-      stream.eat("'");
-      return state.tokenizer(stream, state);
+    } else if (match = stream.match(unterminated_string, true)) {
+      return ret(state, 'string', match[0], 'unterminated-string');
     }
     // Level 1
-    var match;
     if ((match = stream.match(pyret_double_punctuation, true)) || 
         (match = stream.match(pyret_single_punctuation, true))) {
       if (state.dataNoPipeColon && (match[0] == ":" || match[0] == "|"))
         state.dataNoPipeColon = false;
       return ret(state, match[0], match[0], 'builtin');
+    }
+    if (match = stream.match(pyret_keywords_hyphen, true)) {
+      return ret(state, match[0], match[0], 'keyword');
     }
     if (match = stream.match(pyret_keywords, true)) {
       if (match[0] == "data")
@@ -92,8 +125,8 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
   }
   function mkTokenString(singleOrDouble) {
     return function(stream, state) {
-      var insideRE = singleOrDouble === "'" ? /[^'\\]/ : /[^"\\]/;
-      var endRE = singleOrDouble === "'" ? /'/ : /"/;
+      var insideRE = singleOrDouble === "'" ? new RegExp("[^'\\]") : new RegExp('[^"\\]');
+      var endRE = singleOrDouble === "'" ? new RegExp("'") : new RegExp('"');
       while (!stream.eol()) {
         stream.eatWhile(insideRE);
         if (stream.eat('\\')) {
@@ -112,6 +145,23 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
 
   var tokenStringDouble = mkTokenString('"');
   var tokenStringSingle = mkTokenString("'");
+
+  function tokenStringTriple(stream, state) {
+    while (!stream.eol()) {
+      stream.match(/[^`\\]*/, true); //eatWhile(/[^`\\]|`{1,2}([^`\\]|(?:\\))/);
+      if (stream.eat('\\')) {
+        stream.next();
+        if (stream.eol()) {
+          return ret(state, 'string', stream.current(), 'string');
+        }
+      } else if (stream.match('```', true)) {
+        state.tokenizer = tokenBase;
+        return ret(state, 'string', stream.current(), 'string');
+      } else
+        stream.next();
+    }
+    return ret(state, 'string', stream.current(), 'string');
+  }
 
   // Parsing
 
@@ -206,7 +256,8 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
         ls.tokens.pop();
       }
     }
-    if (firstTokenInLine && initial_operators[state.lastToken]) {
+    if (firstTokenInLine && initial_operators[state.lastToken] 
+        && (state.lastToken == "." || stream.match(/^\s+/))) {
       ls.curOpened.i++;
       ls.deferedClosed.i++;
     } else if (state.lastToken === ":") {
@@ -237,7 +288,7 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
     } else if (state.lastToken === "var") {
       ls.deferedOpened.v++;
       ls.tokens.push("VAR", "NEEDSOMETHING", "WANTCOLONOREQUAL");
-    } else if (state.lastToken === "fun" || state.lastToken === "method") {
+    } else if (state.lastToken === "fun" || state.lastToken === "method" || state.lastToken === "lam") {
       ls.deferedOpened.fn++;
       ls.tokens.push("FUN", "WANTOPENPAREN");
     } else if (state.lastToken === "when") {
@@ -252,7 +303,7 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
     } else if (state.lastToken === "data") {
       ls.deferedOpened.d++;
       ls.tokens.push("DATA", "WANTCOLON", "NEEDSOMETHING");
-    } else if (state.lastToken === "ask:") {
+    } else if (state.lastToken === "ask") {
       ls.deferedOpened.c++;
       ls.tokens.push("IFCOND");
     } else if (state.lastToken === "if") {
@@ -273,7 +324,7 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
       }
     } else if (state.lastToken === "|") {
       if (hasTop(ls.tokens, ["OBJECT", "DATA"]) || hasTop(ls.tokens, ["FIELD", "OBJECT", "DATA"])) {
-        ls.curClosed.o++;
+        //ls.curClosed.o++;
         if (hasTop(ls.tokens, "FIELD")) {
           ls.tokens.pop();
           if (ls.curOpened.f > 0) ls.curOpened.f--;
@@ -287,22 +338,23 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
     } else if (state.lastToken === "with") {
       if (hasTop(ls.tokens, ["WANTOPENPAREN", "WANTCLOSEPAREN", "DATA"])) {
         ls.tokens.pop(); ls.tokens.pop();
-        ls.deferedOpened.o++;
         ls.tokens.push("OBJECT", "WANTCOLON");
-      }
+      } else if (hasTop(ls.tokens, ["DATA"])) {
+        ls.tokens.push("OBJECT", "WANTCOLON");
+      }        
     } else if (state.lastToken === "provide") {
       ls.tokens.push("PROVIDE");
     } else if (state.lastToken === "sharing") {
       ls.curClosed.d++; ls.deferedOpened.s++;
       if (hasTop(ls.tokens, ["OBJECT", "DATA"])) {
         ls.tokens.pop(); ls.tokens.pop();
-        ls.curClosed.o++;
+        //ls.curClosed.o++;
         ls.tokens.push("SHARED", "WANTCOLON");
       } else if (hasTop(ls.tokens, "DATA")) {
         ls.tokens.pop();
         ls.tokens.push("SHARED", "WANTCOLON");
       }
-    } else if (state.lastToken === "where") {
+    } else if (state.lastToken === "where" || (state.lastToken === "examples" && ls.tokens.length > 0)) {
       if (hasTop(ls.tokens, ["OBJECT", "DATA"])) {
         ls.tokens.pop();
         // ls.curClosed.o++; 
@@ -316,7 +368,7 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
       }
       ls.tokens.pop();
       ls.tokens.push("CHECK", "WANTCOLON");
-    } else if (state.lastToken === "check" && ls.tokens.length === 0) {
+    } else if (state.lastToken === "check" || (state.lastToken === "examples" && ls.tokens.length === 0)) {
       ls.deferedOpened.s++;
       ls.tokens.push("CHECK", "WANTCOLON");
     } else if (state.lastToken === "try") {
@@ -372,12 +424,14 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
         ls.tokens.pop();
       } else if (hasTop(ls.tokens, "OBJECT") || hasTop(ls.tokens, "SHARED")) {
         ls.tokens.push("FUN");
-        ls.deferedOpened.f++;
+        ls.deferedOpened.fn++;
       } else {
         ls.tokens.push("WANTCLOSEPAREN");
       }
     } else if (state.lastToken === ")") {
-      ls.deferedClosed.p++;
+      if (ls.curOpened.p > 0) { ls.curOpened.p--; }
+      else if (ls.deferedOpened.p > 0) { ls.deferedOpened.p--; }
+      else {ls.deferedClosed.p++; }
       if (hasTop(ls.tokens, "WANTCLOSEPAREN"))
         ls.tokens.pop();
       while (hasTop(ls.tokens, "VAR")) {
@@ -386,7 +440,7 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
       }
     } else if (state.lastToken === "end" || state.lastToken === ";") {
       if (hasTop(ls.tokens, ["OBJECT", "DATA"])) {
-        ls.curClosed.o++;
+        //ls.curClosed.o++;
         ls.tokens.pop();
       }
       var top = peek(ls.tokens);
@@ -555,9 +609,9 @@ CodeMirror.defineMode("pyret", function(config, parserConfig) {
 
     lineComment: "#",
 
-    electricChars: "de|]}+-/=<>.",
+    electricInput: new RegExp("(?:[de.\\]}|:]|[-s\\*\\+/=<>^]\\s)$"),
   };
   return external;
 });
 
-// CodeMirror.defineMIME("text/x-pyret", "pyret");
+CodeMirror.defineMIME("text/x-pyret", "pyret");

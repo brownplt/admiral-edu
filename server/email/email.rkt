@@ -36,7 +36,7 @@
          (header (standard-message-header from to '() '() subject))
          (split-message (lines message)))
     (cond [(email-okay uid) (begin
-                              (check-credentials)
+#|                              (check-credentials)
                               (smtp-send-message 
                                smtp:server-address 
                                from 
@@ -46,6 +46,7 @@
                                #:auth-user username
                                #:auth-passwd password
                                #:tls-encode ports->ssl-ports)
+|#
                               #t)]
           [else #f])))
 

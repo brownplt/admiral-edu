@@ -51,6 +51,6 @@
 
 ;; TODO: Provide file / database entries
 (define (email-okay uid)
-  (let* ((no-email-regexp "[.]*@student.edu")
+  (let* ((no-email-regexp "([.]*@student.edu|default-submission[.]*)")
          (check (regexp-match no-email-regexp uid)))
     (not check)))

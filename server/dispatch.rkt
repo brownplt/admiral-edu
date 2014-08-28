@@ -26,7 +26,8 @@
          (prefix-in assignments: "pages/assignments.rkt")
          (prefix-in submit: "pages/submit.rkt")
          (prefix-in dep: "pages/dependencies.rkt")
-         (prefix-in feedback: "pages/feedback.rkt"))
+         (prefix-in feedback: "pages/feedback.rkt")
+         (prefix-in roster: "pages/roster.rkt"))
 
 (define (any? x)
   #t)
@@ -65,6 +66,7 @@
     [(cons "feedback" rest) (if post (feedback:post session role rest bindings post-data) (render-html session feedback:load rest))]
     [(cons "export" rest) (assignments:export session (role session) rest)]
     [(cons "exception" rest) (error "Test an exception occurring.")]
+    [(cons "roster" rest) (if post (render-html session (roster:post post-data bindings) rest) (render-html session roster:load rest))]
     ;[(cons "reset-db" rest) (require-auth session run-init)]
     [else (error:four-oh-four)]))
 

@@ -13,7 +13,8 @@
       (user-info session role)
       ;(next-step session)
       ;(completed-reviews session)
-      (users session role))))
+      (render-menu session role))))
+      ;(users session role))))
 
 (provide post->index)
 (define (post->index session role binds)
@@ -68,6 +69,19 @@
        (list-tas session)
        '((h2 "Students")) 
        (list-students session))))
+
+(define (render-menu session role)
+  (if (not (roles:role-can-edit role)) (student-view) (instructor-view)))
+
+(define (instructor-view)
+  (append
+   '((p (a ((href "assignments/")) "Assignments"))
+     (p(a ((href "roster/")) "Roster")))))
+
+(define (student-view)
+  (append
+   '((p (a ((href "assignments/")) "Assignments")))))
+         
 
 (define (list-students session)
   (let ((student-records (role:in-class (ct-session-class session) student-role 200 0)))        

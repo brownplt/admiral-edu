@@ -164,6 +164,7 @@ ADD docker/.smtp-credentials /home/admiral-edu/.smtp-credentials
 #
 ADD server /home/admiraledu/server
 
+ADD html/index.html /var/www/html/index.html
 
 #
 # Run AdmiralEdu

@@ -34,6 +34,35 @@
     (query-exec conn create)
     (release conn)))
 
+(provide delete)
+(define (delete class-name uid)
+  (let* ((query (merge "DELETE FROM" table
+                       "WHERE" class-id "=? AND"
+                               user-id "=?"))
+         (result (run query-exec query class-name uid)))
+    result))
+
+(provide (struct-out record))
+(struct record (class uid role) #:transparent)
+
+(define record-cols (string-join (list class-id user-id role-id) ","))
+
+(define (vector->record vec)
+  (let* ((class (vector-ref vec 0))
+         (uid (vector-ref vec 1))
+         (role (roles:get-role (vector-ref vec 2)))
+         (result (record class uid role)))
+    result))
+
+(provide all)
+(define (all class)
+  (let* ((query (merge "SELECT" record-cols
+                       "FROM" table
+                       "WHERE" class-id "=?"))
+         (results (run query-rows query class))
+         (records (map vector->record results)))
+    records))
+
 ;; Retrieve a roles:role for a class/user
 (provide select)
 (define (select class uid)
@@ -75,6 +104,15 @@
          (create (prepare conn (merge "INSERT INTO" table "values(?,?,?)")))
          (result (if (eq? #f (try-with-default #f query-exec conn create class uid role-id)) #f #t)))
     (release conn)
+    result))
+
+(provide set-role)
+(define (set-role class uid  new-role)
+  (let* ((query (merge "UPDATE" table
+                       "SET" role-id "=?"
+                       "WHERE" class-id "=? AND"
+                               user-id "=?"))
+         (result (run query-exec query new-role class uid)))
     result))
 
 ;; Retrieve all students for a class

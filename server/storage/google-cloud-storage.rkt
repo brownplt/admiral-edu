@@ -51,8 +51,9 @@
 
 ; Returns #t if successful and #f if failute
 (provide upload-instructor-solution)
-(define (upload-instructor-solution class user assignment step data)
+(define (upload-instructor-solution class user assignment step file-name data)
   (let* ((path (create-directory class assignment user step))
+         (file (string-append path "/" file-name))
          (files (map (lambda (x) (string-append path "/" x)) (list-files path)))
          (local-files (map (lambda (x) (string-append path "/" x)) (local:list-files path)))
          (subs (map (lambda (x) (string-append path "/" x)) (local:sub-directories-of path))))
@@ -60,11 +61,20 @@
     ;; Remove any previous files
     (map delete-file files)
     (map local:delete-file subs)
-    (let ((out (open-output-file (string-append path "/submission.zip") #:exists 'replace)))
+    (let ((out (open-output-file file #:exists 'replace)))
+      (printf "Writing File: ~a\n" file)
+      (printf "Data:~a\n" data)
+      (printf "Out:~a\n" out)
       (display data out)
       (close-output-port out)
-      (let ((result (unarchive path)))
-        (local:delete-file (string-append path "/submission.zip"))
+      (printf "File exists: ~a\n" (file-exists? file))
+      (if (is-zip? file)
+            (do-unarchive-instructor class user assignment step file path)
+            (do-single-file-instructor class user assignment step file path)))))
+
+(define (do-unarchive-instructor class user assignment step file path)
+      (let ((result (unarchive path file)))
+        (local:delete-file file)
         (when result   
           (let ((files (list-all-sub-files path))
                 ;; remove-leading-slash is a hack fix
@@ -72,7 +82,15 @@
             (when (not (submission:exists? assignment class step user)) (submission:create-instructor-solution assignment class step user))
             (map upload-f files)            
             (local:delete-file path)))
-        result))))
+        result))
+
+(define (do-single-file-instructor class user assignment step file path)
+  (let ((files (list-all-sub-files path))
+                ;; remove-leading-slash is a hack fix
+                (upload-f (lambda (p) (put/file (string-append bucket (remove-leading-slash p)) (string->path p)))))
+            (when (not (submission:exists? assignment class step user)) (submission:create-instructor-solution assignment class step user))
+            (map upload-f files)            
+            (local:delete-file path)))
 
 (define (remove-leading-slash p)
   (let* ((fc (string-ref p 0))
@@ -80,14 +98,24 @@
     pp))
 
 (provide upload-submission)
-(define (upload-submission class user assignment step data)
+(define (upload-submission class user assignment step file-name data)
   (let* ((path (create-directory class assignment user step))
-         (file (string-append path "/submission.zip"))
+         (file (string-append path "/" file-name))
          (out (open-output-file file #:exists 'replace)))
     (display data out)
     (close-output-port out)
-    
-    (let ((result (unarchive path)))
+    (if (is-zip? file) 
+          (do-unarchive class user assignment step path file)
+          (do-single-file class user assignment step path file))))
+
+(define (is-zip? file)
+  (let* ((clean (string-trim file))
+         (split (string-split clean "."))
+         (ext (last split)))
+    (equal? "zip" (string-downcase ext))))
+        
+(define (do-unarchive class user assignment step path file)
+    (let ((result (unarchive path file)))
       (local:delete-file file)
       (when result 
         (begin
@@ -96,7 +124,12 @@
             (map upload-f files)
             (submission:create assignment class step user)
             (local:delete-file path))))
-      result)))
+      result))
+
+(define (do-single-file class user assignment step path file)
+  (put/file (string-append bucket (remove-leading-slash file)) (string->path file))
+  (submission:create assignment class step user)
+  (local:delete-file path))
 
 (provide export-assignment)
 (define (export-assignment class assignment)

@@ -1,6 +1,7 @@
 #lang racket
 
 (require web-server/http/bindings
+         web-server/http/request-structs
          web-server/templates
          web-server/http/response-structs
          xml
@@ -67,14 +68,14 @@
 ;;TODO Allow user to upload new dependencies
 
 (provide post)
-(define (post session rest bindings)
+(define (post session rest bindings raw-bindings)
   (let* ((class class-name)
          (assignment (car rest))
          (stepName (cadr rest))
          (review-id (caddr rest))
          (action (cadddr rest)))
     (cond [(equal? action "load") (load-rubric class assignment stepName review-id)]
-          [(equal? action "upload") (upload-submissions class assignment stepName review-id bindings)])))
+          [(equal? action "upload") (upload-submissions class assignment stepName review-id bindings raw-bindings)])))
 
 (define (load-rubric class assignment stepName review-id)
   (let ((data (retrieve-default-rubric class assignment stepName review-id)))
@@ -84,23 +85,24 @@
      empty
      (list (string->bytes/utf-8 data)))))
 
-(define (upload-submissions class assignment-id step-id review-id bindings)
+(define (upload-submissions class assignment-id step-id review-id bindings raw-bindings)
   (let* ((dep (car (assign:find-dependencies assignment-id step-id review-id)))
          (amount (assign:dependency-amount dep))
-         (result (run-submissions class assignment-id step-id review-id bindings amount) ))
+         (result (run-submissions class assignment-id step-id review-id bindings raw-bindings amount) ))
     (response/full
      200 #"Okay"
      (current-seconds) TEXT/HTML-MIME-TYPE
      empty
      (list (string->bytes/utf-8 result)))))
 
-(define (run-submissions class assignment stepName review-id bindings amount)
+(define (run-submissions class assignment stepName review-id bindings raw-bindings amount)
   (letrec ((helper (lambda (n)
                      (if (<= n 0) (assignment-dependencies assignment "<p>Dependencies uploaded.</p>")
                          (let* ((sym (string->symbol (string-append "file-" (number->string n))))
                                 (uname (assign:default-submission review-id n))
-                                (data (extract-binding/single sym bindings)))
-                           (let ((result (upload-instructor-solution class uname assignment stepName data)))
+                                (data (extract-binding/single sym bindings))
+                                (filename (bytes->string/locale (binding:file-filename (list-ref raw-bindings (- n 1))))))
+                           (let ((result (upload-instructor-solution class uname assignment stepName filename data)))
                              (if (not result) (error:error (string-append "Failed to upload dependency for " stepName ". This is most likely because the file provided was not a zip archive."))
                                  (begin
                                    (assign:check-ready assignment)

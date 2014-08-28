@@ -43,26 +43,27 @@
 (define (handler post)
   (lambda (req path)
     (let* ((session (get-session req))
+           (raw-bindings (request-bindings/raw req))
            (bindings (request-bindings req))
            (post-data (request-post-data/raw req))
            (clean-path (filter (lambda (x) (not (equal? "" x))) path))
-           (result (with-handlers ([any? error:exception-occurred]) (handlerPrime post post-data session bindings clean-path))))
+           (result (with-handlers ([any? error:exception-occurred]) (handlerPrime post post-data session bindings raw-bindings clean-path))))
       result)))
       ;(with-handlers ([any? error:exception-occurred]) (handlerPrime post post-data session bindings clean-path)))))
 
-(define (handlerPrime post post-data session bindings path)
+(define (handlerPrime post post-data session bindings raw-bindings path)
   (print (list post path)) (newline) (flush-output);;TODO Proper log
   (match path
     ['() (if post (post->render session post->index bindings) (render session index))]
     [(list "") (if post (post->render session post->index bindings) (render session index))]
     [(cons "review" rest) (if post (review:post->review session post-data rest) (render-html session review:load rest))]
     [(cons "file-container" rest) (if post (review:push->file-container session post-data rest) (render-html session review:file-container rest))]
-    [(cons "su" (cons uid rest)) (with-sudo post post-data uid session bindings rest)]
+    [(cons "su" (cons uid rest)) (with-sudo post post-data uid session bindings raw-bindings rest)]
     [(cons "author" rest) (if post (author:post->validate session post-data rest) (render-html session author:load rest))]
     [(cons "next" rest) (render-html session next rest)]
     [(cons "assignments" rest) (render-html session assignments:assignments rest)]
-    [(cons "dependencies" rest) (if post (dep:post session rest bindings) (render-html session dep:dependencies rest))]
-    [(cons "submit" rest) (if post (submit:submit session role rest bindings) #f)] ;;TODO Handle correctly when not a post
+    [(cons "dependencies" rest) (if post (dep:post session rest bindings raw-bindings) (render-html session dep:dependencies rest))]
+    [(cons "submit" rest) (if post (submit:submit session role rest bindings raw-bindings) #f)] ;;TODO Handle correctly when not a post
     [(cons "feedback" rest) (if post (feedback:post session role rest bindings post-data) (render-html session feedback:load rest))]
     [(cons "export" rest) (assignments:export session (role session) rest)]
     [(cons "exception" rest) (error "Test an exception occurring.")]
@@ -81,12 +82,12 @@
          (can-sudo (if user-role (roles:role-can-edit user-role) #f)))
     (if can-sudo (f) (error:not-authorized))))
 
-(define (with-sudo post post-data uid session bindings path)
+(define (with-sudo post post-data uid session bindings raw-bindings path)
   (let* ((user-role (role session))
          (can-sudo (if user-role (roles:role-can-edit user-role) #f))
          (new-session (ct-session (ct-session-class session) uid)))
     (if (not can-sudo) (error:four-oh-four)
-        (handlerPrime post post-data new-session bindings path))))
+        (handlerPrime post post-data new-session bindings raw-bindings path))))
 
 
 (define (initialization session role [message '()])

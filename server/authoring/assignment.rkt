@@ -390,7 +390,7 @@
 
 ;; Attempts to submit for the specified uid, assignment, and step-id. If this is not the next expected action,
 ;; This returns a failure with a message describing what the user should do next.
-(define (submit-step assignment-id step-id uid data)
+(define (submit-step assignment-id step-id uid file-name data)
   ;; Assignment must exist
   (cond 
     [(not (assignment:exists? assignment-id class-name)) (failure "The specified assignment '" assignment-id "' does not exists.")]
@@ -399,15 +399,15 @@
                  (steps (Assignment-steps assignment))
                  (next (next-action assignment-id steps uid)))
             (cond
-              [(and (MustSubmitNext? next) (equal? (Step-id (MustSubmitNext-step next)) step-id)) (do-submit-step assignment-id step-id uid data steps)]
+              [(and (MustSubmitNext? next) (equal? (Step-id (MustSubmitNext-step next)) step-id)) (do-submit-step assignment-id step-id uid file-name data steps)]
               [else (failure "Could not submit to the step '" step-id "'." (next-action-error next))]))]))
 
-(define (do-submit-step assignment-id step-id uid data steps)
+(define (do-submit-step assignment-id step-id uid file-name data steps)
   (let* ((assignment (assignment:select class-name assignment-id))
          (is-open (assignment:record-open assignment)))
     (if (not is-open) (Failure "This assignment is currently closed.")
         ;(upload-submission class user assignment step data)
-        (let ((result (upload-submission class-name uid assignment-id step-id data)))
+        (let ((result (upload-submission class-name uid assignment-id step-id file-name data)))
           (if (not result) (Failure "The submission failed. This is most likely because the file uploaded was not a zip archive.")
               (begin
                 ;; Assign reviews to the student if applicable

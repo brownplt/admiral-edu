@@ -95,6 +95,7 @@
                   "WHERE" class-id "=? AND"
                           assignment-id "=?"
                   "LIMIT 1")))
+    ;(printf "class:~a\n\nassignment:~a\n\n" class assignment)
     (row->record (run query-row q class assignment))))
     
 (provide list)

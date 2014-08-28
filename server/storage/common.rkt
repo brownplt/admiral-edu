@@ -46,5 +46,5 @@
 ;; TODO: Eventually we want to detect the archive type and choose the correct program to extract it.
 ;; This also needs to be able to handle invalid file types
 (provide unarchive)
-(define (unarchive path)
-  (system (string-append "unzip " path "/submission.zip -d " path)))
+(define (unarchive path file-name)
+  (system (string-append "unzip " file-name " -d " path)))

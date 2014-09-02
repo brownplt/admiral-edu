@@ -74,7 +74,7 @@
         (when result   
           (let ((files (list-all-sub-files path))
                 ;; remove-leading-slash is a hack fix
-                (upload-f (lambda (p) (put/file (string-append bucket (remove-leading-slash p)) (string->path p)))))
+                (upload-f (lambda (p) (put/file (safe-file-name (string-append bucket (remove-leading-slash p))) (string->path p)))))
             (when (not (submission:exists? assignment class step user)) (submission:create-instructor-solution assignment class step user))
             (map upload-f files)            
             (local:delete-file path)))
@@ -83,7 +83,7 @@
 (define (do-single-file-instructor class user assignment step file path)
   (let ((files (list-all-sub-files path))
                 ;; remove-leading-slash is a hack fix
-                (upload-f (lambda (p) (put/file (string-append bucket (remove-leading-slash p)) (string->path p)))))
+                (upload-f (lambda (p) (put/file (safe-file-name (string-append bucket (remove-leading-slash p))) (string->path p)))))
             (when (not (submission:exists? assignment class step user)) (submission:create-instructor-solution assignment class step user))
             (map upload-f files)            
             (local:delete-file path)))
@@ -116,14 +116,14 @@
       (when result 
         (begin
           (let ((files (list-all-sub-files path))
-                (upload-f (lambda (p) (put/file (string-append bucket (remove-leading-slash p)) (string->path p)))))
+                (upload-f (lambda (p) (put/file (safe-file-name (string-append bucket (remove-leading-slash p))) (string->path p)))))
             (map upload-f files)
             (submission:create assignment class step user)
             (local:delete-file path))))
       result))
 
 (define (do-single-file class user assignment step path file)
-  (put/file (string-append bucket (remove-leading-slash file)) (string->path file))
+  (put/file (safe-file-name (string-append bucket (remove-leading-slash file))) (string->path file))
   (submission:create assignment class step user)
   (local:delete-file path))
 
@@ -245,7 +245,7 @@
     (display contents out)
     (close-output-port out)
     ;; Push the file to the cloud
-    (put/file (string-append bucket (remove-leading-slash path)) (string->path path))
+    (put/file (string-append bucket (safe-file-name (remove-leading-slash path))) (string->path path))
     ;; Remove local copy
     (local:delete-file path)))
 
@@ -255,7 +255,7 @@
 
 (define (upload-path path)
   (let ((all-files (list-all-sub-files path))
-        (helper (lambda (file-path) (put/file (string-append bucket (remove-leading-slash file-path)) (string->path file-path)))))
+        (helper (lambda (file-path) (put/file (safe-file-name (string-append bucket (remove-leading-slash file-path))) (string->path file-path)))))
     (map helper all-files)))
 
 (define (list-all-sub-files path)
@@ -266,4 +266,7 @@
             (sub-dirs (map (lambda (x) (string-append path "/" x)) (local:sub-directories-of path)))
             (sub-contents (map list-all-sub-files sub-dirs)))
        (flatten (append files sub-contents)))]))
+
+(define (safe-file-name filename) 
+  (string-replace filename " " "_"))
          

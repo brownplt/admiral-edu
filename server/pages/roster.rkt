@@ -48,7 +48,7 @@
 (define (post->process-roster bindings)
   (cond [(not (exists-binding? 'file bindings)) "<p>No roster file found.</p>"]
         [else (let* ((data (extract-binding/single 'file bindings))
-                     (results (register-roster (bytes->string/locale data)))
+                     (results (register-roster (bytes->string/utf-8 data)))
                      (output (map render-result results)))
                 (string-join output "\n"))]))
 

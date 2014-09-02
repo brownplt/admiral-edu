@@ -101,7 +101,7 @@
                          (let* ((sym (string->symbol (string-append "file-" (number->string n))))
                                 (uname (assign:default-submission review-id n))
                                 (data (extract-binding/single sym bindings))
-                                (filename (bytes->string/locale (binding:file-filename (list-ref raw-bindings (- n 1))))))
+                                (filename (bytes->string/utf-8 (binding:file-filename (list-ref raw-bindings (- n 1))))))
                            (let ((result (upload-instructor-solution class uname assignment stepName filename data)))
                              (if (not result) (error:error (string-append "Failed to upload dependency for " stepName ". This is most likely because the file provided was not a zip archive."))
                                  (begin

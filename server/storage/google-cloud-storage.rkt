@@ -251,7 +251,7 @@
 
 (provide retrieve-file)
 (define (retrieve-file path)
-    (bytes->string/locale (get/bytes (string-append bucket path))))
+    (bytes->string/utf-8 (get/bytes (string-append bucket path))))
 
 (define (upload-path path)
   (let ((all-files (list-all-sub-files path))

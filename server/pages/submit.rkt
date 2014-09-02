@@ -20,7 +20,7 @@
          (step (cadr rest))
          (data (extract-binding/single 'file bindings))
          ;; TODO: Check to make sure the binding exists and that it is a file
-         (filename (bytes->string/locale (binding:file-filename (car raw-bindings)))))
+         (filename (bytes->string/utf-8 (binding:file-filename (car raw-bindings)))))
     (if (check-okay-to-submit uid assignment step)
         (handle-submit session role rest uid assignment step filename data)
         (render-html "<p>Could not submit to the specified step.</p>"))))

@@ -37,7 +37,10 @@
     (when stack (map print-stack-elem stack))
     (flush-output)))
                  
-(define (print-stack-elem elem) (printf "~a - ~a\n" (car elem) (srcloc->string (cdr elem))))
+(define (print-stack-elem elem) 
+  (let ((label (if (null? elem) "function-name???" (car elem)))
+        (srcloc (if (and (not (null? elem)) (srcloc? (cdr elem))) (srcloc->string (cdr elem)) "No Source Location")))
+  (printf "~a - ~a\n" label srcloc)))
                 
 
 (provide response-error)

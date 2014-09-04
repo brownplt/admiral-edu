@@ -12,6 +12,18 @@
 
 (provide get-pending-reviews)
 
+
+;; TODO(3-study): 
+;; dependencies returns a list of identifiers 
+;; assignment-dependencies in assignment.rkt
+(define (assignment-dependencies)
+  '())
+
+;; TODO(3-study):
+;; What to do when you receive a dependency
+(define (receive-dependencies list-of-deps)
+  #f)
+
 ;; 3 different groups
 
 ;; assignment-id -> uid -> group
@@ -53,7 +65,7 @@
 (provide three-do-submit-step)
 (define (three-do-submit-step assignment-id step-id uid data steps)
   ;(upload-submission class user assignment step data)
-  (upload-submission class-name uid assignment-id step-id data)
+  (upload-submission class-name uid assignment-id step-id "test-file.txt" data)
   (let ((group (lookup-group assignment-id uid)))
     ;; TODO: look to see if there are any pending reviewers
     (if (eq? group 'gets-reviewed) (maybe-assign-reviewers assignment-id step-id uid) (printf "Skipping maybe-assign review. uid: ~a, group: ~a\n" uid group)))
@@ -79,14 +91,13 @@
 (define (assign-reviewer assignment-id step-id uid)
   (lambda (hash)
     (let* ((q (merge "UPDATE" review:table
-                     "SET" review:reviewee-id "=?"
-                     "WHERE" review:hash "=?"))
-           (prep (prepare (sql-conn) q))
-           (result (query-exec (sql-conn) prep uid hash)))
-      result)))                                                        
+                        "SET" review:reviewee-id "=?"
+                        "WHERE" review:hash "=?"))
+           (result (run query-exec q uid hash)))
+      result)))
 
 (define (get-pending-reviews assignment-id step-id amount)
-  (let* ((query (merge "SELECT " review:hash ", count(*) as C"
+  (let* ((q (merge "SELECT " review:hash ", count(*) as C"
                        "FROM" review:table
                        "WHERE" review:assignment-id "=? AND"
                                review:class-id "=? AND"
@@ -96,8 +107,7 @@
                        "ORDER BY" "C DESC,"
                        review:time-stamp "ASC"
                        "LIMIT ?"))
-         (prep (prepare (sql-conn) query))
-         (result (query-rows (sql-conn) prep assignment-id class-name step-id amount)))
+         (result (run query-rows q assignment-id class-name step-id amount)))
     (printf "results of query: ~a\n" result)
     result))
 
@@ -111,6 +121,7 @@
   (lambda (review)
     (let ((review-id (getId review))
           (amount (student-submission-amount review)))
+      ;;TODO(3-study): Map students to correct rubric by writing a new assign-instructor-solution
       (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id class-name step-id "instructor" uid review-id)]
             [(student-submission? review) (assign-student-reviews assignment-id class-name step-id uid review-id amount)]))))
 
@@ -133,9 +144,8 @@
                            submission:times-reviewed "<=?"
                    "ORDER BY" submission:times-reviewed "ASC," submission:time-stamp "ASC"
                    "LIMIT ?"))
-         (prep (prepare (sql-conn) q))
-         (query-list (append (list (sql-conn) prep ) students (list assignment-id class-name step-id amount amount)))
-         (result (apply query-rows query-list))
+         (query-list (append (list query-rows q) students (list assignment-id class-name step-id amount amount)))
+         (result (apply run query-list))
          (total-found (length result))
          (hold-amount (- amount total-found)))
     (printf "Found ~a students to review, will hold ~a for later\n" total-found hold-amount)

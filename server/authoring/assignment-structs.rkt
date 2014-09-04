@@ -3,6 +3,8 @@
 ;; Assignment Description
 (provide (contract-out
           [struct Assignment ((name string?) (id string?) (description string?) (steps (non-empty-listof Step?)))]))
+
+;; TODO(3 study): Add next-action-function to Assignments
 (struct Assignment (name id description steps) #:transparent)
 
 (provide assignment)

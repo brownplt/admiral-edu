@@ -28,6 +28,7 @@
 (define SUE "sue")
 (define SID "sid")
 
+(set-db-address! "localhost")
 
 (define (init-tests)
   (init-db)
@@ -167,14 +168,12 @@
                    "WHERE" review:assignment-id "=? AND"
                            review:step-id "=?"
                    "ORDER BY" review:time-stamp))
-         (prep (prepare (sql-conn) q))
-         (result (query-rows (sql-conn) prep assignment-id step-id)))
+         (result (run query-rows q assignment-id step-id)))
     result))
 
 (define (get-all-reviews)
   (let* ((q (merge "SELECT *"
                    "FROM" review:table
                    "ORDER BY" review:time-stamp "ASC"))
-         (prep (prepare (sql-conn) q))
-         (result (query-rows (sql-conn) prep)))
+         (result (run query-rows q)))
     result))

@@ -2,7 +2,15 @@
 
 (provide (all-defined-out))
 
-(define db-address "173.194.254.129")
+(provide set-db-address!)
+(define (set-db-address! address)
+  (set! db-address address))
+
+(provide get-db-address)
+(define (get-db-address)
+  db-address)
+
+(define db-address "this-will-break")
 (define s3-keys "/home/admiral-edu/.cloud-keys")
 
 ;; File containing:

@@ -46,7 +46,7 @@
   (let ((new-conn (mysql-connect #:user username
                                  #:database password
                                  #:password database
-                                 #:server db-address)))
+                                 #:server (get-db-address))))
 
     new-conn))
 

@@ -15,6 +15,7 @@
 
 
 ;; Assignment
+;; TODO(3 study): Parse next-action-function
 (define (yaml->assignment yaml) 
   (cond [(not (yaml? yaml)) (raise-argument-error 'yaml->assignment "yaml" yaml)]
         [(not (= 4 (hash-count yaml))) (raise-user-error "Expected record with 4 fields: `name`, `id`, `description`, and `steps`")]
@@ -25,6 +26,7 @@
                     (steps (map yaml->step (hash-ref yaml "steps"))))
                 (Assignment name id description steps))]))
 
+;; TODO(3 study): Output next-action-function
 (define (assignment->yaml assignment)
   (cond [(not (Assignment? assignment)) (raise-argument-error 'assignment->yaml "Assignment" assignment)]
         [else (let ((name (Assignment-name assignment))
@@ -384,6 +386,7 @@
 (define (failure . messages)
   (Failure (apply string-append messages)))
 
+;; TODO(3 study): Extract next-action-function from assignment and call that
 (define (next-step assignment-id uid)
   (let ((assignment (yaml->assignment (string->yaml (retrieve-assignment-description class-name assignment-id)))))
     (next-action (Assignment-id assignment) (Assignment-steps assignment) uid)))
@@ -538,7 +541,8 @@
   (let ((deps (assignment-id->assignment-dependencies assignment-id))
         (filter-function (lambda (dep) (not (dependency-met dep)))))
     (if (null? (filter filter-function deps)) (assignment:mark-ready assignment-id class-name) #f)))
-                  
+
+;;TODO(3-study): change instructor-solution to be a message
 (struct dependency (step-id review-id amount instructor-solution met) #:transparent)
                 
 (define (assignment-id->assignment id)

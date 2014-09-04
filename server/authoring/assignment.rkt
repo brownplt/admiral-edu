@@ -431,14 +431,7 @@
 (define (assign-reviews assignment-id next uid)
   (let* ((step (MustReviewNext-step next))
          (reviews (Step-reviews step)))
-    (map (assign-review assignment-id (Step-id step) uid) reviews)))
-
-(define (assign-review assignment-id step-id uid)
-  (lambda (review)
-    (let ((review-id (getId review))
-          (amount (if (student-submission? review) (student-submission-amount review) 1)))
-      (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id class-name step-id (default-submission review-id 1) uid review-id)]
-            [(student-submission? review) (review:assign-student-reviews assignment-id class-name step-id uid review-id amount)]))))
+    (map (ensure-assigned-review assignment-id uid step) reviews)))
 
 (define (next-action-error next)
   (cond [(MustSubmitNext? next) (string-append "Your next action is to submit to on '" (Step-id (MustSubmitNext-step next)) "'.")]

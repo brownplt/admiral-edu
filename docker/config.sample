@@ -1,0 +1,15 @@
+db-address=localhost
+server-name=captain-teach.org
+sub-domain=www.
+
+mail-server=smtp.sendgrid.net
+mail-port=2525
+mail-username=musername
+mail-password=mpassword
+
+class-name=test-class
+ct-port=8080
+
+bucket=test-class/
+cloud-access-key-id=ckey
+cloud-secrete-key=cskey

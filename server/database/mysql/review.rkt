@@ -145,6 +145,18 @@
          (rec (record class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged)))
     rec))
 
+(provide count-assigned-reviews)
+(define (count-assigned-reviews class assignment uid step review)
+  (let* ((q (merge "SELECT COUNT(*)"
+                   "FROM" table
+                   "WHERE" class-id "=? AND"
+                           assignment-id "=? AND"
+                           reviewer-id "=? AND"
+                           step-id "=? AND"
+                           review-id "=?"))
+         (result (run query-row q class assignment uid step review)))
+    (vector-ref result 0)))
+
 (provide select-feedback)
 (define (select-feedback class assignment uid)
   (let* ((conn (make-sql-conn))

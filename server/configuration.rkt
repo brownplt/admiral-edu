@@ -10,7 +10,7 @@
 (define (get-db-address)
   db-address)
 
-(define db-address "this-will-break")
+(define db-address "173.194.254.129")
 (define s3-keys "/home/admiral-edu/.cloud-keys")
 
 ;; File containing:

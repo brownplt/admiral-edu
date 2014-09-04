@@ -21,6 +21,17 @@
 (define (step id instructions . reviews)
   (Step id instructions reviews))
 
+(provide Review-id)
+(define (Review-id review)
+  (cond [(student-submission? review) (student-submission-id review)]
+        [(instructor-solution? review) (instructor-solution-id review)]))
+
+(provide Review-amount)
+(define (Review-amount review)
+  (cond [(student-submission? review) (student-submission-amount review)]
+        [(instructor-solution? review) 1]))
+
+
 ;; Student Submission Review
 (provide (contract-out
           [struct student-submission ((id string?) (amount integer?) (rubric Rubric?))]))

@@ -483,7 +483,30 @@
                            [(student-submission? next-review) (check-student-submission assignment-id step next-review uid)])))
             (cond
               [result (check-reviews assignment-id step rest uid)]
-              [else (MustReviewNext step (review:select-assigned-reviews assignment-id class-name (Step-id step) uid))]))]))
+              [else (MustReviewNext step (get-reviews assignment-id uid step))]))]))
+
+(define (get-reviews assignment-id uid step)
+  (let* ((reviews (Step-reviews step)))         
+    (map (ensure-assigned-review assignment-id uid step) reviews)
+    (review:select-assigned-reviews assignment-id class-name (Step-id step) uid)))
+
+(define (ensure-assigned-review assignment-id uid step)
+  (lambda (review)
+    (let* ((assigned-amount (review:count-assigned-reviews class-name assignment-id uid (Step-id step) (Review-id review)))
+           (expected-amount (Review-amount review))
+           (diff (max 0 (- expected-amount assigned-amount))))
+    (assign-n-reviews diff assignment-id (Step-id step) uid review))))
+
+(define (assign-n-reviews n assignment-id step-id uid review) 
+  (cond [(<= n 0) #t]
+        [else (begin
+                (assign-single-review assignment-id step-id uid review)
+                (assign-n-reviews (- n 1) assignment-id step-id uid review))]))
+
+(define (assign-single-review assignment-id step-id uid review)
+  (let ((review-id (Review-id review)))
+  (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id class-name step-id (default-submission review-id 1) uid review-id)]
+        [(student-submission? review) (review:assign-student-reviews assignment-id class-name step-id uid review-id 1)])))
 
 ;; Returns #t if the instructor solution has been reviewed and #f otherwise
 

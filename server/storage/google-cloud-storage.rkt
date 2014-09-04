@@ -7,8 +7,10 @@
 (require "common.rkt")
 (require (prefix-in local: "local.rkt"))
 
+;;TODO: Move to configuration file
 (s3-host "storage.googleapis.com")
-(read-keys s3-keys)
+(public-key cloud-access-key-id)
+(private-key cloud-secret-key)
 
 
 (provide retrieve-default-rubric)

@@ -37,7 +37,7 @@
   (set! server-name (ref "server-name"))
   (set! sub-domain (ref "sub-domain"))
   (set! mail-server (ref "mail-server"))
-  (set! mail-port (ref "mail-port"))
+  (set! mail-port (string->number (ref "mail-port")))
   (set! mail-username (ref "mail-username"))
   (set! mail-password (ref "mail-password"))
   (set! class-name (ref "class-name"))

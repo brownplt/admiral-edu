@@ -3,7 +3,8 @@
 (require "../storage/local.rkt")
 
 (s3-host "storage.googleapis.com")
-(read-keys "/home/jcollard/.cloud-keys")
+(public-key cloud-access-key-id)
+(private-key cloud-secret-key)
 (define bucket "test-class/")
 
 (define test-path "/home/jcollard/test")

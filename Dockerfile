@@ -154,10 +154,9 @@ ADD rubrics/implementation-rubric.json /home/admiraledu/reviews/cmpsci220/clock/
 ADD rubrics/tests-rubric.json /home/admiraledu/reviews/cmpsci220/clock/tests/rubric.json
 
 #
-# Copy Cloud Keys
+# Copy Configuration file
 #
-ADD docker/.cloud-keys /home/admiral-edu/.cloud-keys
-ADD docker/.smtp-credentials /home/admiral-edu/.smtp-credentials
+ADD docker/config /home/admiral-edu/config
 
 #
 # Copy AdmiralEdu to container

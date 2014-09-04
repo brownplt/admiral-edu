@@ -1,5 +1,7 @@
 #lang racket
 
+(require "util/config-file-reader.rkt")
+
 (provide (all-defined-out))
 
 (provide set-db-address!)
@@ -10,19 +12,37 @@
 (define (get-db-address)
   db-address)
 
-(define db-address "173.194.254.129")
-(define s3-keys "/home/admiral-edu/.cloud-keys")
+(define db-address 'nil)
+(define server-name 'nil)
+(define sub-domain 'nil)
 
-;; File containing:
-;; username=XXXX
-;; password=XXX
-(define server-name "captain-teach.org")
-(define sub-domain "www.")
-(define smtp:credentials-file "/home/admiral-edu/.smtp-credentials")
-(define smtp:server-address "email-smtp.us-east-1.amazonaws.com")
-(define smtp:port 465)
-(define smtp:tls #t)
+(define mail-server 'nil)
+(define mail-port 'nil)
+(define mail-username 'nil)
+(define mail-password 'nil)
 
-(define bucket "test-class/")
-(define class-name "test-class")
-(define ct-port 8080)
+(define cloud-access-key-id 'nil)
+(define cloud-secret-key 'nil)
+
+(define bucket 'nil)
+(define class-name 'nil)
+
+(define ct-port 'nil)
+
+(define configuration-file "/home/admiral-edu/config")
+
+(let* ((conf (read-conf configuration-file))
+       (ref (lambda (key) (hash-ref conf key))))
+  (set! db-address (ref "db-address"))
+  (set! server-name (ref "server-name"))
+  (set! sub-domain (ref "sub-domain"))
+  (set! mail-server (ref "mail-server"))
+  (set! mail-port (string->number (ref "mail-port")))
+  (set! mail-username (ref "mail-username"))
+  (set! mail-password (ref "mail-password"))
+  (set! class-name (ref "class-name"))
+  (set! ct-port (string->number (ref "ct-port")))
+  (set! bucket (ref "bucket"))
+  (set! cloud-access-key-id (ref "cloud-access-key-id"))
+  (set! cloud-secret-key (ref "cloud-secret-key")))
+

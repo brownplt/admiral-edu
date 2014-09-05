@@ -1,15 +1,12 @@
 #lang racket
 
 ;; Assignment Description
-(provide (contract-out
-          [struct Assignment ((name string?) (id string?) (description string?) (steps (non-empty-listof Step?)))]))
-
-;; TODO(3 study): Add next-action-function to Assignments
-(struct Assignment (name id description steps) #:transparent)
+(provide (struct-out Assignment))
+(struct Assignment (name id description assignment-handler steps) #:transparent)
 
 (provide assignment)
-(define (assignment name id description . steps)
-  (Assignment name id description steps))
+(define (assignment name id description assignment-handler . steps)
+  (Assignment name id description assignment-handler steps))
 
 ;; Step Description
 (provide (contract-out
@@ -31,6 +28,11 @@
   (cond [(student-submission? review) (student-submission-amount review)]
         [(instructor-solution? review) 1]))
 
+(provide Review-rubric)
+(define (Review-rubric review) 
+  (cond [(student-submission? review) (student-submission-rubric review)]
+        [(instructor-solution? review) (instructor-solution-rubric review)]
+        [else (raise-user-error 'validate-step "Expected to find student-submissions / instructor-solution.")]))
 
 ;; Student Submission Review
 (provide (contract-out
@@ -76,3 +78,37 @@
 (define review?
   (or/c student-submission? instructor-solution?))
 
+
+
+;; Used to state a students next action is to submit to the step
+(provide (struct-out MustSubmitNext))
+(struct MustSubmitNext (step instructions) #:transparent)
+
+;; Used to state a students next action is to review on a step
+(provide (struct-out MustReviewNext))
+(struct MustReviewNext (step reviews) #:transparent) 
+
+;; Assignment Handler
+;; next-action: (assignment -> steps -> (Either MustSubmitNext MustReviewNext #t))
+;;   Given an assignment-id and the list of steps to complete, returns the next-action the user must take
+;;   or #t if the user has completed the assignment
+;; do-submit-step: (assignment -> step -> uid -> file-name -> data -> steps -> (Either Success Failure))
+;;   Given an assignment, a step, user id, file name being submitted, the data of the file, and a list of assignment steps
+;;   attempts to submit the data for the specified assignment user and step.
+(provide (struct-out AssignmentHandler))
+(struct AssignmentHandler (next-action do-submit-step))
+         
+
+(provide (struct-out Success))
+(struct Success (message))
+
+(provide (struct-out Failure))
+(struct Failure (message))
+
+(provide failure)
+(define (failure . messages)
+  (Failure (apply string-append messages)))
+
+(provide dependency-submission-name)
+(define (dependency-submission-name review-id n)
+  (string-append "default-submission-" review-id "-" (number->string n)))

@@ -21,7 +21,7 @@
 (define (yaml->assignment yaml) 
   (cond [(not (yaml? yaml)) (raise-argument-error 'yaml->assignment "yaml" yaml)]
         [(not (= 4 (hash-count yaml))) (raise-user-error "Expected record with 4 fields: `name`, `id`, `description`, and `steps`")]
-        [(not (hash-has-keys? yaml "name" "id" "description" "steps")) (raise-user-error "Expected record with 4 fields: `name`, `id`, `description`, and `steps`")]
+        [(not (hash-has-keys? yaml "name" "id" "description" "steps")) (raise-user-error "Expected record with fields: `name`, `id`, `description`, `steps`, and optionally `assignment-handler`.")]
         [else (let ((id (hash-ref yaml "id"))
                     (name (hash-ref yaml "name"))
                     (description (hash-ref yaml "description"))
@@ -30,8 +30,8 @@
                 (Assignment name id description assignment-handler steps))]))
 
 (define (get-assignment-handler yaml)
-  (cond [(hash-has-keys? yaml "assignment-handler") default-assignment-handler]
-        [else (hash-ref assignment-handlers (hash-ref yaml "assignment-handler"))]))
+  (cond [(hash-has-keys? yaml "assignment-handler") (hash-ref assignment-handlers (hash-ref yaml "assignment-handler"))]
+        [else default-assignment-handler]))
 
 ;; TODO(3 study): Output next-action-function
 (define (assignment->yaml assignment)

@@ -59,6 +59,7 @@
                       [else #f]))]))
 
 ;;(with-handlers ([exn:fail? could-not-create-user]) (create-new-user (ct-session-class session) new-uid new-role))
+(provide yaml-bytes->create-assignment)
 (define (yaml-bytes->create-assignment bytes)
   (let ((yaml-string (bytes->string/utf-8 bytes)))
     (let ((yaml (with-handlers ([exn:fail? could-not-parse]) (string->yaml yaml-string))))
@@ -70,6 +71,7 @@
                                         [else result]))]))]))))
 
 ;;(with-handlers ([exn:fail? could-not-create-user]) (create-new-user (ct-session-class session) new-uid new-role))
+(provide yaml-bytes->save-assignment)
 (define (yaml-bytes->save-assignment bytes)
   (let ((yaml-string (bytes->string/utf-8 bytes)))
     (let ((yaml (with-handlers ([exn:fail? could-not-parse]) (string->yaml yaml-string))))
@@ -131,28 +133,28 @@
         [else (let ((steps (Assignment-steps assignment)))
                 #f)]))
 
-
-;; TODO(3 study): Extract next-action-function from assignment and call that
+(provide next-step)
 (define (next-step assignment-id uid)
-  (let ((assignment (yaml->assignment (string->yaml (retrieve-assignment-description class-name assignment-id))))
-        (next-action #f))
-    (next-action (Assignment-id assignment) (Assignment-steps assignment) uid)))
+  (let* ((assignment (yaml->assignment (string->yaml (retrieve-assignment-description class-name assignment-id))))
+         (handler (Assignment-assignment-handler assignment))
+         (next-action (AssignmentHandler-next-action handler)))
+    (next-action assignment (Assignment-steps assignment) uid)))
 
-;; TODO(3 study): Extract submit-step-function from assignment and call that
 ;; Attempts to submit for the specified uid, assignment, and step-id. If this is not the next expected action,
 ;; This returns a failure with a message describing what the user should do next.
+(provide submit-step)
 (define (submit-step assignment-id step-id uid file-name data)
   ;; Assignment must exist
   (cond 
     [(not (assignment:exists? assignment-id class-name)) (failure "The specified assignment '" assignment-id "' does not exists.")]
     [else (let* ((assignment (yaml->assignment (string->yaml (retrieve-assignment-description class-name assignment-id))))
-                 (assignment-id (Assignment-id assignment))
                  (steps (Assignment-steps assignment))
-                 (next-action #f) ;; TODO(3 study): Extract next-action-functin
-                 (next (next-action assignment-id steps uid))
-                 (do-submit-step #f)) ;; TODO(3 study): Extract do-submit-step function
+                 (handler (Assignment-assignment-handler assignment))
+                 (next-action (AssignmentHandler-next-action handler)) 
+                 (next (next-action assignment steps uid))
+                 (do-submit-step (AssignmentHandler-do-submit-step handler))) 
             (cond
-              [(and (MustSubmitNext? next) (equal? (Step-id (MustSubmitNext-step next)) step-id)) (do-submit-step assignment-id step-id uid file-name data steps)]
+              [(and (MustSubmitNext? next) (equal? (Step-id (MustSubmitNext-step next)) step-id)) (do-submit-step assignment (step-id->step assignment-id step-id) uid file-name data steps)]
               [else (failure "Could not submit to the step '" step-id "'." (next-action-error next))]))]))
 
 
@@ -164,15 +166,10 @@
 
 
 
-;;TODO(3-study): change instructor-solution to be a message
-;; A dependency for an assignment to be open
-;; step-id: The step id
-;; review-id: The review id
-;; amount: The number of files that are needed for this dependency to be met
-;; instructor-solution: If this is an instructor solution dependency
-;; met: #t if this dependency has been met and #f otherwise.
-(struct dependency (step-id review-id amount instructor-solution met) #:transparent)
 
+
+;; TODO(3-study): Provide a way to get dependencies based on assignment-handler
+(provide assignment-id->assignment-dependencies)
 (define (assignment-id->assignment-dependencies id)
   (assignment-dependencies (assignment-id->assignment id)))
 
@@ -180,6 +177,7 @@
   (cond [(not (Assignment? assignment)) (raise-argument-error 'determine-dependencies "Assignment" assignment)]
         [else (flatten (map (step-dependencies (Assignment-id assignment)) (Assignment-steps assignment)))]))
 
+(provide find-dependencies)
 (define (find-dependencies assignment-id step-id review-id)
   (let ((deps (assignment-id->assignment-dependencies assignment-id))
         (f (lambda (dep) (and (equal? (dependency-step-id dep) step-id) (equal? (dependency-review-id dep) review-id)))))
@@ -208,6 +206,7 @@
         [(not (submission:exists? assignment-id class-name step-id (dependency-submission-name review-id n))) #f]
         [else (check-upload assignment-id step-id review-id (- n 1))]))
 
+(provide check-ready)
 (define (check-ready assignment-id)
   (let ((deps (assignment-id->assignment-dependencies assignment-id))
         (filter-function (lambda (dep) (not (dependency-met dep)))))

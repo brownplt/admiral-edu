@@ -99,7 +99,7 @@
   (letrec ((helper (lambda (n)
                      (if (<= n 0) (assignment-dependencies assignment "<p>Dependencies uploaded.</p>")
                          (let* ((sym (string->symbol (string-append "file-" (number->string n))))
-                                (uname (assign:default-submission review-id n))
+                                (uname (assign:dependency-submission-name review-id n))
                                 (data (extract-binding/single sym bindings))
                                 (filename (bytes->string/utf-8 (binding:file-filename (list-ref raw-bindings (- n 1))))))
                            (let ((result (upload-instructor-solution class uname assignment stepName filename data)))

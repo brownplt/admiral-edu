@@ -112,3 +112,13 @@
 (provide dependency-submission-name)
 (define (dependency-submission-name review-id n)
   (string-append "default-submission-" review-id "-" (number->string n)))
+
+;;TODO(3-study): change instructor-solution to be a message
+;; A dependency for an assignment to be open
+;; step-id: The step id
+;; review-id: The review id
+;; amount: The number of files that are needed for this dependency to be met
+;; instructor-solution: If this is an instructor solution dependency
+;; met: #t if this dependency has been met and #f otherwise.
+(provide (struct-out dependency))
+(struct dependency (step-id review-id amount instructor-solution met) #:transparent)

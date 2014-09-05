@@ -8,14 +8,14 @@
 (define (do-submit-step assignment step uid file-name data steps)
   (let ((assignment-id (Assignment-id assignment))
         (step-id (Step-id step)))
-    (let* ((assignment (assignment:select class-name assignment-id))
-           (is-open (assignment:record-open assignment)))
+    (let* ((assignment-record (assignment:select class-name assignment-id))
+           (is-open (assignment:record-open assignment-record)))
       (if (not is-open) (Failure "This assignment is currently closed.")
           (let ((result (upload-submission class-name uid assignment-id step-id file-name data)))
             (if (not result) (Failure "The submission failed. This is most likely because the file uploaded was not a zip archive.")
                 (begin
                   ;; Assign reviews to the student if applicable
-                  (let ((next (next-action assignment-id steps uid)))
+                  (let ((next (next-action assignment steps uid)))
                     (cond
                       [(MustReviewNext? next) (assign-reviews assignment-id next uid)])
                     (Success "Assignment submitted.")))))))))
@@ -36,7 +36,7 @@
        (let ((check-result (check-step assignment-id (car steps) uid))
              (rest (cdr steps)))
          (cond
-           [(eq? #t check-result) (next-action assignment-id rest uid)]
+           [(eq? #t check-result) (next-action assignment rest uid)]
            [else check-result]))])))
   
 ;; Returns #t if this step has been submitted to and all reviews have been compelted.

@@ -57,7 +57,7 @@
 (provide create-instructor-solution)
 (define (create-instructor-solution assignment class step user)
      (let* ((conn (make-sql-conn))
-            (query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),5000)"))
+            (query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),9001)"))
             (prep (prepare conn query)))
        (query-exec conn prep assignment class step user)
        (release conn)

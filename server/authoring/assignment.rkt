@@ -6,6 +6,7 @@
          json
          "assignment-structs.rkt"
          "assignment-parser.rkt"
+         "assignment-dependencies.rkt"
          "util.rkt"
          "../base.rkt")
 
@@ -82,6 +83,7 @@
                                   (cond [(eq? #t result) (save-assignment-description class-name (Assignment-id assignment) yaml-string) "Success"]
                                         [else result]))]))]))))
 
+(provide create-assignment)
 (define (create-assignment assignment)
   (cond [(not (Assignment? assignment)) (raise-argument-error 'create-assignment "Assignment" assignment)]
         [else (let ((validation (validate-assignment assignment #f)))
@@ -167,44 +169,22 @@
 
 
 
-
 ;; TODO(3-study): Provide a way to get dependencies based on assignment-handler
 (provide assignment-id->assignment-dependencies)
 (define (assignment-id->assignment-dependencies id)
-  (assignment-dependencies (assignment-id->assignment id)))
+  (let* ((assignment (assignment-id->assignment id))
+         (handler (Assignment-assignment-handler assignment))
+         (get-deps-f (AssignmentHandler-get-dependencies handler)))
+    (get-deps-f assignment)))
 
-(define (assignment-dependencies assignment)
-  (cond [(not (Assignment? assignment)) (raise-argument-error 'determine-dependencies "Assignment" assignment)]
-        [else (flatten (map (step-dependencies (Assignment-id assignment)) (Assignment-steps assignment)))]))
-
+;; TOTO: Only find review-dependecies here
 (provide find-dependencies)
 (define (find-dependencies assignment-id step-id review-id)
   (let ((deps (assignment-id->assignment-dependencies assignment-id))
-        (f (lambda (dep) (and (equal? (dependency-step-id dep) step-id) (equal? (dependency-review-id dep) review-id)))))
-    (filter f deps)))       
-
-(define (find-dependencies-prime assignment step-id review-id)
-  (let ((deps (assignment-dependencies assignment))
-        (f (lambda (dep) (and (equal? (dependency-step-id dep) step-id) (equal? (dependency-review-id dep) review-id)))))
+        (f (lambda (dep) (and (review-dependency? dep) 
+                              (equal? (review-dependency-step-id dep) step-id) 
+                              (equal? (review-dependency-review-id dep) review-id)))))
     (filter f deps)))
-
-(define (step-dependencies assignment-id)
-  (lambda (step)
-    (map (determine-dependency assignment-id (Step-id step)) (Step-reviews step))))
-
-(define (determine-dependency assignment-id step-id)
-  (lambda (review)
-    (let* ((review-id (Review-id review))
-           (met (lambda (n) (check-upload assignment-id step-id review-id n))))
-      (cond [(instructor-solution? review) (dependency step-id (Review-id review) 1 #t (met 1))]
-            [(student-submission? review) 
-             (let ((n (student-submission-amount review)))
-               (dependency step-id (Review-id review) n #f (met n)))]))))
-
-(define (check-upload assignment-id step-id review-id n)
-  (cond [(<= n 0) #t]
-        [(not (submission:exists? assignment-id class-name step-id (dependency-submission-name review-id n))) #f]
-        [else (check-upload assignment-id step-id review-id (- n 1))]))
 
 (provide check-ready)
 (define (check-ready assignment-id)

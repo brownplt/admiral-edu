@@ -48,7 +48,8 @@
          (let ((check-result (three-check-step assignment (car steps) uid group))
                (rest (cdr steps)))
            (cond
-             [(eq? #t check-result) (default:next-action assignment rest uid)]
+             ;;TODO pass in assign-review function
+             [(eq? #t check-result) (default:next-action three-ensure-assigned-review assignment rest uid)]
              [else check-result]))]))))
 
 (define (three-check-step assignment step uid group)
@@ -59,7 +60,7 @@
         [(not has-submitted) (MustSubmitNext step (Step-instructions step))]
         [else (cond [(eq? group 'no-reviews) #t]
                     ;;TODO: Select from get-review students only
-                    [(eq? group 'does-reviews) (default:check-reviews assignment-id step (Step-reviews step) uid)]
+                    [(eq? group 'does-reviews) (default:check-reviews three-ensure-assigned-review assignment-id step (Step-reviews step) uid)]
                     ;;TODO: Notify users that they are in get-reviews
                     [(eq? group 'gets-reviewed) #t]
                     [else (error (format "Unknown group type ~a" group))])]))))
@@ -74,7 +75,7 @@
       ;; TODO: look to see if there are any pending reviewers
       (if (eq? group 'gets-reviewed) (maybe-assign-reviewers assignment-id step uid) (printf "Skipping maybe-assign review. uid: ~a, group: ~a\n" uid group)))
     ;; Assign reviews to the student if applicable
-    (let ((next (three-next-action assignment-id steps uid)))
+    (let ((next (three-next-action assignment steps uid)))
       (printf "Next Action for ~a is ~a\n" uid next)
       (cond
         [(MustReviewNext? next) (three-assign-reviews assignment-id (MustReviewNext-step next) uid)])
@@ -116,10 +117,38 @@
     result))
 
 (define (three-assign-reviews assignment-id step uid)
-  (let* ((reviews (Step-reviews step))
-         (step-id (Step-id step)))
-    (map (three-assign-review assignment-id step-id uid) reviews)))
-    
+  (let* ((reviews (Step-reviews step)))
+    (map (three-ensure-assigned-review assignment-id uid step) reviews)))
+
+(define (three-ensure-assigned-review assignment-id uid step)
+  (lambda (review)
+    (check-single-assigned assignment-id step uid review)))
+
+(define (check-single-assigned assignment-id step uid review)
+  (let ((result (cond [(student-submission? review) ((check-student-submission assignment-id uid step) review)]
+                      [(instructor-solution? review) ((check-instructor-solution assignment-id uid step) review)])))
+    (when result ((three-assign-review assignment-id (Step-id step) uid) result))))
+
+(define (check-student-submission assignment-id uid step)
+  (lambda (review)
+    (let* ((step-id (Step-id step))
+           (review-id (Review-id review))
+           (expected (student-submission-amount review))
+           (rubric (student-submission-rubric review))
+           (actual  (review:count-assigned-reviews class-name assignment-id uid step-id review-id))
+           (diff (max 0 (- expected actual))))
+      (student-submission review-id diff rubric))))
+
+(define (check-instructor-solution assignment-id step-id uid)
+  (lambda (review)
+    (let* ((review-id (Review-id review))
+           (rubric (instructor-solution-rubric review))
+           (count (review:count-assigned-reviews class-name assignment-id uid step-id review-id)))
+      (if (> count 0) #f review))))     
+  
+(define (three-assign-single-review assignment-id step-id uid review)
+  ((three-assign-review assignment-id step-id uid) review))
+
 ;; Student is in the does-reviews group
 (define (three-assign-review assignment-id step-id uid)
   (lambda (review)
@@ -168,7 +197,8 @@
       (begin (review:create assignment-id class-name step-id "HOLD" uid review-id)
              (assign-student-hold assignment-id class-name step-id uid review-id (- n 1)))))
 
+;; TODO: write get-deps tak-deps
 (provide three-condition-study-handler)
 (define three-condition-study-handler
-  (AssignmentHandler three-next-action three-do-submit-step))
+  (AssignmentHandler three-next-action three-do-submit-step #f #f))
 

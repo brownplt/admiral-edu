@@ -95,8 +95,10 @@
 ;; do-submit-step: (assignment -> step -> uid -> file-name -> data -> steps -> (Either Success Failure))
 ;;   Given an assignment, a step, user id, file name being submitted, the data of the file, and a list of assignment steps
 ;;   attempts to submit the data for the specified assignment user and step.
+;; get-dependencies: (assignment -> ListOf dependecy)
+;; take-dependencies: (ListOf (dependencies, file-data))
 (provide (struct-out AssignmentHandler))
-(struct AssignmentHandler (next-action do-submit-step))
+(struct AssignmentHandler (next-action do-submit-step get-dependencies take-dependencies))
          
 
 (provide (struct-out Success))
@@ -120,5 +122,18 @@
 ;; amount: The number of files that are needed for this dependency to be met
 ;; instructor-solution: If this is an instructor solution dependency
 ;; met: #t if this dependency has been met and #f otherwise.
-(provide (struct-out dependency))
-(struct dependency (step-id review-id amount instructor-solution met) #:transparent)
+
+(provide dependency-met)
+(struct dependency (met) #:transparent)
+
+(provide (struct-out review-dependency)) 
+(struct review-dependency dependency (step-id review-id) #:transparent)
+
+(provide (struct-out student-submission-dependency))
+(struct student-submission-dependency review-dependency (amount) #:transparent)
+
+(provide (struct-out instructor-solution-dependency))
+(struct instructor-solution-dependency review-dependency () #:transparent)
+
+(provide (struct-out three-study-config-dependency))
+(struct three-study-config-dependency dependency () #:transparent)

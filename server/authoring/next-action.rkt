@@ -1,9 +1,9 @@
 #lang racket
 
 (require "assignment-structs.rkt"
-         "../base.rkt")
+         "../base.rkt"
+         "assignment-dependencies.rkt")
 
-;;TODO(3-study) must accept Assignment and Step rather than IDs
 (provide do-submit-step)
 (define (do-submit-step assignment step uid file-name data steps)
   (let ((assignment-id (Assignment-id assignment))
@@ -23,37 +23,39 @@
 (define (assign-reviews assignment-id next uid)
   (let* ((step (MustReviewNext-step next))
          (reviews (Step-reviews step)))
-    (map (ensure-assigned-review assignment-id uid step) reviews)))
+    (map (default-ensure-assigned-review assignment-id uid step) reviews)))
+
+(define (default-next-action assignment steps uid)
+  (next-action default-ensure-assigned-review assignment steps uid))
 
 ;; Given an assignment and the list of steps to complete, returns the next-action the user must take
 ;; or #t if the user has completed the assignment
 (provide next-action)
-(define (next-action assignment steps uid)
+(define (next-action ensure-assigned-review assignment steps uid)
   (let ((assignment-id (Assignment-id assignment)))
     (cond 
       [(null? steps) #t]
       [else 
-       (let ((check-result (check-step assignment-id (car steps) uid))
+       (let ((check-result (check-step ensure-assigned-review assignment-id (car steps) uid))
              (rest (cdr steps)))
          (cond
-           [(eq? #t check-result) (next-action assignment rest uid)]
+           [(eq? #t check-result) (next-action ensure-assigned-review assignment rest uid)]
            [else check-result]))])))
   
 ;; Returns #t if this step has been submitted to and all reviews have been compelted.
 ;; If the uid has not submitted for this step, returns a MustSubmitNext for this step-id along with the instructions from the assignment description
 ;; Otherwise, returns a MustReviewNext for this step-id
-
-(define (check-step assignment-id step uid)
+(define (check-step ensure-assigned-review assignment-id step uid)
   (let* ((step-id (Step-id step))
          (has-submitted (> (submission:count assignment-id class-name step-id uid) 0)))
     (cond 
       [(not has-submitted) (MustSubmitNext step (Step-instructions step))]
-      [else (check-reviews assignment-id step (Step-reviews step) uid)])))
+      [else (check-reviews ensure-assigned-review assignment-id step (Step-reviews step) uid)])))
 
 ;; Returns #t if all of the reviews for the specified step are completed.
 ;; Otherwise, returns a MustReviewNext with the step for which reviews have not been completed
 (provide check-reviews)
-(define (check-reviews assignment-id step reviews uid)
+(define (check-reviews ensure-assigned-review assignment-id step reviews uid)
   (cond
     [(null? reviews) #t]
     [else (let* ((next-review (car reviews))
@@ -63,9 +65,14 @@
                            [(student-submission? next-review) (check-student-submission assignment-id step next-review uid)])))
             (cond
               [result (check-reviews assignment-id step rest uid)]
-              [else (MustReviewNext step (get-reviews assignment-id uid step))]))]))
+              [else (MustReviewNext step (get-reviews ensure-assigned-review assignment-id uid step))]))]))
 
-(define (ensure-assigned-review assignment-id uid step)
+(define (get-reviews ensure-assigned-review assignment-id uid step)
+  (let* ((reviews (Step-reviews step)))         
+    (map (ensure-assigned-review assignment-id uid step) reviews)
+    (review:select-assigned-reviews assignment-id class-name (Step-id step) uid)))
+
+(define (default-ensure-assigned-review assignment-id uid step)
   (lambda (review)
     (let* ((assigned-amount (review:count-assigned-reviews class-name assignment-id uid (Step-id step) (Review-id review)))
            (expected-amount (Review-amount review))
@@ -97,10 +104,8 @@
     (>= count required-reviews)))
 
 
-(define (get-reviews assignment-id uid step)
-  (let* ((reviews (Step-reviews step)))         
-    (map (ensure-assigned-review assignment-id uid step) reviews)
-    (review:select-assigned-reviews assignment-id class-name (Step-id step) uid)))
 
+
+;; TODO: Write take-dependencies
 (provide default-assignment-handler)
-(define default-assignment-handler (AssignmentHandler next-action do-submit-step))
+(define default-assignment-handler (AssignmentHandler default-next-action do-submit-step get-dependencies #f))

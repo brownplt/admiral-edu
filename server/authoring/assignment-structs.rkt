@@ -96,9 +96,9 @@
 ;;   Given an assignment, a step, user id, file name being submitted, the data of the file, and a list of assignment steps
 ;;   attempts to submit the data for the specified assignment user and step.
 ;; get-dependencies: (assignment -> ListOf dependecy)
-;; take-dependencies: (ListOf (dependencies, file-data))
+;; take-dependencies: assignment-id -> dependency -> file-name -> file-data -> Either Success Failure
 (provide (struct-out AssignmentHandler))
-(struct AssignmentHandler (next-action do-submit-step get-dependencies take-dependencies))
+(struct AssignmentHandler (next-action do-submit-step get-dependencies take-dependency))
          
 
 (provide (struct-out Success))

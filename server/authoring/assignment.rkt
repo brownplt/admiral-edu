@@ -177,7 +177,15 @@
          (get-deps-f (AssignmentHandler-get-dependencies handler)))
     (get-deps-f assignment)))
 
-;; TOTO: Only find review-dependecies here
+(provide handle-dependency)
+(define (handle-dependency assignment-id dependency bindings raw-bindings)
+  (let* ((assignment (assignment-id->assignment assignment-id))
+         (handler (Assignment-assignment-handler assignment))
+         (take-dependency (AssignmentHandler-take-dependency handler)))
+    (take-dependency assignment-id dependency bindings raw-bindings)))
+         
+
+;; TODO: Only find review-dependecies here
 (provide find-dependencies)
 (define (find-dependencies assignment-id step-id review-id)
   (let ((deps (assignment-id->assignment-dependencies assignment-id))

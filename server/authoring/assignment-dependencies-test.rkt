@@ -4,7 +4,9 @@
          "assignment-structs.rkt"
          "assignment-parser.rkt"
          "assignment-dependencies.rkt"
-         (planet esilkensen/yaml:3:1))
+         "next-action.rkt"
+         (planet esilkensen/yaml:3:1)
+         rackunit)
 
 (define (make-student id)
     (user:create id)
@@ -30,32 +32,66 @@
 
 (define (init-tests)
   (init-db)
-  (class:create class-name)
+  (create-assignment test-assignment))
 
-  
-  (roles:create instructor-role "Instructor" 1)
-  (roles:create ta-role "Teaching Assistant" 1)
-  (roles:create student-role "Student" 0)
-
-  (map make-student (list ACE AMY ART ALF JOE JAN JIM JON SAL SAM STU SUE SID))
-  (create-assignment three-test-assignment)
-  (save-assignment-description class-name "test-assignment" (file->string "test-assignment-description.yaml")))
-
-(define three-test-assignment (yaml->assignment (string->yaml (file->string "test-assignment-description.yaml"))))
 
 (define (run-tests)
-  (initialize))
+  (test-initial-dependencies)
+  (test-met-dependencies))
 
+(define (test-initial-dependencies)
+  (let ((expected-test-assignment-dependencies (list
+                                                (instructor-solution-dependency #f "tests" "poor-tests")
+                                                (instructor-solution-dependency #f "tests" "good-tests")
+                                                (student-submission-dependency #f "tests" "student-review" 1)
+                                                (instructor-solution-dependency #f "implementation" "poor-impl")
+                                                (instructor-solution-dependency #f "implementation" "good-impl")
+                                                (student-submission-dependency #f "implementation" "student-review" 1))))
+    (init-tests)
+    (check-equal? (get-dependencies test-assignment) expected-test-assignment-dependencies)))
+
+(define (deps a b c d e f)
+  (list
+   (instructor-solution-dependency a "tests" "poor-tests")
+   (instructor-solution-dependency b "tests" "good-tests")
+   (student-submission-dependency c "tests" "student-review" 1)
+   (instructor-solution-dependency d "implementation" "poor-impl")
+   (instructor-solution-dependency e "implementation" "good-impl")
+   (student-submission-dependency f "implementation" "student-review" 1)))
+
+(define (check-test-assignment a b c d e f)
+  (let ((expected (deps a b c d e f)))
+    (check-equal? (get-dependencies test-assignment) expected)))
+
+(define (test-met-dependencies)
+  (init-tests)  
+  (submission:create-instructor-solution (Assignment-id test-assignment) class-name "tests" (dependency-submission-name "poor-tests" 1))
+  (check-test-assignment #t #f #f #f #f #f)
+  
+  (submission:create-instructor-solution (Assignment-id test-assignment) class-name "tests" (dependency-submission-name "good-tests" 1)) 
+  (check-test-assignment #t #t #f #f #f #f)
+  
+  (submission:create-instructor-solution (Assignment-id test-assignment) class-name "tests" (dependency-submission-name "student-review" 1)) 
+  (check-test-assignment #t #t #t #f #f #f)
+  
+  (submission:create-instructor-solution (Assignment-id test-assignment) class-name "implementation" (dependency-submission-name "poor-impl" 1)) 
+  (check-test-assignment #t #t #t #t #f #f)
+  
+  (submission:create-instructor-solution (Assignment-id test-assignment) class-name "implementation" (dependency-submission-name "good-impl" 1))  
+  (check-test-assignment #t #t #t #t #t #f)
+  
+  (submission:create-instructor-solution (Assignment-id test-assignment) class-name "implementation" (dependency-submission-name "student-review" 1)) 
+  (check-test-assignment #t #t #t #t #t #t))
 
 
 (define test-assignment
   (assignment "Clocks"
               "clocks"
               "Students develop functions representing an alarm clock."
-              
+              default-assignment-handler
                (step "tests"
                      "Submit your test cases. Do not submit any clock implementation."
-                     (instructor-solution "Poor Tests"
+                     (instructor-solution "poor-tests"
                                           (rubric
                                            (likert "correctness"
                                                    "These tests are correct."
@@ -74,7 +110,7 @@
                                            (free-form "not-covered"
                                                       "If applicable, provide inputs that are not covered by the tests.")))
                      
-                     (instructor-solution "Good Tests"
+                     (instructor-solution "good-tests"
                                           (rubric
                                            (likert "correctness"
                                                    "These tests are correct."
@@ -116,7 +152,7 @@
                (step "implementation"
                      "Submit all of your test cases and your clock implementation."
                      
-                     (instructor-solution "Poor Implementation"
+                     (instructor-solution "poor-impl"
                                           (rubric
                                           (likert "behavior"
                                                   "This code correctly implements the desired behavior."
@@ -137,7 +173,7 @@
                                           (free-form "feedback"
                                                      "Additional Comments")))
                      
-                     (instructor-solution "Good Implementation"
+                     (instructor-solution "good-impl"
                                           (rubric
                                           (likert "behavior"
                                                   "This code correctly implements the desired behavior."

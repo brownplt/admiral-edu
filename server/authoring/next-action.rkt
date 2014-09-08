@@ -1,8 +1,9 @@
 #lang racket
 
-(require "assignment-structs.rkt"
-         "../base.rkt"
-         "assignment-dependencies.rkt")
+(require web-server/http/bindings
+         web-server/http/request-structs
+         "assignment-structs.rkt"
+         "../base.rkt")
 
 (provide do-submit-step)
 (define (do-submit-step assignment step uid file-name data steps)
@@ -103,9 +104,53 @@
          (required-reviews (student-submission-amount student-submission)))
     (>= count required-reviews)))
 
+;; Dependencies 
+(provide default-get-dependencies)
+(define (default-get-dependencies assignment)
+  (cond [(not (Assignment? assignment)) (raise-argument-error 'determine-dependencies "Assignment" assignment)]
+        [else (flatten (map (step-dependencies (Assignment-id assignment)) (Assignment-steps assignment)))]))     
+
+(define (step-dependencies assignment-id)
+  (lambda (step)
+    (map (determine-dependency assignment-id (Step-id step)) (Step-reviews step))))
+
+(define (determine-dependency assignment-id step-id)
+  (lambda (review)
+    (let* ((review-id (Review-id review))
+           (met (lambda (n) (check-upload assignment-id step-id review-id n))))
+      (cond [(instructor-solution? review) (instructor-solution-dependency (met 1) step-id (Review-id review))]
+            [(student-submission? review) 
+             (let ((amount (student-submission-amount review)))
+               (student-submission-dependency (met amount) step-id (Review-id review) amount))]
+            [else (raise (format "Unknown dependency type: ~a" review))]))))
+
+(define (check-upload assignment-id step-id review-id n)
+  (cond [(<= n 0) #t]
+        [(not (submission:exists? assignment-id class-name step-id (dependency-submission-name review-id n))) #f]
+        [else (check-upload assignment-id step-id review-id (- n 1))]))
+
+(provide default-take-dependency)
+(define (default-take-dependency assignment-id dependency bindings raw-bindings)
+  (let ((review-id (review-dependency-review-id dependency))
+        (step-id (review-dependency-step-id dependency)))
+  (cond [(instructor-solution-dependency? dependency) (run-submissions class-name assignment-id step-id review-id bindings raw-bindings 1)]
+        [(student-submission-dependency? dependency) (run-submissions class-name assignment-id step-id review-id bindings raw-bindings (student-submission-dependency-amount dependency))]
+        [else (raise (format "Unknown dependency: ~a" dependency))])))
+  
+
+(define (run-submissions class assignment stepName review-id bindings raw-bindings amount)
+  (letrec ((helper (lambda (n)
+                     (if (<= n 0) (Success "Dependencies uploaded.")
+                         (let* ((sym (string->symbol (string-append "file-" (number->string n))))
+                                (uname (dependency-submission-name review-id n))
+                                (data (extract-binding/single sym bindings))
+                                (filename (bytes->string/utf-8 (binding:file-filename (list-ref raw-bindings (- n 1))))))
+                           (let ((result (upload-instructor-solution class (dependency-submission-name review-id n) assignment stepName filename data)))
+                             (cond [(Failure? result) (Failure result)]
+                                   [else (helper (- n 1))])))))))
+    (helper amount)))
 
 
 
-;; TODO: Write take-dependencies
 (provide default-assignment-handler)
-(define default-assignment-handler (AssignmentHandler default-next-action do-submit-step get-dependencies #f))
+(define default-assignment-handler (AssignmentHandler default-next-action do-submit-step default-get-dependencies default-take-dependency))

@@ -20,7 +20,8 @@
 (provide yaml->assignment)
 (define (yaml->assignment yaml) 
   (cond [(not (yaml? yaml)) (raise-argument-error 'yaml->assignment "yaml" yaml)]
-        [(not (= 4 (hash-count yaml))) (raise-user-error "Expected record with 4 fields: `name`, `id`, `description`, and `steps`")]
+        [(not (or (= 5 (hash-count yaml))
+                  (= 4 (hash-count yaml)))) (raise-user-error "Expected record with 4 or 5 fields: `name`, `id`, `description`, `steps`, and optionally `assignment-handler`.")]
         [(not (hash-has-keys? yaml "name" "id" "description" "steps")) (raise-user-error "Expected record with fields: `name`, `id`, `description`, `steps`, and optionally `assignment-handler`.")]
         [else (let ((id (hash-ref yaml "id"))
                     (name (hash-ref yaml "name"))
@@ -247,8 +248,8 @@
 
 (provide could-not-parse)
 (define (could-not-parse exn)
-  (failure "Could not parse as YAML."))
+  (failure (format "Could not parse as YAML: ~a" exn)))
 
 (provide invalid-yaml)
 (define (invalid-yaml exn)
-  (failure "YAML did not contain a valid assignment description."))
+  (failure (format "YAML did not contain a valid assignment description: ~a" exn)))

@@ -1,6 +1,7 @@
 #lang racket
 
-(require db
+(require web-server/http/bindings
+         db
          (planet esilkensen/yaml:3:1)
          json
          "../base.rkt"
@@ -11,24 +12,11 @@
          "../database/mysql/common.rkt")
 
 
-
-;; TODO(3-study): 
-;; dependencies returns a list of identifiers 
-;; assignment-dependencies in assignment.rkt
-(define (assignment-dependencies)
-  '())
-
-;; TODO(3-study):
-;; What to do when you receive a dependency
-(define (receive-dependencies list-of-deps)
-  #f)
-
 ;; 3 different groups
 
 ;; assignment-id -> uid -> group
-;; TODO: Added to file storage API
 (define (lookup-group assignment-id uid)
-  (let* ((yaml-string (file->string (string-append assignment-id ".yaml")))
+  (let* ((yaml-string (retrieve-file (dependency-file-name assignment-id)))
          (yaml (string->yaml yaml-string))
          (does-reviews (hash-ref yaml "does-reviews"))
          (gets-reviewed (hash-ref yaml "gets-reviewed"))
@@ -36,9 +24,8 @@
     (cond [(member uid does-reviews) 'does-reviews]
           [(member uid gets-reviewed) 'gets-reviewed]
           [(member uid no-reviews) 'no-reviews]
-          [else 'no-such-student])))
+          [else (error (format "Could not find uid ~a in configuration file.\n\nYAML:~a\n\n" uid yaml-string))])))
 
-;;TODO(3-study) must accept Assignment and Step rather than IDs
 (define (three-next-action assignment steps uid)
   (let ((assignment-id (Assignment-id assignment)))
     (let ((group (lookup-group assignment-id uid)))
@@ -48,7 +35,6 @@
          (let ((check-result (three-check-step assignment (car steps) uid group))
                (rest (cdr steps)))
            (cond
-             ;;TODO pass in assign-review function
              [(eq? #t check-result) (default:next-action three-ensure-assigned-review assignment rest uid)]
              [else check-result]))]))))
 
@@ -66,11 +52,11 @@
                     [else (error (format "Unknown group type ~a" group))])]))))
 
 (provide three-do-submit-step)
-(define (three-do-submit-step assignment step uid data steps)
+(define (three-do-submit-step assignment step uid file-name data steps)
   (let ((assignment-id (Assignment-id assignment))
         (step-id (Step-id step)))
     ;(upload-submission class user assignment step data)
-    (upload-submission class-name uid assignment-id step-id "test-file.txt" data)
+    (upload-submission class-name uid assignment-id step-id file-name data)
     (let ((group (lookup-group assignment-id uid)))
       ;; TODO: look to see if there are any pending reviewers
       (if (eq? group 'gets-reviewed) (maybe-assign-reviewers assignment-id step uid) (printf "Skipping maybe-assign review. uid: ~a, group: ~a\n" uid group)))
@@ -159,8 +145,7 @@
             [(student-submission? review) (assign-student-reviews assignment-id class-name step-id uid review-id amount)]))))
 
 (define (gets-reviewed-list assignment-id step-id)
-  ;;TODO Add to file storage API
-  (let* ((yaml-string (file->string (string-append assignment-id ".yaml")))
+  (let* ((yaml-string (retrieve-file (dependency-file-name assignment-id)))
          (yaml (string->yaml yaml-string))
          (gets-reviewed (hash-ref yaml "gets-reviewed")))
     gets-reviewed))
@@ -197,8 +182,35 @@
       (begin (review:create assignment-id class-name step-id "HOLD" uid review-id)
              (assign-student-hold assignment-id class-name step-id uid review-id (- n 1)))))
 
+(provide dependency-file-name)
+(define (dependency-file-name assignment-id)
+  (string-append class-name "/" assignment-id "/three-condition-config.yaml"))
+
+;; TODO(3-study): 
+;; dependencies returns a list of identifiers 
+;; assignment-dependencies in assignment.rkt
+(define (three-get-deps assignment)
+  (cons 
+   (three-study-config-dependency (check-for-config-file (Assignment-id assignment)))
+   (filter instructor-solution-dependency? (default:default-get-dependencies assignment))))
+
+(define (check-for-config-file assignment-id)
+  (file-exists-in-cloud? (dependency-file-name assignment-id)))
+  
+  
+;; TODO(3-study):
+;; What to do when you receive a dependency
+(define (three-take-deps assignment-id dependency bindings raw-bindings)
+  (cond [(three-study-config-dependency? dependency) (take-config assignment-id bindings raw-bindings)]
+        [else (default:default-take-dependency assignment-id dependency bindings raw-bindings)]))
+
+(define (take-config assignment-id bindings raw-bindings)
+  (let* ((data (extract-binding/single 'three-condition-file bindings)))
+    (write-file (dependency-file-name assignment-id) data)
+    (Success "Configuration uploaded.")))
+
 ;; TODO: write get-deps tak-deps
 (provide three-condition-study-handler)
 (define three-condition-study-handler
-  (AssignmentHandler three-next-action three-do-submit-step #f #f))
+  (AssignmentHandler three-next-action three-do-submit-step three-get-deps three-take-deps))
 

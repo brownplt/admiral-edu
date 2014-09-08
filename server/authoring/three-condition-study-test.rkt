@@ -35,6 +35,7 @@
 (define (init-tests)
   (init-db)
   (class:create class-name)
+  
 
   
   (roles:create instructor-role "Instructor" 1)
@@ -43,6 +44,7 @@
 
   (map make-student (list ACE AMY ART ALF JOE JAN JIM JON SAL SAM STU SUE SID))
   (create-assignment three-test-assignment)
+  (write-file (dependency-file-name "test-assignment") (file->string "test-assignment.yaml"))
   (save-assignment-description class-name "test-assignment" (file->string "test-assignment-description.yaml")))
 
 (define three-test-assignment (yaml->assignment (string->yaml (file->string "test-assignment-description.yaml"))))
@@ -66,7 +68,7 @@
   ;; NOTE(joe): this seems to be enough to get different timestamps so our
   ;; ordering tests work well
   (sleep 1)
-  (three-do-submit-step three-test-assignment three-test-assignment-tests-step user useless-tar-file (Assignment-steps three-test-assignment)))
+  (three-do-submit-step three-test-assignment three-test-assignment-tests-step user "useless.tar" useless-tar-file (Assignment-steps three-test-assignment)))
 
 (define (check-review-assignments submission-list expected-assignments)
   (map test-submit-order-submit submission-list)

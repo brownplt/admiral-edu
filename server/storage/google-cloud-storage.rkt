@@ -241,6 +241,7 @@
   (let ((path (string-append class "/" assignment "/reviews/"  stepName "/" review-id "/" reviewer "/" reviewee "/rubric.json")))
     (if (file-exists-in-cloud? path) (retrieve-file path) (retrieve-default-rubric class assignment stepName review-id))))
 
+(provide file-exists-in-cloud?)
 (define (file-exists-in-cloud? path)
   (let* ((files (ls (string-append bucket path)))
          (member? (filter (lambda (x) (equal? path x)) files)))

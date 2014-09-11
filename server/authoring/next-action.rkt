@@ -16,7 +16,7 @@
             (if (not result) (Failure "The submission failed. This is most likely because the file uploaded was not a zip archive.")
                 (begin
                   ;; Assign reviews to the student if applicable
-                  (let ((next (next-action assignment steps uid)))
+                  (let ((next (default-next-action assignment steps uid)))
                     (cond
                       [(MustReviewNext? next) (assign-reviews assignment-id next uid)])
                     (Success "Assignment submitted.")))))))))
@@ -65,7 +65,7 @@
                            [(instructor-solution? next-review) (check-instructor-solution assignment-id step next-review uid)]
                            [(student-submission? next-review) (check-student-submission assignment-id step next-review uid)])))
             (cond
-              [result (check-reviews assignment-id step rest uid)]
+              [result (check-reviews ensure-assigned-review assignment-id step rest uid)]
               [else (MustReviewNext step (get-reviews ensure-assigned-review assignment-id uid step))]))]))
 
 (define (get-reviews ensure-assigned-review assignment-id uid step)

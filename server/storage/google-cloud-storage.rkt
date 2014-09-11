@@ -155,7 +155,7 @@
 (define (store-local-file path)
   (local:ensure-path-exists path)
   (let* ((bytes (get/bytes (string-append bucket path)))
-         (out (open-output-file path #:exists 'replace)))
+         (out (open-output-file path #:exists 'replace)))    
     (write-bytes bytes out)
     (close-output-port out)))
 

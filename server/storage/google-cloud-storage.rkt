@@ -133,16 +133,24 @@
 (define (export-assignment class assignment)
   (let* ((path (string-append class "/" assignment))
          (archive (string-append path "/" assignment ".zip"))
-         (files (ls (string-append bucket path))))
-    (map store-local-file files)
+         (files (ls (string-append bucket path)))
+         (tmp-dir "tmp"))
+
+    (map (store-temp-file tmp-dir) files)
     
-    (system (string-append "rm " archive " -f"))
-    
-    (system (string-append "zip -r " archive " " path))
-     (let ((data (file->bytes archive)))
-       (system (string-append "rm " archive " -f"))
-       (map local:delete-file files)
-       data)))
+    (system (string-append "cd " tmp-dir "; zip -r " archive " "  path))
+            
+    (let ((data (file->bytes (string-append tmp-dir "/" archive))))
+      (system (string-append "rm " tmp-dir " -rf"))
+      data)))
+
+(define (store-temp-file tmp-dir)
+  (lambda (path)
+  (local:ensure-path-exists (string-append tmp-dir "/" path))
+  (let* ((bytes (get/bytes (string-append bucket path)))
+         (out (open-output-file (string-append tmp-dir "/" path) #:exists 'replace)))
+    (write-bytes bytes out)
+    (close-output-port out))))
 
 (define (store-local-file path)
   (local:ensure-path-exists path)
@@ -150,8 +158,6 @@
          (out (open-output-file path #:exists 'replace)))
     (write-bytes bytes out)
     (close-output-port out)))
-  
-    
 
 (provide delete-file)
 (define (delete-file path)

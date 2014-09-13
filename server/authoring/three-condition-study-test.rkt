@@ -44,10 +44,10 @@
 
   (map make-student (list ACE AMY ART ALF JOE JAN JIM JON SAL SAM STU SUE SID))
   (create-assignment three-test-assignment)
-  (write-file (dependency-file-name "test-assignment") (file->string "test-assignment.yaml"))
-  (save-assignment-description class-name "test-assignment" (file->string "test-assignment-description.yaml")))
+  (write-file (dependency-file-name "test-assignment") (file->string "sample-yaml/test-assignment.yaml"))
+  (save-assignment-description class-name "test-assignment" (file->string "sample-yaml/test-assignment-description.yaml")))
 
-(define three-test-assignment (yaml->assignment (string->yaml (file->string "test-assignment-description.yaml"))))
+(define three-test-assignment (yaml->assignment (string->yaml (file->string "sample-yaml/test-assignment-description.yaml"))))
 (define three-test-assignment-tests-step
   (let* ((steps (Assignment-steps three-test-assignment))
          (step (filter (lambda (step) (string=? (Step-id step) "tests")) steps)))
@@ -62,7 +62,7 @@
 ; no-review: SAL SAM STU SUE SID
 
 (define useless-tar-file
-  (file->string "empty.tar"))
+  (file->string "sample-yaml/empty.tar"))
 
 (define (test-submit-order-submit user)
   ;; NOTE(joe): this seems to be enough to get different timestamps so our

@@ -110,7 +110,7 @@
          [path (to-path-html (cdr rest))]
          (file (to-path (cdr rest)))
          (test-prime (newline))
-         (file-path (submission-file-path class reviewee assignment stepName file))
+         (file-path (submission-file-path class assignment reviewee stepName file))
          (contents (if (is-directory? file-path) (render-directory prefix file-path) (render-file file-path))))
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
         (string-append (include-template "html/feedback-file-container-header.html")
@@ -165,8 +165,8 @@
     (helper '() ls)))
 
 (define (render-directory prefix dir-path)
-  (let ((dirs (sub-directories-of dir-path))
-        (files (list-only-files dir-path)))
+  (let ((dirs (list-dirs dir-path))
+        (files (list-files dir-path)))
     (string-append
      "<div id=\"directory\" class=\"browser\">"
      "<ul>"

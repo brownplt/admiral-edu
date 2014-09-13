@@ -15,13 +15,6 @@
       ;(completed-reviews session)
       (render-menu session role))))
       ;(users session role))))
-
-(provide post->index)
-(define (post->index session role binds)
-  (cond
-    [(exists-binding? 'new-uid binds) (new-user session role binds)]
-    [(exists-binding? 'file binds) (upload-file session role binds)]
-    [else (index session role)]))
   
 
 (define (new-user session role binds)
@@ -29,13 +22,6 @@
          (new-role (extract-binding/single 'new-role binds))
          (output (with-handlers ([exn:fail? could-not-create-user]) (create-new-user (ct-session-class session) new-uid new-role))))
     (index session role output)))
-
-(define (upload-file session role binds)
-  (let ((data (extract-binding/single 'file binds))
-        (assignment (extract-binding/single 'assignment binds))
-        (step (extract-binding/single 'step binds)))
-    (upload-submission (ct-session-class session) (ct-session-uid session) assignment step data)
-    (index session role '((p "Your submission has been accepted.")))))
 
 (define (could-not-create-user exn)
   '((p "Unable to create user")))

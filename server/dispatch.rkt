@@ -54,8 +54,8 @@
 (define (handlerPrime post post-data session bindings raw-bindings path)
   (print (list post path)) (newline) (flush-output);;TODO Proper log
   (match path
-    ['() (if post (post->render session post->index bindings) (render session index))]
-    [(list "") (if post (post->render session post->index bindings) (render session index))]
+    ['() (render session index)]
+    [(list "") (render session index)]
     [(cons "review" rest) (if post (review:post->review session post-data rest) (render-html session review:load rest))]
     [(cons "file-container" rest) (if post (review:push->file-container session post-data rest) (render-html session review:file-container rest))]
     [(cons "su" (cons uid rest)) (with-sudo post post-data uid session bindings raw-bindings rest)]

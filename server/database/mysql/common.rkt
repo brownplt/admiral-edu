@@ -56,9 +56,6 @@
 (define (try-with-default default f . args)
   (with-handlers ([exn:fail? (lambda (exn) default)]) (apply f args)))
 
-(define (test required . optional)
-  (printf "required:~a\n\noptional:~a\n\n" required optional))
-
 (provide run)
 (define (run query-func q . args)
   (let* ((conn (make-sql-conn))

@@ -1,13 +1,13 @@
 #lang racket
 
-(require "storage/google-cloud-storage.rkt"
+(require "storage/storage.rkt"
          "database/mysql.rkt"
          "configuration.rkt"
          "ct-session.rkt")
 
 (provide (all-from-out "configuration.rkt"))
 (provide (all-from-out "database/mysql.rkt"))
-(provide (all-from-out "storage/google-cloud-storage.rkt"))
+(provide (all-from-out "storage/storage.rkt"))
 (provide (all-from-out "ct-session.rkt"))
 
 

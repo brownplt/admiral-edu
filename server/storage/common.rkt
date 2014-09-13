@@ -42,6 +42,21 @@
                        (if (null? rest) path (helper (cons (car rest) acc) (cdr rest)))))))
     (helper (reverse root) path-list)))
 
+(provide ensure-path-exists)
+(define (ensure-path-exists path)
+  (let* ((split (string-split path "/"))
+         (withoutFile (take split (- (length split) 1)))
+         (to-make (apply string-append (intercalate "/" withoutFile))))
+    (make-directory* to-make)))
+
+;; Checks if a file-name is acceptable
+;; Acceptable filenames include alphanumeric characters, underscore, dash, and period
+;; that is, they must meet the regular expression #rx[a-zA-Z0-9_.-]*
+;; Returns #t if the file-name is acceptable and #f otherwise.
+(provide check-file-name)
+(define (check-file-name file-name)
+  (let* ((okay-chars #rx"[a-zA-Z0-9_.-]*"))
+    (regexp-match-exact? okay-chars file-name)))
 
 ;; TODO: Eventually we want to detect the archive type and choose the correct program to extract it.
 ;; This also needs to be able to handle invalid file types

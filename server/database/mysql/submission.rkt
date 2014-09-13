@@ -72,7 +72,6 @@
 ;; 'no-such-user-in-class - if the specified user exists but is not registered for the class
 (provide create)
 (define (create assignment class step user)
-  (print (list assignment class step user)) (newline)
   (cond
     [(not (class:exists? class)) 'no-such-class]
     [(not (assignment:exists? assignment class)) 'no-such-assignment]
@@ -150,7 +149,6 @@
 
 (provide select-least-reviewed)
 (define (select-least-reviewed assignment class step not-users)
-  (print "In select-least-reviewed") (newline)
   (let* ((conn (make-sql-conn))
          (user-commas (string-join (build-list (length not-users) (lambda (n) "?")) ","))
          (query (merge "SELECT" user-id
@@ -161,12 +159,8 @@
                                user-id " NOT IN (" user-commas ")"
                        "ORDER BY" times-reviewed "ASC"
                        "LIMIT 1"))
-         (test (printf "Query:~a\n" query))
          (prep (prepare conn query))
-         (test (printf "Query prepped.\n"))
          (arg-list (append `(,conn ,prep ,assignment ,class ,step) not-users))
-         (test (printf "Arg-list:~a\n" arg-list))
-         (test (printf "Selecting Least Reviewed.\nQuery:~a\n Argument list:~a\n" query arg-list))
          (result (apply query-row arg-list)))
     (release conn)
     (vector-ref result 0)))

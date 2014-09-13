@@ -195,7 +195,7 @@
    (filter instructor-solution-dependency? (default:default-get-dependencies assignment))))
 
 (define (check-for-config-file assignment-id)
-  (file-exists-in-cloud? (dependency-file-name assignment-id)))
+  (is-file? (dependency-file-name assignment-id)))
   
   
 ;; TODO(3-study):

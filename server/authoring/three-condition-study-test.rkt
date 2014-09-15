@@ -207,6 +207,7 @@
   (init-tests)
   (map test-reflection-assigned-submit-tests all-students)
   (map (test-reflection-assigned-submit-reviews "tests") does-reviews)
+  (map test-must-submit-next all-students)
   (map test-reflection-assigned-submit-implementation all-students)
   (map (check-review-exists "does-reviews") does-reviews)
   (map (check-review-exists "no-reviews") no-reviews)
@@ -214,6 +215,11 @@
   (map check-assignment-incomplete all-students)
   (map (test-reflection-assigned-submit-reviews "implementation") all-students)
   (map check-assignment-completed all-students))
+
+(define (test-must-submit-next user)
+  (let ((next (three-next-action three-test-assignment (Assignment-steps three-test-assignment) user)))
+    (printf "Checking if ~a should submit next." user)
+    (check-true (MustSubmitNext? next))))
 
 (define (check-assignment-incomplete user)
   (let ((next (three-next-action three-test-assignment (Assignment-steps three-test-assignment) user)))

@@ -44,7 +44,7 @@
            (result (cond 
                      [(not has-submitted) (MustSubmitNext step (Step-instructions step))]
                      [(eq? group 'no-reviews) (default:next-action (three-check-reviewed group) three-ensure-assigned-review assignment tail uid)]
-                     [(eq? group 'does-reviews) (default:check-reviews (three-check-reviewed group) three-ensure-assigned-review assignment-id step (Step-reviews step) uid)]
+                     [(eq? group 'does-reviews) (handle-does-reviews assignment steps uid group)]
                      ;;TODO: Notify users that they are in get-reviews
                      [(eq? group 'gets-reviewed) (default:next-action (three-check-reviewed group) three-ensure-assigned-review assignment tail uid)]
                      [else (error (format "Unknown group type ~a" group))])))
@@ -52,6 +52,15 @@
         ;; If this is the final-submission, check to see if they have completed their reflection
         [(eq? #t result) (check-final-review assignment (last steps) uid group)]
         [else result]))))
+
+(define (handle-does-reviews assignment steps uid group)
+  (let* ((assignment-id (Assignment-id assignment))
+         (step (first steps))
+         (tail (rest steps))
+         (result (default:check-reviews (three-check-reviewed group) three-ensure-assigned-review assignment-id step (Step-reviews step) uid)))
+    (if (eq? #t result) 
+          (default:next-action (three-check-reviewed group) three-ensure-assigned-review assignment tail uid)
+          result)))
 
 ; Returns #t if the review has been completed and #f otherwise
 ; assignment-id -> step -> review -> user-id -> bool?

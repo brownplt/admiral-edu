@@ -70,7 +70,7 @@
     [(cons "su" (cons uid rest)) (with-sudo post post-data uid session bindings raw-bindings rest)]
     [(cons "author" rest) (if post (author:post->validate session post-data rest) (render-html session author:load rest))]
     [(cons "next" rest) (render-html session next rest)]
-    [(cons "assignments" rest) (render-html session assignments:assignments rest)]
+    [(cons "assignments" rest) (render-html session (assignments:load post) rest)]
     [(cons "dependencies" rest) (if post (dep:post session rest bindings raw-bindings) (render-html session dep:dependencies rest))]
     [(cons "submit" rest) (if post (submit:submit session role rest bindings raw-bindings) (error:response-error 
                                                                                             (error:error (string-append "<p>You've accessed this page in an invalid way.</p>"

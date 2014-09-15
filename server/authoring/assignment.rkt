@@ -10,6 +10,12 @@
          "util.rkt"
          "../base.rkt")
 
+;; assignment-id -> void
+;; Completely remove all trace of an assignment
+(provide delete-assignment)
+(define (delete-assignment assignment-id)
+  (database:delete-assignment class-name assignment-id)
+  (delete-path (string-append class-name "/" assignment-id)))
 
 (define (repeat-id? getter)
   (lambda (list)

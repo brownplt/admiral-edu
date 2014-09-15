@@ -279,6 +279,13 @@
     (release conn)
     result))
 
+(provide delete-assignment)
+(define (delete-assignment class assignment)
+  (let ((query (merge "DELETE FROM" table
+                       "WHERE" assignment-id "=? AND"
+                               class-id "=?")))
+    (run query-exec query assignment class)))
+
 (define (random-hash)
   (for/fold ([s ""])
       ([x (in-range 32)])

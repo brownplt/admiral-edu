@@ -11,30 +11,54 @@
          (prefix-in error: "errors.rkt")
          "../authoring/assignment.rkt")
 
+(define OPEN-ACTION "open")
+(define CLOSE-ACTION "close")
+(define DASHBOARD-ACTION "dashboard")
+(define DELETE-ACTION "delete")
+(define LIST-ACTION "")
+
+
 (define (repeat val n)
   (cond
     [(<= n 0) '()]
     [else (cons val (repeat val (- n 1)))]))
 
-(provide assignments)
-(define (assignments session role rest [message '()])
-  (let ((start-url (hash-ref (ct-session-table session) 'start-url)))
-    (cond [(not (roles:role-can-edit role)) (show-open-assignments start-url)]
-          [else (show-instructor-view session rest message)])))
+(provide load)
+(define (load post)
+  (lambda (session role rest [message ""])
+    (let ((start-url (hash-ref (ct-session-table session) 'start-url)))
+      (cond [(not (roles:role-can-edit role)) (show-open-assignments start-url)]
+            [else (show-instructor-view session rest message post)]))))
 
-(define (show-instructor-view session rest [message '()])
-  (let ((no-care (check-action rest))
-        (assign-list (assignment:list class-name)))    
-    (string-append "<h1>Assignments</h1>" 
-                   "<p><a href='/" class-name "/author/'>New Assignment</a></p>"
-                   (apply string-append (map record->html assign-list)))))
+(define (show-instructor-view session url message [post #f])
+  (let ((action (if (empty? url) LIST-ACTION (first url)))
+        (start-url (hash-ref (ct-session-table session) 'start-url))
+        (rest-url (if (empty? url) '() (rest url))))
+    ((lookup-action-function action) start-url session rest-url message post)))
 
-(define (check-action rest)
-  (cond [(null? rest) #f]
-        [(equal? "open" (car rest)) (let ((id (cadr rest)))
-                                      (assignment:open id class-name))]
-        [(equal? "close" (car rest)) (let ((id (cadr rest)))
-                                       (assignment:close id class-name))]))
+(define (do-list-action start-url session url message [post #f])
+    (let* ((assign-list (assignment:list class-name))
+           (open-assignments (filter assignment:record-open assign-list))
+           (closed-assignments (filter (lambda (x) (not (assignment:record-open x))) assign-list)))
+      (string-append "<h1>Assignments</h1>" 
+                     message
+                     "<p><a href='/" class-name "/author/'>New Assignment</a></p>"
+                     "<p>Click an assignment to view more details.</p>"
+                     "<h2>Open Assignments</h2>"
+                     "<ul>"
+                     (apply string-append (map (record->html start-url) open-assignments))
+                   "</ul>"
+                   "<h2>Closed Assignments</h2>"
+                   "<ul>"
+                   (apply string-append (map (record->html start-url) closed-assignments))
+                   "</ul>")))
+
+(define (record->html start-url)
+  (lambda (record)
+    (let ((id (assignment:record-id record))
+          (open (if (assignment:record-open record) "Open" "Closed")))
+      (string-append "<li><a href='/" class-name "/assignments/"  DASHBOARD-ACTION "/" id "/'>" id "</a></li>"))))
+
 
 (define (show-open-assignments start-url)
   (let* ((assign-list (filter assignment:record-open (assignment:list class-name)))
@@ -56,25 +80,55 @@
 (define (what-next-link id start-url)
   (string-append "<p>" id " : <a href='" start-url "../next/" id "/'>Next Step</a> - <a href='" start-url "../feedback/" id "/'>Assignment Feedback</a></p>"))
 
-(define (record->html record)
-  (let ((id (assignment:record-id record))
-        (ready (assignment:record-ready record))
-        (open (assignment:record-open record)))
-    (cond [ready (with-open-link id open)]
-          [else (with-ready-link id)])))
 
-(define (with-open-link id open)
-  (let ((link-text (if open "Close" "Open"))
-        (action (if open "close" "open")))
-    (string-append "<p>" id " - " (edit-assignment-link id) " - <a href=\"/" class-name "/assignments/" action "/" id "/\">" link-text "</a> - "
+#|" - " (edit-assignment-link id) " - <a href=\"/" class-name "/assignments/" action "/" id "/\">" link-text "</a> - "
                    "<a href='/" class-name "/export/" id "/" id ".zip'>Export Assignment Data</a>"
                    "</p>")))
+|#
 
-(define (with-ready-link id)
-  (string-append "<p>" id " - "  (edit-assignment-link id) ": This assignment is missing dependencies. <a href=\"/" class-name "/dependencies/" id "/\">Upload Dependencies</a></p>"))
+(define (do-dashboard-action start-url session url message [post #f])
+  (let ((assignment-id (first url)))
+    (check-ready assignment-id)
+    (let* ((assignment (assignment:select class-name assignment-id))
+           (open (assignment:record-open assignment))
+           (ready (assignment:record-ready assignment))
+           (status (if ready (if open "Open" "Closed") "Missing Dependencies")))
+        
+    (string-append "<h1><a href='/" class-name "/assignments/'>Assignments</a></h1>"
+                   "<h2>"assignment-id "</h2>"
+                   "<p>Status: " status "</p>"
+                   (cond [(and ready open) (string-append "<p><a href='/" class-name "/assignments/" CLOSE-ACTION "/" assignment-id  "/'>Close Assignment</a></p>")]
+                         [(and ready (not open)) (string-append "<p><a href='/" class-name "/assignments/" OPEN-ACTION "/" assignment-id "/'>Open Assignment</a></p>")]
+                         [else ""])
+                   "<p><a href='/" class-name "/dependencies/" assignment-id "/'>Upload Dependencies</a></p>"
+                   "<p><a href='/" class-name "/author/edit/" assignment-id "/'>Edit Assignment Description</a></p>"
+                   "<p><a href='/" class-name "/export/" assignment-id "/" assignment-id ".zip'>Export Assignment Data</a></p>"
+                   "<p><a href='/" class-name "/assignments/" DELETE-ACTION "/" assignment-id "/'>Delete Assignment</a></p>")
+  )))
 
-(define (edit-assignment-link assignment-id)
-  (string-append "<a href='/" class-name "/author/edit/" assignment-id "/'>Edit Assignment</a>"))
+(define (do-open-action start-url session url message [post #f])
+  (let ((assignment-id (first url)))
+    (assignment:open assignment-id class-name)
+    (do-dashboard-action start-url session url message)))
+
+(define (do-close-action start-url session url message [post #f])
+  (let ((assignment-id (first url)))
+    (assignment:close assignment-id class-name)
+    (do-dashboard-action start-url session url message)))
+
+(define (do-delete-action start-url session url message [post #f])
+  (let ((assignment-id (first url)))
+    (cond [post (run-delete start-url session url message assignment-id)]
+          [else (string-append "<h1><a href='/" class-name "/assignments/'>Assignments</a></h1>"
+                               "<h2><a href='/" class-name "/assignments/" DASHBOARD-ACTION "/" assignment-id "'>" assignment-id "</a></h2>"
+                               "<p><b>You are about to delete this assignment. This action is irreversable. Click Submit below to proceed.</b></p>"
+                               "<form action='/" class-name "/assignments/delete/" assignment-id "/' method='post'>"
+                               "<input type='submit'>"
+                               "</form>")])))
+
+(define (run-delete start-url session url message assignment-id)
+  (delete-assignment assignment-id)
+  (do-list-action start-url session url (string-append "<p><b>Assignment " assignment-id " deleted.</b></p>")))
 
 (provide export)
 (define (export session role rest)
@@ -93,5 +147,19 @@
          (current-seconds) TEXT/HTML-MIME-TYPE
          empty
          (list (string->bytes/utf-8 (error:error "You are not authorized to see this page.")))))
-  
+
+(define (no-such-action action)
+  (lambda (start-url session url message)
+    (error:error (format "The requested action ~a is not valid here." action))))
+
+(define action-functions
+  (hash LIST-ACTION do-list-action
+        DASHBOARD-ACTION do-dashboard-action
+        OPEN-ACTION do-open-action
+        CLOSE-ACTION do-close-action
+        DELETE-ACTION do-delete-action))
+
+(define (lookup-action-function action)
+  (cond [(hash-has-key? action-functions action) (hash-ref action-functions action)]
+        [else (no-such-action action)]))
 

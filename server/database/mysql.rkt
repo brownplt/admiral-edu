@@ -56,3 +56,10 @@
 
 ;; Review Table
 (provide (all-from-out "mysql/review.rkt"))
+
+;; Permanently removes all references to an assignment from the database
+(provide database:delete-assignment)
+(define (database:delete-assignment class-id assignment-id)
+  (review:delete-assignment class-id assignment-id)
+  (assignment:delete-assignment class-id assignment-id)
+  (submission:delete-assignment class-id assignment-id))

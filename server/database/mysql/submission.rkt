@@ -207,3 +207,10 @@
                 (result (vector-ref (query-row conn prep assignment class step user) 0)))
            (release conn)
            (> result 0)))
+
+(provide delete-assignment)
+(define (delete-assignment class assignment)
+  (let ((query (merge "DELETE FROM" table
+                       "WHERE" assignment-id "=? AND"
+                               class-id "=?")))
+    (run query-exec query assignment class)))

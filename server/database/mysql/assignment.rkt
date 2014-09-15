@@ -106,6 +106,14 @@
             (results (run query-rows q class)))
        (map result->record results))]))
 
+(provide delete-assignment)
+(define (delete-assignment class assignment)
+  (let ((query (merge "DELETE FROM" table
+                       "WHERE" assignment-id "=? AND"
+                               class-id "=?")))
+    (run query-exec query assignment class)))
+
+
 (define (result->record result)
   (let ((class (vector-ref result 0))
         (id (vector-ref result 1))

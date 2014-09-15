@@ -27,14 +27,18 @@
           [(and (= len 2) (string=? THREE-STUDY-ACTION (cadr rest))) (three-study-form (car rest))]
           [(> len 2) (dependencies-form (car rest) (cadr rest) (caddr rest) rest)])))
 
-(define (assignment-dependencies assignment-id [message #f])
+(define (assignment-dependencies assignment-id [message ""])
   (cond [(not (assignment:exists? assignment-id class-name)) (error:error-page "The assignment id '" assignment-id "' was not found.")]
         [else (let* ((deps (assign:assignment-id->assignment-dependencies assignment-id))
-                     [assignment-id assignment-id]
-                     [dependency-list (string-append "<p><a href='/" class-name "/assignments/'>Back to Assignments</a></p>"
-                                                     (string-join (map (dep->html assignment-id) deps) "\n"))]
-                     [message-text (if message message "")])
-                (include-template "html/dependency-list.html"))]))
+                     [header (string-append "<a href='/" class-name "/assignments/'>Assignments</a>")]
+                     (dependency-list (string-append (string-join (map (dep->html assignment-id) deps) "\n")))
+                     [extra-message ""]
+                     [body (string-append "<h2><a href='/" class-name "/assignments/dashboard/" assignment-id "/'>" assignment-id "</a></h2>"
+                                          "<p>" message "</p>"
+                                          "<p>The links below allow you to preview each rubric and upload file dependencies.</p>"
+                                          "<ul>" dependency-list "</ul>"
+                                          )])
+                (include-template "html/basic.html"))]))
 
 (define (three-study-form assignment-id [message #f])
   (cond [(not (assignment:exists? assignment-id class-name)) (error:error-page "The assignment id '" assignment-id "' was not found.")]

@@ -14,6 +14,7 @@
 (define write-file 'nil)
 (define (set-write-file proc) (set! write-file proc))
 
+(provide delete-path)
 (define delete-path 'nil)
 (define (set-delete-path proc) (set! delete-path proc))
 

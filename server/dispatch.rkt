@@ -2,7 +2,8 @@
 (require web-server/servlet
          web-server/servlet-dispatch
          web-server/web-server
-         web-server/dispatch)
+         web-server/dispatch
+         racket/date)
 
 (require 
   "auth/google-openidc.rkt"
@@ -52,7 +53,7 @@
       ;(with-handlers ([any? error:exception-occurred]) (handlerPrime post post-data session bindings clean-path)))))
 
 (define (handlerPrime post post-data session bindings raw-bindings path)
-  (print (list post path)) (newline) (flush-output);;TODO Proper log
+  (printf "[~a] ~a - ~a ~a\n" (date->string (current-date) #t) session (if post "POST" "GET") path)
   (match path
     ['() (render session index)]
     [(list "") (render session index)]

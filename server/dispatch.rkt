@@ -48,7 +48,7 @@
            (post-data (request-post-data/raw req))
            (clean-path (filter (lambda (x) (not (equal? "" x))) path))
            (start-rel-url (ensure-trailing-slash (string-append "/" class-name "/" (string-join path "/"))))
-           (session (get-session req (hash 'star-rel-url start-rel-url)))
+           (session (get-session req (hash 'start-url start-rel-url)))
            (result (with-handlers ([any? error:exception-occurred]) (handlerPrime post post-data session bindings raw-bindings clean-path))))
       result)))
       ;(with-handlers ([any? error:exception-occurred]) (handlerPrime post post-data session bindings clean-path)))))
@@ -96,7 +96,7 @@
 (define (with-sudo post post-data uid session bindings raw-bindings path)
   (let* ((user-role (role session))
          (can-sudo (if user-role (roles:role-can-edit user-role) #f))
-         (new-session (ct-session (ct-session-class session) uid)))
+         (new-session (ct-session (ct-session-class session) uid (ct-session-table session))))
     (if (not can-sudo) (error:four-oh-four)
         (handlerPrime post post-data new-session bindings raw-bindings path))))
 

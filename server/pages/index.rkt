@@ -45,80 +45,19 @@
     (p ,(string-append "User ID: " (ct-session-uid session)))
     (p ,(string-append "User Role: " (roles:role-name role)))))
 
-(define (users session role)
-  (if (not (roles:role-can-edit role)) '()
-      (append
-       (add-student-form)
-       '((h2 "Instructors"))
-       (list-instructors session)
-       '((h2 "Teaching Assistants"))
-       (list-tas session)
-       '((h2 "Students")) 
-       (list-students session))))
-
 (define (render-menu session role)
-  (if (not (roles:role-can-edit role)) (student-view) (instructor-view)))
+  (let ((start-url (hash-ref (ct-session-table session) 'start-url)))
+    (if (not (roles:role-can-edit role)) (student-view start-url) (instructor-view start-url))))
 
-(define (instructor-view)
+(define (instructor-view start-url)
   (append
-   '((p (a ((href "assignments/")) "Assignments"))
-     (p(a ((href "roster/")) "Roster")))))
+   `((p (a ((href ,(string-append start-url "assignments/"))) "Assignments"))
+     (p(a ((href ,(string-append start-url "roster/"))) "Roster")))))
 
-(define (student-view)
+(define (student-view start-url)
   (append
-   '((p (a ((href "assignments/")) "Assignments")))))
-         
-
-(define (list-students session)
-  (let ((student-records (role:in-class (ct-session-class session) student-role 200 0)))        
-    (map show-record student-records)))
-
-(define (list-instructors session)
-  (let ((records (role:in-class (ct-session-class session) instructor-role 200 0)))        
-    (map show-record records)))
-
-(define (list-tas session)
-  (let ((records (role:in-class (ct-session-class session) ta-role 200 0)))        
-    (map show-record records)))
-
-(define (add-student-form)
-  (let* 
-      ;; Creates a single <option> field from a role-record
-      ((role-option (lambda (record) 
-                        `(option ((value ,(number->string (roles:role-id record)))) ,(roles:role-name record))))
-       ;; Creates a <select> field containing one <option> for each role in the database
-         (role-select (append '(select ((name "new-role"))) (map role-option (roles:all)))))
-    `((h3 "Add User")
-      (form ((method "post") (action ""))
-            (p "User ID: " (input ((name "new-uid") (type "text"))))
-            (p "Role: " ,role-select)
-            (p (input ((name "submit") (type "submit"))))))))
-
-(define (finished)
-  `((h3 "Assignment Complete.")
-    (p "You have finished all of the steps for this assignment.")))
-
-(define (review-form step)
-    `((h3 "Review Step")
-      (p "You must complete a review before continuing to the next step. When you have finished reviewing, return to this page.")
-      (p (a ((href ,(string-append "review/clock/" step))) "Access Review"))))
-
-(define (upload-form step)
-    `((h3 "Submission Step")
-      (form ((method "post") (action "") (enctype "multipart/form-data"))
-            (p "Assignment: clock")
-            (p ,(string-append "Step: " step)
-            (p "File: " (input ((name "file") (type "file") (id "file"))))
-            (input ((type "hidden") (name "step") (value ,step)))
-            (input ((type "hidden") (name "assignment") (value "clock")))
-            (p (input ((name "submit") (type "submit"))))))))
-
-(define (completed-reviews session)
-  (let* ((hashes (review:select-reviews (ct-session-uid session))))
-    (append '((h3 "Available Reviews"))
-    (map (lambda (hash) `(p (a ((href ,(string-append "view-review/" hash))) "View Review"))) hashes))))
-      
-
+   `((p (a ((href ,(string-append start-url "assignments/"))) "Assignments")))))
+    
 (define (show-record record)
   `(p ,(role:user-uid record)))
 

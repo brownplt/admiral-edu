@@ -55,24 +55,26 @@
 
 (define (do-default session role rest message)
   (let* ((uid (ct-session-uid session))
+         (start-url (hash-ref (ct-session-table session) 'start-url))
          (assignment (car rest))
          (reviews (review:select-feedback class-name assignment uid))
-         (results (if (null? reviews) "<p>You have no reviews at this time.</p>" (gen-reviews reviews))))
+         (results (if (null? reviews) "<p>You have no reviews at this time.</p>" (gen-reviews reviews start-url))))
     (string-append "<h1>" assignment "</h1>"
                    results)))
 
-(define (gen-reviews reviews) (gen-reviews-helper reviews 1))
+(define (gen-reviews reviews start-url) (gen-reviews-helper reviews 1 start-url))
 
-(define (gen-reviews-helper reviews cur)
+(define (gen-reviews-helper reviews cur start-url)
   (if (null? reviews) ""
       (let* ((review (car reviews))
              (hash (review:record-hash review))
              (step (review:record-step-id review))
              (rest (cdr reviews)))
-        (string-append "<p><a href='../view/" hash "/'>Review #" (number->string cur) ": " step "</a></p>" (gen-reviews-helper rest (+ 1 cur))))))
+        (string-append "<p><a href='" start-url "../view/" hash "/'>Review #" (number->string cur) ": " step "</a></p>" (gen-reviews-helper rest (+ 1 cur) start-url)))))
          
 (define (do-view session rest message)
-  (let* ((r-hash (car rest))
+  (let* ((start-url (hash-ref (ct-session-table session) 'start-url))
+         (r-hash (car rest))
          (review (review:select-by-hash r-hash))
          (assignment (review:record-assignment-id review))
          (step (review:record-step-id review))
@@ -81,10 +83,10 @@
          [display-message message]
          [review-feedback (load-review-feedback review)]
          [review-flagged (if (review:record-flagged review) "CHECKED" "")]
-         [submit-url (string-append root-url "review/submit/" r-hash "/")]
+         [submit-url (string-append start-url root-url "review/submit/" r-hash "/")]
          (updir-rubric (apply string-append (repeat "../" (- (length rest) 1))))
-         [file-container (string-append updir "file-container/" (to-path rest))]
-         [load-url (xexpr->string (string-append "\"" updir-rubric step "/load\""))]
+         [file-container (string-append start-url updir "file-container/" (to-path rest))]
+         [load-url (xexpr->string (string-append "\"" start-url updir-rubric step "/load\""))]
          (reviewer (ct-session-uid session))
          (class (ct-session-class session)))
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
@@ -96,14 +98,15 @@
     (equal? uid reviewee)))
 
 (define (do-file-container session role rest [message '()])
-  (let* ((r-hash (car rest))
+  (let* ((start-url (hash-ref (ct-session-table session) 'start-url))
+         (r-hash (car rest))
          (review (review:select-by-hash r-hash))
          (class (ct-session-class session))
          [assignment (review:record-assignment-id review)]
          (stepName (review:record-step-id review))
          (reviewee (review:record-reviewee-id review))
          [default-mode (determine-mode-from-filename (last rest))]
-         [load-url (prepare-load-url rest)]
+         [load-url (string-append "'" start-url "load" "'")]
          [step (to-step-link stepName (- (length rest) 2))]
          (last-path (last rest))
          (prefix (if (equal? last-path "") "" (string-append last-path "/")))
@@ -111,7 +114,7 @@
          (file (to-path (cdr rest)))
          (test-prime (newline))
          (file-path (submission-file-path class assignment reviewee stepName file))
-         (contents (if (is-directory? file-path) (render-directory prefix file-path) (render-file file-path))))
+         (contents (if (is-directory? file-path) (render-directory file-path start-url) (render-file file-path))))
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
         (string-append (include-template "html/feedback-file-container-header.html")
                        contents
@@ -164,24 +167,24 @@
                                            (helper new-acc tail))]))))
     (helper '() ls)))
 
-(define (render-directory prefix dir-path)
+(define (render-directory dir-path start-url)
   (let ((dirs (list-dirs dir-path))
         (files (list-files dir-path)))
     (string-append
      "<div id=\"directory\" class=\"browser\">"
      "<ul>"
-     (apply string-append (map (html-directory prefix) dirs))
-     (apply string-append (map (html-file prefix) files))
+     (apply string-append (map (html-directory start-url) dirs))
+     (apply string-append (map (html-file start-url) files))
      "</ul>"
      "</div>")))
 
-(define (html-directory prefix)
+(define (html-directory start-url)
   (lambda (dir)
-    (string-append "<li class=\"directory\"><a href=\"" prefix dir "\">" dir "</a></li>")))
+    (string-append "<li class=\"directory\"><a href=\"" start-url dir "\">" dir "</a></li>")))
 
-(define (html-file prefix)
+(define (html-file start-url)
   (lambda (file)
-    (string-append "<li class=\"file\"><a href=\"" prefix file "\">" file "</a></li>")))
+    (string-append "<li class=\"file\"><a href=\"" start-url file "\">" file "</a></li>")))
 
 (define (render-file file-path)
   (string-append "<textarea id=\"file\" class=\"file\">" (retrieve-file file-path) "</textarea>"))

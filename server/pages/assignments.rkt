@@ -18,8 +18,9 @@
 
 (provide assignments)
 (define (assignments session role rest [message '()])
-  (cond [(not (roles:role-can-edit role)) (show-open-assignments)]
-        [else (show-instructor-view session rest message)]))
+  (let ((start-url (hash-ref (ct-session-table session) 'start-url)))
+    (cond [(not (roles:role-can-edit role)) (show-open-assignments start-url)]
+          [else (show-instructor-view session rest message)])))
 
 (define (show-instructor-view session rest [message '()])
   (let ((no-care (check-action rest))
@@ -35,24 +36,25 @@
         [(equal? "close" (car rest)) (let ((id (cadr rest)))
                                        (assignment:close id class-name))]))
 
-(define (show-open-assignments)
+(define (show-open-assignments start-url)
   (let* ((assign-list (filter assignment:record-open (assignment:list class-name)))
          (assign-rendered (if (null? assign-list) 
                               "<p>There are currently no open assignments.</p>"
-                              (apply string-append (map open-record->html assign-list)))))
+                              (apply string-append (map (open-record->html start-url) assign-list)))))
                              
     (string-append "<h1>Assignments</h1>"
                    assign-rendered)))
 
-(define (open-record->html record)
-  (let ((id (assignment:record-id record))
-        (open (assignment:record-open record)))
-    (cond [open (what-next-link id)]
-          [else ""])))
+(define (open-record->html start-url)
+  (lambda (record)
+    (let ((id (assignment:record-id record))
+          (open (assignment:record-open record)))
+      (cond [open (what-next-link id start-url)]
+            [else ""]))))
 
 ;; TODO: This should be slightly more sophisticated so that closed assignments still show up
-(define (what-next-link id)
-  (string-append "<p>" id " : <a href='../next/" id "/'>Next Step</a> - <a href='../feedback/" id "/'>Assignment Feedback</a></p>"))
+(define (what-next-link id start-url)
+  (string-append "<p>" id " : <a href='" start-url "../next/" id "/'>Next Step</a> - <a href='" start-url "../feedback/" id "/'>Assignment Feedback</a></p>"))
 
 (define (record->html record)
   (let ((id (assignment:record-id record))

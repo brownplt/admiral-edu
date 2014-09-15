@@ -20,44 +20,46 @@
 (define (next session role rest [message '()])
   (let* ((assignment-id (car rest))
          (assignment-record (assignment:select class-name assignment-id))
-         (is-open (assignment:record-open assignment-record)))
+         (is-open (assignment:record-open assignment-record))
+         (start-url (hash-ref (ct-session-table session) 'start-url)))
     (if (not is-open) (error:assignment-closed)
         (let* ((uid (ct-session-uid session))
                (assignment (car rest))     
                (do-next (next-step assignment-id uid)))
           (cond 
-            [(MustSubmitNext? do-next) (handle-submit-next assignment do-next)]
-            [(MustReviewNext? do-next) (handle-review-next do-next)]
+            [(MustSubmitNext? do-next) (handle-submit-next assignment do-next start-url)]
+            [(MustReviewNext? do-next) (handle-review-next do-next start-url)]
             [(eq? #t do-next) (assignment-completed)]
             [else (error "Unknown next-action.")])))))
 
-(define (handle-submit-next assignment-id action)
+(define (handle-submit-next assignment-id action start-url)
   (let* ((step (MustSubmitNext-step action))
          (instruction (Step-instructions step))
          (step-id (Step-id step)))
     (string-append "<p>You must submit to '" step-id "'.</p>" 
                    "<p>Instructions: "instruction"</p>"
-                   "<form action='../../submit/" assignment-id "/" step-id "/' method='post' enctype='multipart/form-data'>"
+                   "<form action='" start-url "../../submit/" assignment-id "/" step-id "/' method='post' enctype='multipart/form-data'>"
                    "<p>File:</p>"
                    "<p><input type='file' id='file' name='file'></p>"
                    "<p><input type='submit' value='Upload'></p>")))
 
-(define (handle-review-next action)
+(define (handle-review-next action start-url)
   (let* ((step (MustReviewNext-step action))
          (step-id (Step-id step))
          (reviews (MustReviewNext-reviews action))
          (result  (string-append 
                    "<p>You must complete the following reviews: </p>"
-                   (apply string-append (map review-link reviews)))))
+                   (apply string-append (map (review-link start-url) reviews)))))
     result))
 
-(define (review-link hash)
-  (let* ((review (review:select-by-hash hash))
-         (completed (review:record-completed review))
-         (reviewee (review:record-reviewee-id review)))
-    (cond [completed ""]
-          [(string=? reviewee "HOLD") (string-append "<p>This review is on hold. You will be notified when this review is assigned.</p>")]
-          [else (string-append "<p><a href='../../review/" hash "/'>Review</a></p>")])))
+(define (review-link start-url)
+  (lambda (hash)
+    (let* ((review (review:select-by-hash hash))
+           (completed (review:record-completed review))
+           (reviewee (review:record-reviewee-id review)))
+      (cond [completed ""]
+            [(string=? reviewee "HOLD") (string-append "<p>This review is on hold. You will be notified when this review is assigned.</p>")]
+            [else (string-append "<p><a href='" start-url "../../review/" hash "/'>Review</a></p>")]))))
 
 (define (assignment-completed)
   "You have completed this assignment.")

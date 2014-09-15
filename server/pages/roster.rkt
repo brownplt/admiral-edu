@@ -57,68 +57,69 @@
         [(Failure? result) (string-append "<p style='font-weight:bold; color:red'>Could not add " (Failure-uid result) ": " (Failure-message result))]))
 
 (define (do-load session rest message)
-  (let* ((action (if (null? rest) RENDER-ROSTER (car rest)))
+  (let* ((start-url (hash-ref (ct-session-table session) 'start-url))
+         (action (if (null? rest) RENDER-ROSTER (car rest)))
          [extra-message (if (null? message) "" message)]
-         [body (select-body action rest)]
+         [body (select-body action rest start-url)]
          [header (string-append class-name " - Roster")])
     (include-template "html/basic.html")))
 
-(define (select-body action rest)
-  (cond [(equal? action RENDER-ROSTER) (render-roster)]
-        [(equal? action NEW-STUDENT) (new-student)]
-        [(equal? action UPLOAD-ROSTER) (upload-roster)]
-        [(equal? action EDIT-USER) (edit-user rest)]
-        [else (render-roster)]))
+(define (select-body action rest start-url)
+  (cond [(equal? action RENDER-ROSTER) (render-roster start-url)]
+        [(equal? action NEW-STUDENT) (new-student start-url)]
+        [(equal? action UPLOAD-ROSTER) (upload-roster start-url)]
+        [(equal? action EDIT-USER) (edit-user rest start-url)]
+        [else (render-roster start-url)]))
 
-(define (edit-user rest)
+(define (edit-user rest start-url)
   (let* ((uid (cadr rest))
          (action (if (null? (cddr rest)) "" (caddr rest))))
-    (cond [(equal? action CHANGE-ROLE) (do-change-role uid (cadddr rest))]
-          [(equal? action DROP-USER) (do-drop-user uid)]
+    (cond [(equal? action CHANGE-ROLE) (do-change-role uid (cadddr rest) start-url)]
+          [(equal? action DROP-USER) (do-drop-user uid start-url)]
           [else
            (string-append "<h2>Editing User</h2>\n"
                           "<p>User ID: " uid "</p>\n"
-                          "<p><a href='" CHANGE-ROLE "/student-role/'>Set Role: Student</a></p>"
-                          "<p><a href='" CHANGE-ROLE "/ta-role/'>Set Role: Teaching Assistant</a></p>"
-                          "<p><a href='" CHANGE-ROLE "/instructor-role/'>Set Role: Instructor</a></p>"
-                          "<p><a href='" DROP-USER "/'>Drop User from Course</a></p>")])))
+                          "<p><a href='" start-url CHANGE-ROLE "/student-role/'>Set Role: Student</a></p>"
+                          "<p><a href='" start-url CHANGE-ROLE "/ta-role/'>Set Role: Teaching Assistant</a></p>"
+                          "<p><a href='" start-url CHANGE-ROLE "/instructor-role/'>Set Role: Instructor</a></p>"
+                          "<p><a href='" start-url DROP-USER "/'>Drop User from Course</a></p>")])))
 
-(define (do-change-role uid role)
+(define (do-change-role uid role start-url)
   (let ((result (change-role uid (string->symbol role))))
-    (cond [(Success? result) "<p>User role changed.</p><p><a href='../../../../'>Back to Roster</a></p>"]
-          [(Failure? result) (string-append "<p>" (Failure-message result) "</p><p><a href='../../../../'>Back to Roster</a></p>")])))
+    (cond [(Success? result) (string-append "<p>User role changed.</p><p><a href='" start-url "../../../../'>Back to Roster</a></p>")]
+          [(Failure? result) (string-append "<p>" (Failure-message result) "</p><p><a href='" start-url "../../../../'>Back to Roster</a></p>")])))
 
-(define (do-drop-user uid)
+(define (do-drop-user uid start-url)
   (let ((result (drop-uid uid)))
-    (cond [(Success? result) "<p>User dropped.</p><p><a href='../../../'>Back to Roster</a></p>"]
-          [(Failure? result) (string-append "<p>" (Failure-message result) "</p><p><a href='../../../'>Back to Roster</a></p>")])))
+    (cond [(Success? result) (string-append "<p>User dropped.</p><p><a href='" start-url "../../../'>Back to Roster</a></p>")]
+          [(Failure? result) (string-append "<p>" (Failure-message result) "</p><p><a href='" start-url "../../../'>Back to Roster</a></p>")])))
          
 
-(define (new-student)
+(define (new-student start-url)
   (string-append "<h2>New User</h2>\n"
                  "<p>Enter the User ID you would like to add to the roster.</p>"
-                 "<form action='../' method='post'>\n"
+                 "<form action='" start-url "../' method='post'>\n"
                  "<input type='hidden' name='action' value='" CREATE-STUDENT "'>\n"
                  "<p>User ID: <input name='uid' type='text'></p>\n"
                  "<p><input type='submit' value='Submit'></p>\n"
                  "</form>\n"))
 
-(define (upload-roster)
+(define (upload-roster start-url)
   (string-append "<h2>Upload Roster</h2>\n"
                  "<p>Select a file that has one user id per line. Each user id will be added as a student. Their role may be changed later.</p>"
-                 "<form action='../' method='post' enctype='multipart/form-data'>\n"
+                 "<form action='" start-url "../' method='post' enctype='multipart/form-data'>\n"
                  "<input type='hidden' name='action' value='" PROCESS-ROSTER "'>\n"
                  "<p><input type='file' name='file'></p>"
                  "<p><input type='submit'></p>\n"
                  "</form>\n"))
 
-(define (render-roster)
+(define (render-roster start-url)
   (let ((records (role:all class-name)))
-    (string-append "<p><a href='" UPLOAD-ROSTER "/'>Upload Roster</a></p>\n"
-                   "<p><a href='" NEW-STUDENT "/'>New User</a></p>\n"
-                   (render-instructors records)
-                   (render-tas records)
-                   (render-students records))))
+    (string-append "<p><a href='" start-url UPLOAD-ROSTER "/'>Upload Roster</a></p>\n"
+                   "<p><a href='" start-url NEW-STUDENT "/'>New User</a></p>\n"
+                   (render-instructors records start-url)
+                   (render-tas records start-url)
+                   (render-students records start-url))))
 
 (define (is-role? id)
   (lambda (record)
@@ -131,9 +132,9 @@
 (define is-student? (is-role? student-role))
 
 (define (render-role title pred?)
-  (lambda (records)
+  (lambda (records start-url)
     (let* ((records (filter pred? records))
-           (output (map render-record records)))
+           (output (map (render-record start-url) records)))
       (string-append title "\n"
                      (string-join output "\n")))))
 
@@ -141,6 +142,7 @@
 (define render-tas (render-role "<h2>Teaching Assistants</h2>" is-ta?))
 (define render-students (render-role "<h2>Students</h2>" is-student?))
 
-(define (render-record record)
-  (let* ((uid (role:record-uid record)))
-    (string-append "<p>" uid " - <a href='" EDIT-USER "/" uid "/'>Edit User</a></p>")))
+(define (render-record start-url)
+  (lambda (record)
+    (let* ((uid (role:record-uid record)))
+      (string-append "<p>" uid " - <a href='" start-url EDIT-USER "/" uid "/'>Edit User</a></p>"))))

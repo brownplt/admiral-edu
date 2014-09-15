@@ -19,7 +19,6 @@
          (assignment (car rest))
          (step (cadr rest))
          (data (extract-binding/single 'file bindings))
-         ;; TODO: Check to make sure the binding exists and that it is a file
          (filename (bytes->string/utf-8 (binding:file-filename (car raw-bindings)))))
     (if (check-okay-to-submit uid assignment step)
         (handle-submit session role rest uid assignment step filename data)
@@ -39,12 +38,13 @@
       [else #f])))
 
 (define (handle-submit session role rest uid assignment step filename data)
-  (let ((result (submit-step assignment step uid filename data)))
+  (let ((result (submit-step assignment step uid filename data))
+        (start-url (hash-ref (ct-session-table session) 'start-url)))
     (cond [(Success? result) 
            (let ((message (Success-message result)))
              (render-html (string-append "<p>" message "</p>"
-                                         "<p><a href='../../../next/" assignment "/'>Continue</a></p>" )))]
+                                         "<p><a href='" start-url "../../../next/" assignment "/'>Continue</a></p>" )))]
           [(Failure? result)
            (let ((message (Failure-message result)))
              (render-html (string-append "<p>" message "</p>"
-                                         "<p><a href='../../../next/" assignment "/'>Back</a></p>" )))])))
+                                         "<p><a href='" start-url "../../../next/" assignment "/'>Back</a></p>" )))])))

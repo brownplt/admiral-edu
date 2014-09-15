@@ -16,8 +16,6 @@
     [(<= n 0) '()]
     [else (cons val (repeat val (- n 1)))]))
 
-;;TODO: Ensure that the hash being loaded is assigned to the person who is logged into
-;; this session
 (provide load)
 (define (load session role rest [message '()])
   (let ((submit? (equal? "submit" (car rest))))
@@ -26,7 +24,8 @@
         (do-load session role rest message))))
 
 (define (do-load session role rest message)
-  (let* ((r-hash (car rest))
+  (let* ((start-url (hash-ref (ct-session-table session) 'start-url))
+         (r-hash (car rest))
          (review (review:select-by-hash r-hash))
          (assignment (review:record-assignment-id review))
          (step (review:record-step-id review))
@@ -35,11 +34,11 @@
          (root-url updir)
          [no-modifications (if completed "<p>This review has already been submitted. Modifications will not be saved.</p>" "")]
          [submit-hidden (if completed "hidden" "")]
-         [submit-url (if completed "#" (string-append root-url "review/submit/" r-hash "/"))]
+         [submit-url (if completed "#" (string-append start-url root-url "review/submit/" r-hash "/"))]
          (updir-rubric (apply string-append (repeat "../" (- (length rest) 1))))
-         [file-container (string-append updir "file-container/" (to-path rest))]
-         [save-url (xexpr->string (string-append "\"" updir-rubric step "/save\""))]
-         [load-url (xexpr->string (string-append "\"" updir-rubric step "/load\""))]
+         [file-container (string-append start-url updir "file-container/" (to-path rest))]
+         [save-url (xexpr->string (string-append "\"" start-url updir-rubric step "/save\""))]
+         [load-url (xexpr->string (string-append "\"" start-url updir-rubric step "/load\""))]
          (reviewer (ct-session-uid session))
          (class (ct-session-class session))
          (r (review:select-by-hash r-hash)))
@@ -55,7 +54,8 @@
     (equal? uid reviewer)))
 
 (define (do-submit-review session role rest message)
-  (let* ((r-hash (cadr rest))
+  (let* ((start-url (hash-ref (ct-session-table session) 'start-url))
+         (r-hash (cadr rest))
          (review (review:select-by-hash r-hash))
          (assignment (review:record-assignment-id review))
          (step (review:record-step-id review))
@@ -69,7 +69,7 @@
              (review:mark-complete r-hash)
              (send-review-ready-email review)
              (string-append "<p>Review Submitted</p>"
-                            "<p><a href='" root-url "next/" assignment "/'>Continue</a></p>"))])))
+                            "<p><a href='" start-url root-url "next/" assignment "/'>Continue</a></p>"))])))
 
 (define (send-review-ready-email review)
   (let* ((uid (review:record-reviewee-id review))
@@ -167,23 +167,23 @@
   
 (provide file-container)
 (define (file-container session role rest [message '()])
-  (let* ((r-hash (car rest))
+  (let* ((start-url (hash-ref (ct-session-table session) 'start-url))
+         (r-hash (car rest))
          (review (review:select-by-hash r-hash))
          (class (ct-session-class session))
          [assignment (review:record-assignment-id review)]
          [default-mode (determine-mode-from-filename (last rest))]
          (stepName (review:record-step-id review))
          (reviewee (review:record-reviewee-id review))
-         [save-url (prepare-save-url rest)]
-         [load-url (prepare-load-url rest)]
+         [save-url (string-append "'" start-url "save'")]
+         [load-url (string-append "'" start-url "load'")]
          [step (to-step-link stepName (- (length rest) 2))]
          (last-path (last rest))
-         (prefix (if (equal? last-path "") "" (string-append last-path "/")))
-         [path (to-path-html (cdr rest))]
+         [path (to-path-html (cdr rest) start-url)]
          (file (to-path (cdr rest)))
          (test-prime (newline))
          (file-path (submission-file-path class assignment reviewee stepName file))
-         (contents (if (is-directory? file-path) (render-directory prefix file-path) (render-file file-path))))
+         (contents (if (is-directory? file-path) (render-directory file-path start-url) (render-file file-path))))
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
         (if (not (validate review session)) (error:error "You are not authorized to see this page.")
             (string-append (include-template "html/file-container-header.html")
@@ -207,24 +207,24 @@
   (prepare-url "save" rest))
    
 
-(define (render-directory prefix dir-path)
+(define (render-directory dir-path start-url)
   (let ((dirs (list-dirs dir-path))
         (files (list-files dir-path)))
     (string-append
      "<div id=\"directory\" class=\"browser\">"
      "<ul>"
-     (apply string-append (map (html-directory prefix) dirs))
-     (apply string-append (map (html-file prefix) files))
+     (apply string-append (map (html-directory start-url) dirs))
+     (apply string-append (map (html-file start-url) files))
      "</ul>"
      "</div>")))
 
-(define (html-directory prefix)
+(define (html-directory start-url)
   (lambda (dir)
-    (string-append "<li class=\"directory\"><a href=\"" prefix dir "\">" dir "</a></li>")))
+    (string-append "<li class=\"directory\"><a href=\"" start-url dir "\">" dir "</a></li>")))
 
-(define (html-file prefix)
+(define (html-file start-url)
   (lambda (file)
-    (string-append "<li class=\"file\"><a href=\"" prefix file "\">" file "</a></li>")))
+    (string-append "<li class=\"file\"><a href=\"" start-url file "\">" file "</a></li>")))
 
 (define (render-file file-path)
   (string-append "<textarea id=\"file\" class=\"file\">" (retrieve-file file-path) "</textarea>"))
@@ -246,14 +246,14 @@
                                            (helper new-acc tail))]))))
     (helper '() ls)))
 
-(define (to-path-html input)
+(define (to-path-html input start-url)
   (letrec ((helper (lambda (acc ls)
                      (match ls
                        ['() (apply string-append (reverse acc))]
                        [(cons head '()) (let ((new-acc (cons head acc)))
                                           (helper new-acc '()))]
                        [(cons head tail) (let* ((url (string-append (apply string-append (repeat "../" (- (length input) (+ (length acc) 1)))) (xexpr->string head)))
-                                                (link (string-append " <a href=\"" url "\">" (xexpr->string head) "</a> / "))
+                                                (link (string-append " <a href=\"" start-url url "\">" (xexpr->string head) "</a> / "))
                                                 (new-acc (cons link acc)))
                                            (helper new-acc tail))]))))
     (helper '() input)))

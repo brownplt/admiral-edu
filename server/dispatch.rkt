@@ -43,17 +43,25 @@
 
 (define (handler post)
   (lambda (req path)
-    (let* ((session (get-session req))
-           (raw-bindings (request-bindings/raw req))
+    (let* ((raw-bindings (request-bindings/raw req))
            (bindings (request-bindings req))
            (post-data (request-post-data/raw req))
            (clean-path (filter (lambda (x) (not (equal? "" x))) path))
+           (start-rel-url (ensure-trailing-slash (string-append "/" class-name "/" (string-join path "/"))))
+           (session (get-session req (hash 'star-rel-url start-rel-url)))
            (result (with-handlers ([any? error:exception-occurred]) (handlerPrime post post-data session bindings raw-bindings clean-path))))
       result)))
       ;(with-handlers ([any? error:exception-occurred]) (handlerPrime post post-data session bindings clean-path)))))
 
+(define (ensure-trailing-slash candidate)
+  (let ((len (string-length candidate)))
+    (cond [(= 0 len) "/"]
+          [else (let ((last-char (string-ref candidate (- len 1))))
+                  (cond [(eq? #\/ last-char) candidate]
+                        [else (string-append candidate "/")]))])))
+
 (define (handlerPrime post post-data session bindings raw-bindings path)
-  (printf "[~a] ~a - ~a ~a\n" (date->string (current-date) #t) session (if post "POST" "GET") path)
+  (printf "[~a] ~a ~a - ~a ~a\n" (date->string (current-date) #t) (ct-session-class session) (ct-session-uid session) (if post "POST" "GET") path) (flush-output)
   (match path
     ['() (render session index)]
     [(list "") (render session index)]
@@ -64,7 +72,9 @@
     [(cons "next" rest) (render-html session next rest)]
     [(cons "assignments" rest) (render-html session assignments:assignments rest)]
     [(cons "dependencies" rest) (if post (dep:post session rest bindings raw-bindings) (render-html session dep:dependencies rest))]
-    [(cons "submit" rest) (if post (submit:submit session role rest bindings raw-bindings) #f)] ;;TODO Handle correctly when not a post
+    [(cons "submit" rest) (if post (submit:submit session role rest bindings raw-bindings) (error:response-error 
+                                                                                            (error:error (string-append "<p>You've accessed this page in an invalid way.</p>"
+                                                                                                                  "<p>Try returning to <a href='https://" sub-domain server-name "/" class-name "/'>Class Home</a> and trying again.</p>"))))]
     [(cons "feedback" rest) (if post (feedback:post session role rest bindings post-data) (render-html session feedback:load rest))]
     [(cons "export" rest) (assignments:export session (role session) rest)]
     [(cons "exception" rest) (error "Test an exception occurring.")]
@@ -97,8 +107,8 @@
 
 ;; Defines how a session is created
 ;; request -> ct-session
-(define (get-session req)
-  (ct-session class-name (req->uid req)))
+(define (get-session req trailing-slash)
+  (ct-session class-name (req->uid req) trailing-slash))
 
 ;; Returns #f if the session is not valid
 ;; otherwise returns a role-record
@@ -127,23 +137,7 @@
          empty
          (list (string->bytes/utf-8 (page session valid-role rest)))))))
 
-;; If the session is valid, tries to render the specified page. Othewise,
-;; this responds with an invalid session error
-(define (dispatch-html page)
-  (lambda (req . rest)
-    (let ((session (get-session req)))
-      (if (eq? session 'invalid-session) 
-          (response/xexpr error:error-invalid-session)
-          (render-html session page rest)))))
-    
-;; If the session is valid, tries to render the specified page. Othewise,
-;; this responds with an invalid session error
-(define (dispatch page)
-  (lambda (req)
-    (let ((session (get-session req)))
-      (if (eq? session 'invalid-session) 
-          (response/xexpr error:error-invalid-session)
-          (render session page)))))
+
 
 ;; If the session has a valid role, renders the specified page with the specified bindings. 
 ;; Otherwise, this displays an error message
@@ -153,13 +147,3 @@
      (if (not valid-role) 
          (error:error-not-registered session)
          (page session valid-role bindings)))))
-
-;; If the session is valid, tries to render the specified page with any 
-;; request-bindings. Othewise, this responds with an invalid session error.
-(define (post->dispatch page)
-  (lambda (req)
-    (let ((session (get-session req))
-          (bindings (request-bindings req)))
-      (if (eq? session 'invalid-session)
-          (response/xexpr error:error-invalid-session)
-          (post->render session page bindings)))))

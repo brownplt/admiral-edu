@@ -28,7 +28,8 @@
           (cond 
             [(MustSubmitNext? do-next) (handle-submit-next assignment do-next)]
             [(MustReviewNext? do-next) (handle-review-next do-next)]
-            [(eq? #t do-next) (assignment-completed)])))))
+            [(eq? #t do-next) (assignment-completed)]
+            [else (error "Unknown next-action.")])))))
 
 (define (handle-submit-next assignment-id action)
   (let* ((step (MustSubmitNext-step action))
@@ -44,18 +45,19 @@
 (define (handle-review-next action)
   (let* ((step (MustReviewNext-step action))
          (step-id (Step-id step))
-         (reviews (MustReviewNext-reviews action)))
-    ;;TODO: Does this only show incomplete reviews?
-    (string-append 
-     "<p>You must complete the following reviews: </p>"
-     (apply string-append (map review-link reviews)))))
+         (reviews (MustReviewNext-reviews action))
+         (result  (string-append 
+                   "<p>You must complete the following reviews: </p>"
+                   (apply string-append (map review-link reviews)))))
+    result))
 
-;; TODO Number these?
 (define (review-link hash)
   (let* ((review (review:select-by-hash hash))
-         (completed (review:record-completed review)))
-    (if completed ""
-        (string-append "<p><a href='../../review/" hash "/'>Review</a></p>"))))
+         (completed (review:record-completed review))
+         (reviewee (review:record-reviewee-id review)))
+    (cond [completed ""]
+          [(string=? reviewee "HOLD") (string-append "<p>This review is on hold. You will be notified when this review is assigned.</p>")]
+          [else (string-append "<p><a href='../../review/" hash "/'>Review</a></p>")])))
 
 (define (assignment-completed)
   "You have completed this assignment.")

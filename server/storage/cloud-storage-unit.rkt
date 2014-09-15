@@ -51,12 +51,14 @@
   ; (path -> (listof path))
   ; Returns all files that are at the specified path.
   (define (list-files path)
+    (printf "Listing files at ~a\n" path)
     (let* ((files (ls (string-append bucket path)))
            (split-path (string-split path "/"))
            (split (lambda (x) (string-split x "/")))
            (split-files (map split files))
            (at-len (length split-path))
            (at-path (map last (filter (lambda (x) (= (length x) (+ at-len 1))) split-files))))
+      (printf "at-path:~a\n" at-path)
       at-path))
   
   ; (path -> (listof path))

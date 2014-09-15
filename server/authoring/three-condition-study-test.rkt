@@ -14,21 +14,29 @@
     (user:create id)
     (role:associate class-name id student-role))
 
+;; Gets Reviews
 (define ACE "ace")
 (define AMY "amy")
 (define ART "art")
 (define ALF "alf")
+(define gets-reviews (list ACE AMY ART ALF))
   
+;; Does reviews
 (define JOE "joe")
 (define JAN "jan")
 (define JIM "jim")
 (define JON "jon")
+(define does-reviews (list JOE JAN JIM JON))
 
+;; No Reviews
 (define SAL "sal")
 (define SAM "sam")
 (define STU "stu")
 (define SUE "sue")
 (define SID "sid")
+(define no-reviews (list SAL SAM STU SUE SID))
+
+(define all-students (list ACE AMY ART ALF JOE JAN JIM JON SAL SAM STU SUE SID))
 
 (set-db-address! "localhost")
 
@@ -53,8 +61,16 @@
          (step (filter (lambda (step) (string=? (Step-id step) "tests")) steps)))
     (first step)))
 
+(define three-test-assignment-implementation-step
+  (let* ((steps (Assignment-steps three-test-assignment))
+         (step (filter (lambda (step) (string=? (Step-id step) "implementation")) steps)))
+    (first step)))
+
 (define (run-tests)
-  (initialize))
+  (initialize)
+  (test-submit-order)
+  (test-reviewers-submit-first)
+  (test-reflection-assigned))
 
 ; groups:
 ; gets-review: ACE AMY ART ALF
@@ -185,3 +201,49 @@
                    "ORDER BY" review:time-stamp "ASC"))
          (result (run query-rows q)))
     result))
+
+
+(define (test-reflection-assigned)
+  (init-tests)
+  (map test-reflection-assigned-submit-tests all-students)
+  (map (test-reflection-assigned-submit-reviews "tests") does-reviews)
+  (map test-reflection-assigned-submit-implementation all-students)
+  (map (check-review-exists "does-reviews") does-reviews)
+  (map (check-review-exists "no-reviews") no-reviews)
+  (map (check-review-exists "gets-reviewed") gets-reviews)
+  (map check-assignment-incomplete all-students)
+  (map (test-reflection-assigned-submit-reviews "implementation") all-students)
+  (map check-assignment-completed all-students))
+
+(define (check-assignment-incomplete user)
+  (let ((next (three-next-action three-test-assignment (Assignment-steps three-test-assignment) user)))
+    (check-true (MustReviewNext? next))
+    (check-equal? (Step-id (MustReviewNext-step next)) "implementation")
+    (check-equal? (length (MustReviewNext-reviews next)) 1)))
+
+(define (check-assignment-completed user)
+  (check-equal? (three-next-action three-test-assignment (Assignment-steps three-test-assignment) user) #t))
+
+(define (check-review-exists review-id-expected)
+  (lambda (user)
+    (let* ((hashes (review:select-assigned-reviews "test-assignment" class-name "implementation" user))
+           (reviews (map review:select-by-hash hashes))
+           (assigned-expected 1))
+      (check-equal? (list user review-id-expected (length reviews)) (list user review-id-expected assigned-expected))
+      (check-equal? (review:record-review-id (first reviews)) review-id-expected))))
+
+(define (test-reflection-assigned-submit-reviews step-id)
+  (lambda (user)
+    (let ((review-hashes (review:select-assigned-reviews "test-assignment" class-name step-id user)))
+      (map review:mark-complete review-hashes))))
+
+(define (test-reflection-assigned-submit-tests user)
+  (sleep 1)
+  (three-do-submit-step three-test-assignment three-test-assignment-tests-step user "useless.tar" useless-tar-file (Assignment-steps three-test-assignment)))
+
+(define (test-reflection-assigned-submit-implementation user)
+  (sleep 1)
+  (printf "Submitting implementation for: ~a\n" user)
+  (three-do-submit-step three-test-assignment three-test-assignment-implementation-step user "useless.tar" useless-tar-file (Assignment-steps three-test-assignment)))
+
+

@@ -5,6 +5,7 @@
          (planet esilkensen/yaml:3:1)
          json
          "../base.rkt"
+         "../email/email.rkt"
          "assignment-structs.rkt"
          (prefix-in default: "next-action.rkt")
          "util.rkt"
@@ -26,30 +27,57 @@
           [(member uid no-reviews) 'no-reviews]
           [else (error (format "Could not find uid ~a in configuration file.\n\nYAML:~a\n\n" uid yaml-string))])))
 
+(provide three-next-action)
 (define (three-next-action assignment steps uid)
   (let ((assignment-id (Assignment-id assignment)))
     (let ((group (lookup-group assignment-id uid)))
       (cond 
         [(null? steps) #t]
-        [else 
-         (let ((check-result (three-check-step assignment (car steps) uid group))
-               (rest (cdr steps)))
-           (cond
-             [(eq? #t check-result) (default:next-action three-ensure-assigned-review assignment rest uid)]
-             [else check-result]))]))))
+        [else (three-check-step assignment steps uid group)]))))
 
-(define (three-check-step assignment step uid group)
-  (let ((assignment-id (Assignment-id assignment)))
+(define (three-check-step assignment steps uid group)
+  (let ((assignment-id (Assignment-id assignment))
+        (step (first steps))
+        (tail (rest steps)))
     (let* ((step-id (Step-id step))
-           (has-submitted (> (submission:count assignment-id class-name step-id uid) 0)))
-      (cond 
-        [(not has-submitted) (MustSubmitNext step (Step-instructions step))]
-        [else (cond [(eq? group 'no-reviews) #t]
-                    ;;TODO: Select from get-review students only
-                    [(eq? group 'does-reviews) (default:check-reviews three-ensure-assigned-review assignment-id step (Step-reviews step) uid)]
-                    ;;TODO: Notify users that they are in get-reviews
-                    [(eq? group 'gets-reviewed) #t]
-                    [else (error (format "Unknown group type ~a" group))])]))))
+           (has-submitted (> (submission:count assignment-id class-name step-id uid) 0))
+           (result (cond 
+                     [(not has-submitted) (MustSubmitNext step (Step-instructions step))]
+                     [(eq? group 'no-reviews) (default:next-action (three-check-reviewed group) three-ensure-assigned-review assignment tail uid)]
+                     [(eq? group 'does-reviews) (default:check-reviews (three-check-reviewed group) three-ensure-assigned-review assignment-id step (Step-reviews step) uid)]
+                     ;;TODO: Notify users that they are in get-reviews
+                     [(eq? group 'gets-reviewed) (default:next-action (three-check-reviewed group) three-ensure-assigned-review assignment tail uid)]
+                     [else (error (format "Unknown group type ~a" group))])))
+      (cond
+        ;; If this is the final-submission, check to see if they have completed their reflection
+        [(eq? #t result) (check-final-review assignment (last steps) uid group)]
+        [else result]))))
+
+; Returns #t if the review has been completed and #f otherwise
+; assignment-id -> step -> review -> user-id -> bool?
+(provide three-check-reviewed)
+(define (three-check-reviewed group)
+  (lambda (assignment-id step review uid)
+    (cond
+      [(instructor-solution? review) 
+           (let* ((review-id (Review-id review)))
+             (cond [(string=? (symbol->string group) review-id) (check-instructor-solution assignment-id uid step)]
+                   [else #t]))]
+      [(student-submission? review) (default:default-check-reviewed assignment-id step review uid)])))
+
+;; assignment -> step -> user-id -> group-symbol -> Either #t MustReviewNext
+;; Checks to see if this is the final step. If it is, ensures that students are assigned
+;; an instructor solution review.
+(define (check-final-review assignment step uid group)
+  (let* ((assignment-id (Assignment-id assignment))
+         (step-id (Step-id step))
+         (match-group-id (lambda (review) (string=? (symbol->string group) (Review-id review))))
+         (reviews (filter match-group-id (Step-reviews step)))
+         (check-review (lambda (review) (not (default:default-check-reviewed assignment-id step review uid)))))
+    (map (three-ensure-assigned-review assignment-id uid step) reviews)
+    ;; Filter out completed reviews. If the list is empty, there are no reviews left
+    (cond [(null? (filter check-review reviews)) #t]
+          [else (MustReviewNext step (review:select-assigned-reviews assignment-id class-name step-id uid))])))
 
 (provide three-do-submit-step)
 (define (three-do-submit-step assignment step uid file-name data steps)
@@ -62,7 +90,6 @@
       (if (eq? group 'gets-reviewed) (maybe-assign-reviewers assignment-id step uid) (printf "Skipping maybe-assign review. uid: ~a, group: ~a\n" uid group)))
     ;; Assign reviews to the student if applicable
     (let ((next (three-next-action assignment steps uid)))
-      (printf "Next Action for ~a is ~a\n" uid next)
       (cond
         [(MustReviewNext? next) (three-assign-reviews assignment-id (MustReviewNext-step next) uid)])
       (Success "Assignment submitted."))))
@@ -77,14 +104,25 @@
     (cond [(student-submission? review) (let* ((amount (student-submission-amount review))
                                                (pending-reviews (get-pending-reviews assignment-id step-id amount)))
                                           (map (assign-reviewer assignment-id step-id uid) (map (lambda (v) (vector-ref v 0)) pending-reviews)))]
+          [(instructor-solution? review) #f]
           [else (error "Ooops should not be here.")])))
 
 (define (assign-reviewer assignment-id step-id uid)
   (lambda (hash)
-    (let* ((q (merge "UPDATE" review:table
-                        "SET" review:reviewee-id "=?"
-                        "WHERE" review:hash "=?"))
+    (let* ((review (review:select-by-hash hash))
+           (reviewer (review:record-reviewer-id review))
+           (assignment-id (review:record-assignment-id review))
+           (q (merge "UPDATE" review:table
+                     "SET" review:reviewee-id "=?"
+                     "WHERE" review:hash "=?"))
            (result (run query-exec q uid hash)))
+      (send-email reviewer "Captain Teach: A review is ready." 
+                  (string-join 
+                   (list "A review has been assigned to you."
+                         (string-append "Assignment-id: " assignment-id)
+                         "You can access the review at the following URL:"
+                         (string-append "https://" sub-domain server-name "/" class-name "/next/" assignment-id "/"))
+                   "\n"))
       result)))
 
 (define (get-pending-reviews assignment-id step-id amount)
@@ -102,6 +140,7 @@
     (printf "results of query: ~a\n" result)
     result))
 
+;; For a given assignment-id, step, and uid, assigns reviews that are not currently assigned.
 (define (three-assign-reviews assignment-id step uid)
   (let* ((reviews (Step-reviews step)))
     (map (three-ensure-assigned-review assignment-id uid step) reviews)))
@@ -125,12 +164,19 @@
            (diff (max 0 (- expected actual))))
       (student-submission review-id diff rubric))))
 
-(define (check-instructor-solution assignment-id step-id uid)
+; (assignment-id -> uid -> step-id -> (review -> Either review #f))
+; Checks to see if an instructor review needs to be completed.
+; Returns the specified review if the review has not been completed. Otherwise, returns #f
+(define (check-instructor-solution assignment-id uid step)
   (lambda (review)
-    (let* ((review-id (Review-id review))
+    (let* ((step-id (Step-id step))
+           (user-group (symbol->string (lookup-group assignment-id uid)))
+           (review-id (Review-id review))
            (rubric (instructor-solution-rubric review))
            (count (review:count-assigned-reviews class-name assignment-id uid step-id review-id)))
-      (if (> count 0) #f review))))     
+      ;; If the user-group matches the review-id, assign them to the review
+      (cond [(string=? user-group review-id) (if (> count 0) #f review)]
+            [else #f]))))
   
 (define (three-assign-single-review assignment-id step-id uid review)
   ((three-assign-review assignment-id step-id uid) review))
@@ -139,9 +185,8 @@
 (define (three-assign-review assignment-id step-id uid)
   (lambda (review)
     (let ((review-id (Review-id review))
-          (amount (student-submission-amount review)))
-      ;;TODO(3-study): Map students to correct rubric by writing a new assign-instructor-solution
-      (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id class-name step-id "instructor" uid review-id)]
+          (amount (Review-amount review)))
+      (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id class-name step-id (dependency-submission-name review-id 1) uid review-id)]
             [(student-submission? review) (assign-student-reviews assignment-id class-name step-id uid review-id amount)]))))
 
 (define (gets-reviewed-list assignment-id step-id)

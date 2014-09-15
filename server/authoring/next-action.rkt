@@ -27,45 +27,43 @@
     (map (default-ensure-assigned-review assignment-id uid step) reviews)))
 
 (define (default-next-action assignment steps uid)
-  (next-action default-ensure-assigned-review assignment steps uid))
+  (next-action default-check-reviewed default-ensure-assigned-review assignment steps uid))
 
 ;; Given an assignment and the list of steps to complete, returns the next-action the user must take
 ;; or #t if the user has completed the assignment
 (provide next-action)
-(define (next-action ensure-assigned-review assignment steps uid)
+(define (next-action check-reviewed ensure-assigned-review assignment steps uid)
   (let ((assignment-id (Assignment-id assignment)))
     (cond 
       [(null? steps) #t]
       [else 
-       (let ((check-result (check-step ensure-assigned-review assignment-id (car steps) uid))
+       (let ((check-result (check-step check-reviewed ensure-assigned-review assignment-id (car steps) uid))
              (rest (cdr steps)))
          (cond
-           [(eq? #t check-result) (next-action ensure-assigned-review assignment rest uid)]
+           [(eq? #t check-result) (next-action check-reviewed ensure-assigned-review assignment rest uid)]
            [else check-result]))])))
   
 ;; Returns #t if this step has been submitted to and all reviews have been compelted.
 ;; If the uid has not submitted for this step, returns a MustSubmitNext for this step-id along with the instructions from the assignment description
 ;; Otherwise, returns a MustReviewNext for this step-id
-(define (check-step ensure-assigned-review assignment-id step uid)
+(define (check-step check-reviewed ensure-assigned-review assignment-id step uid)
   (let* ((step-id (Step-id step))
          (has-submitted (> (submission:count assignment-id class-name step-id uid) 0)))
     (cond 
       [(not has-submitted) (MustSubmitNext step (Step-instructions step))]
-      [else (check-reviews ensure-assigned-review assignment-id step (Step-reviews step) uid)])))
+      [else (check-reviews check-reviewed ensure-assigned-review assignment-id step (Step-reviews step) uid)])))
 
 ;; Returns #t if all of the reviews for the specified step are completed.
 ;; Otherwise, returns a MustReviewNext with the step for which reviews have not been completed
 (provide check-reviews)
-(define (check-reviews ensure-assigned-review assignment-id step reviews uid)
+(define (check-reviews check-reviewed ensure-assigned-review assignment-id step reviews uid)
   (cond
     [(null? reviews) #t]
     [else (let* ((next-review (car reviews))
                  (rest (cdr reviews))
-                 (result (cond
-                           [(instructor-solution? next-review) (check-instructor-solution assignment-id step next-review uid)]
-                           [(student-submission? next-review) (check-student-submission assignment-id step next-review uid)])))
+                 (result (check-reviewed assignment-id step next-review uid)))
             (cond
-              [result (check-reviews ensure-assigned-review assignment-id step rest uid)]
+              [result (check-reviews check-reviewed ensure-assigned-review assignment-id step rest uid)]
               [else (MustReviewNext step (get-reviews ensure-assigned-review assignment-id uid step))]))]))
 
 (define (get-reviews ensure-assigned-review assignment-id uid step)
@@ -91,10 +89,17 @@
   (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id class-name step-id (dependency-submission-name review-id 1) uid review-id)]
         [(student-submission? review) (review:assign-student-reviews assignment-id class-name step-id uid review-id 1)])))
 
+; Returns #t if the review has been completed and #f otherwise
+; assignment-id -> step -> review -> user-id -> bool?
+(provide default-check-reviewed)
+(define (default-check-reviewed assignment-id step review uid)
+  (cond
+    [(instructor-solution? review) (check-instructor-solution assignment-id step review uid)]
+    [(student-submission? review) (check-student-submission assignment-id step review uid)]))
+
 ;; Returns #t if the instructor solution has been reviewed and #f otherwise
 (define (check-instructor-solution assignment-id step instructor-solution uid)
   (let* ((review-id (instructor-solution-id instructor-solution))
-         ;;TODO: This query fails
          (count (review:completed? assignment-id class-name (Step-id step) uid review-id)))
     count))
 

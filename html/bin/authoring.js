@@ -129,7 +129,7 @@ var Authoring;
 
 var Authoring;
 (function (Authoring) {
-    var assignment = new Authoring.Example("Assignment Description").description("After creation, the assignment will appear on the instructor dashboard where it can be manually opened and closed for students to access.").field("name", "string").field("id", "string").field("description", "string").field("steps", "list of Step").usage('name: Clocks').usage('id: clocks').usage('description: Students develop functions representing an alarm clock.').usage('steps: ').usage('  - One or').usage('  - more Steps');
+    var assignment = new Authoring.Example("Assignment Description").description("After creation, the assignment will appear on the instructor dashboard where it can be manually opened and closed for students to access.").field("name", "string").field("id", "string").field("description", "string").field("steps", "list of Step").field("assignment-handler (optional)", "assignment-handler-id").usage('name: Clocks').usage('id: clocks').usage('description: Students develop functions representing an alarm clock.').usage('steps: ').usage('  - One or').usage('  - more Steps');
 
     var step = new Authoring.Example("Step");
     step.description("Students must complete each step before proceeding to the next. ").description("Optionally, each step may have any number of reviews. All of the reviews will be assigned to a student once they have submitted their solution to the step.").description("A student may not proceed to the next step until all of their assigned reviews have been completed.").field("id", "string").field("instructions", "string").field("reviews (optional)", "list of Review").usage('  - id: tests').usage('    instructions: Submit your test cases. Do not submit any implementation details.').usage('#   reviews:').usage('#     - One or').usage('#     - more Reviews');
@@ -138,7 +138,7 @@ var Authoring;
     instructorSolution.description("An instructor provided solution is a review where you provide the material that the students will see. After submitting an Assignment Description, you will be asked to upload an archive file for each instructor-solution in your description.").field("id", "string").field("rubric", "list of RubricElement").usage('      - instructor-solution:').usage('          id: poor-implementation').usage('          rubric:').usage('            - One or').usage('            - more RubricElements');
 
     var studentSubmission = new Authoring.Example("Review - Student Submission");
-    studentSubmission.description("Students will be assigned the specified number of other student submissions.").field("amount", "integer").field("rubric", "list of RubricElement").usage('      - student-submission:').usage('          amount: 2').usage('          rubric:').usage('            - One or').usage('            - more RubricElements');
+    studentSubmission.description("Students will be assigned the specified number of other student submissions.").field("amount", "integer").field("id", "string").field("rubric", "list of RubricElement").usage('      - student-submission:').usage('          id: student-reviews').usage('          amount: 2').usage('          rubric:').usage('            - One or').usage('            - more RubricElements');
 
     var instruction = new Authoring.Example("Rubric Element - Instruction");
     instruction.description("Students will see a text box with the specified instructions.").usage('            - instruction: Add inline comments where tests are incomplete.');

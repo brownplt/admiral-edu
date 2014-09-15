@@ -13,6 +13,7 @@ module Authoring {
 	.field("id", "string")
 	.field("description", "string")
 	.field("steps", "list of Step")
+	.field("assignment-handler (optional)", "assignment-handler-id")
 	.usage('name: Clocks')
 	.usage('id: clocks')
 	.usage('description: Students develop functions representing an alarm clock.')
@@ -50,8 +51,10 @@ module Authoring {
     studentSubmission
 	.description("Students will be assigned the specified number of other student submissions.")
 	.field("amount", "integer")
+	.field("id", "string")
 	.field("rubric", "list of RubricElement")
 	.usage('      - student-submission:')
+	.usage('          id: student-reviews')
 	.usage('          amount: 2')
 	.usage('          rubric:')
 	.usage('            - One or')

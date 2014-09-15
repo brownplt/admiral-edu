@@ -31,7 +31,16 @@
           [else #f])))
 
 ;; TODO: Provide file / database entries
+
+;; Extremely basic. Ensures that there are no spaces, a receipient, and a domain.
+(define okay-email-regexp "[^ ]+@[^ ]+\\.[^ ]+")
+
+;; Blacklist @student.edu email addresses and default-submission addresses
+(define black-list-email-regexp "([.]*@student.edu|default-submission[.]*)")
+
 (define (email-okay uid)
-  (let* ((no-email-regexp "([.]*@student.edu|default-submission[.]*)")
-         (check (regexp-match no-email-regexp uid)))
-    (not check)))
+  (let ((black-listed (regexp-match black-list-email-regexp uid))
+        (okay (regexp-match-exact? okay-email-regexp uid)))
+    (and (not black-listed) okay)))
+
+

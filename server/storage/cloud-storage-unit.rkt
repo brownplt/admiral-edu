@@ -20,7 +20,6 @@
   
   ; If the file exists locally, it returns it. Otherwise, it fetches it from the cloud and then returns it
   (define (retrieve-file path)
-    (printf "Retrieving: ~a\n" path)
     (let* ((info (local:path-info path)))
       (local:ensure-path-exists path)
       (when (eq? info 'does-not-exist) (get/file (string-append bucket path) (string->path path))))
@@ -52,25 +51,21 @@
   ; (path -> (listof path))
   ; Returns all files that are at the specified path.
   (define (list-files path)
-    (printf "Listing Files (~a): " path)
     (let* ((files (ls (string-append bucket path)))
            (split-path (string-split path "/"))
            (split (lambda (x) (string-split x "/")))
            (split-files (map split files))
            (at-len (length split-path))
            (at-path (map last (filter (lambda (x) (= (length x) (+ at-len 1))) split-files))))
-      (printf "~a\n" at-path)
       at-path))
   
   ; (path -> (listof path))
   ; Returns all directories that are at the specified path.
   (define (list-dirs path)
-    (printf "Listing Directories (~a): " path)
     (let* ((len (string-length path))
            (lc (if (= len 0) "" (string-ref path (- len 1))))
            (pathPrime (if (eq? #\/ lc) path (string-append path "/")))
            (result (filter (lambda (p) (is-directory? (string-append pathPrime p))) (list-path pathPrime))))
-      (printf "~a\n" result)
       result))
   
   (define (list-path path)

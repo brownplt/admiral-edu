@@ -6,28 +6,45 @@
          "../database/mysql.rkt"
          (prefix-in local: "local-storage.rkt"))
 
+; (path -> string)
+; Given the path to a file, returns the contents of the retrieved file
+; Otherwise retures Failure with a message.
 (provide retrieve-file)
 (define retrieve-file 'nil)
 (define (set-retrieve-file proc) (set! retrieve-file proc))
 
+; (path -> string -> ())
+; Given a path and the contents to a file, writes that file (over writing any existing file).
 (provide write-file)
 (define write-file 'nil)
 (define (set-write-file proc) (set! write-file proc))
 
+; (path -> ())
+; Deletes the specified path. If it is a file, removes the specified file. If it is a directory
+; removes the directory recursively deleting all files
 (provide delete-path)
 (define delete-path 'nil)
 (define (set-delete-path proc) (set! delete-path proc))
 
+; (path -> Either 'file 'directory 'does-not-exist)
+; Returns a symbol representing if the path is a file, directory, or does not exist
 (define path-info 'nil)
 (define (set-path-info proc) (set! path-info proc))
 
+
+; (path -> (listof path))
+; Returns all files that are at the specified path.
 (provide list-files)
 (define list-files 'nil)
 (define (set-list-files proc) (set! list-files proc))
 
+; (path -> (listof path))
+; Returns all files that are at the specified path recursively adding all files in sub directories
 (define list-sub-files 'nil)
 (define (set-list-sub-files proc) (set! list-sub-files proc))
 
+; (path -> (listof path))
+; Returns all directories that are at the specified path.
 (provide list-dirs)
 (define list-dirs 'nil)
 (define (set-list-dirs proc) (set! list-dirs proc))
@@ -70,56 +87,19 @@
 (when (not (procedure? list-sub-files)) (error "list-sub-files not set."))
 (when (not (procedure? list-dirs)) (error "list-dirs not set."))
 
-;; Utility functions
-(define (remove-leading-slash p)
-  (cond [(string=? "" p) ""]
-        [else (begin
-                (let* ((fc (string-ref p 0))
-                       (pp (if (eq? #\/ fc) (substring p 1) p)))
-                  pp))]))
 
-;; Creates a directory tmp/some-hash
-(define (get-local-temp-directory)
-  (string-append "tmp/" (random-hash) "/"))
 
-;; Creates a random 32 hash
-(define (random-hash)
-  (for/fold ([s ""])
-      ([x (in-range 32)])
-    (string-append s
-                   (number->string (truncate (random 15)) 16))))
+;; Start function definitions
 
-;; Checks if a file-name is acceptable
-;; Acceptable filenames include alphanumeric characters, underscore, dash, and period
-;; that is, they must meet the regular expression #rx[a-zA-Z0-9_.-]*
-;; Returns #t if the file-name is acceptable and #f otherwise.
-(provide check-file-name)
-(define (check-file-name file-name)
-  (let* ((okay-chars #rx"[a-zA-Z0-9_.-]*"))
-    (regexp-match-exact? okay-chars file-name)))
-
-;; TODO: Eventually we want to detect the archive type and choose the correct program to extract it.
-;; This also needs to be able to handle invalid file types
-(provide unarchive)
-(define (unarchive path file-name)
-  (system (string-append "unzip " file-name " -d " path)))
-
-(define (is-zip? file)
-  (let* ((clean (string-trim file))
-         (split (string-split clean "."))
-         (ext (last split)))
-    (equal? "zip" (string-downcase ext))))
-
+;; Returns #t if the specified path is a file and #f otherwise.
 (provide is-file?)
 (define (is-file? path)
   (eq? 'file (path-info path)))
 
+;; Returns #t if the specified path is a directory and #f otherwise.
 (provide is-directory?)
 (define (is-directory? path)
   (eq? 'directory (path-info path)))
-
-;; Start function definitions
-
 
 ;; class-id -> assignment-id -> step-id -> review-id -> string
 ;; The path to the default-rubric for the class, assignment, step-id, and review-id
@@ -313,3 +293,42 @@
           [else ""])))
 
 
+;; Utility functions
+(define (remove-leading-slash p)
+  (cond [(string=? "" p) ""]
+        [else (begin
+                (let* ((fc (string-ref p 0))
+                       (pp (if (eq? #\/ fc) (substring p 1) p)))
+                  pp))]))
+
+;; Creates a directory tmp/some-hash
+(define (get-local-temp-directory)
+  (string-append "tmp/" (random-hash) "/"))
+
+;; Creates a random 32 hash
+(define (random-hash)
+  (for/fold ([s ""])
+      ([x (in-range 32)])
+    (string-append s
+                   (number->string (truncate (random 15)) 16))))
+
+;; Checks if a file-name is acceptable
+;; Acceptable filenames include alphanumeric characters, underscore, dash, and period
+;; that is, they must meet the regular expression #rx[a-zA-Z0-9_.-]*
+;; Returns #t if the file-name is acceptable and #f otherwise.
+(provide check-file-name)
+(define (check-file-name file-name)
+  (let* ((okay-chars #rx"[a-zA-Z0-9_.-]*"))
+    (regexp-match-exact? okay-chars file-name)))
+
+;; TODO: Eventually we want to detect the archive type and choose the correct program to extract it.
+;; This also needs to be able to handle invalid file types
+(provide unarchive)
+(define (unarchive path file-name)
+  (system (string-append "unzip " file-name " -d " path)))
+
+(define (is-zip? file)
+  (let* ((clean (string-trim file))
+         (split (string-split clean "."))
+         (ext (last split)))
+    (equal? "zip" (string-downcase ext))))

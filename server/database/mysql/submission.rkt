@@ -208,6 +208,18 @@
            (release conn)
            (> result 0)))
 
+(provide has-submitted)
+(define (has-submitted assignment class user)
+  (let* ((q (merge "SELECT COUNT(*)"
+                   "FROM" table
+                   "WHERE" assignment-id "=? AND"
+                           class-id "=? AND"
+                           user-id "=?"
+                   "LIMIT 1"))
+         (result (run query-row q assignment class user))
+         (value (vector-ref result 0)))
+    (> value 0)))
+
 (provide delete-assignment)
 (define (delete-assignment class assignment)
   (let ((query (merge "DELETE FROM" table

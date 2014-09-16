@@ -5,7 +5,7 @@
          (prefix-in action: "action.rkt"))
 
 (provide load)
-(define (load start-url session url message [post #f])
+(define (load session url message [post #f])
     (let* ((assign-list (assignment:list class-name))
            (open-assignments (filter assignment:record-open assign-list))
            (closed-assignments (filter (lambda (x) (not (assignment:record-open x))) assign-list)))
@@ -13,13 +13,12 @@
         ,(when message message)
         (p (a ((href ,(string-append "/" class-name "/author/"))) "New Assignment"))
         (h2 "Open Assignments")
-        ,(cons 'ul (map (record->html start-url) open-assignments))
+        ,(cons 'ul (map record->html  open-assignments))
         (h2 "Closed Assignments")
-        ,(cons 'ul (map (record->html start-url) closed-assignments)))))
+        ,(cons 'ul (map record->html closed-assignments)))))
 
 
-(define (record->html start-url)
-  (lambda (record)
+(define (record->html record)
     (let ((id (assignment:record-id record)))
-      `(li ,(action:dashboard id id)))))
+      `(li ,(action:dashboard id id))))
       

@@ -1,7 +1,6 @@
 #lang racket
 
-(require web-server/http/bindings
-         web-server/templates
+(require web-server/templates
          web-server/http/response-structs
          xml
          json)

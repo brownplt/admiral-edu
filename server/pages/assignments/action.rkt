@@ -1,10 +1,10 @@
 #lang racket
 
-(require xml)
 (require "../../base.rkt")
 
 (define base-url (string-append "/" class-name "/assignments/"))
 
+;; Links to assignments page
 (provide assignments)
 (define (assignments context)
   (action-item base-url context))

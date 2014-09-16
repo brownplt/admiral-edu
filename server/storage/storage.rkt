@@ -258,7 +258,7 @@
     (map store-temp-file files)
     
     ;; Archive assignment
-    (system (string-append "cd " temp-dir "; zip -r " archive-name " "  path))
+    (system (string-append "cd \"" temp-dir "\"; zip -r \"" archive-name "\" \""  path "\""))
     
     ;; Convert archive to bytes, delete temporary directory, and return archive's bytes
     (let ((data (file->bytes (string-append temp-dir "/" archive-name))))

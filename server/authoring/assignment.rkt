@@ -206,7 +206,7 @@
         (filter-function (lambda (dep) (not (dependency-met dep)))))
     (if (null? (filter filter-function deps)) (assignment:mark-ready assignment-id class-name) #f)))
 
-
+(provide assignment-id->assignment)
 (define (assignment-id->assignment id)
   (yaml->assignment (string->yaml (retrieve-assignment-description class-name id))))
 

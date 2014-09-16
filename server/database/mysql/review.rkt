@@ -286,6 +286,18 @@
                                class-id "=?")))
     (run query-exec query assignment class)))
 
+(provide count-completed-reviews)
+(define (count-completed-reviews assignment class step review)
+  (let* ((q (merge "SELECT COUNT(*)"
+                   "FROM" table
+                   "WHERE" assignment-id "=? AND"
+                           class-id "=? AND"
+                           step-id "=? AND"
+                           review-id "=? AND"
+                           completed "=?"))
+         (result (run query-row q assignment class step review 1)))
+    (vector-ref result 0)))
+
 (define (random-hash)
   (for/fold ([s ""])
       ([x (in-range 32)])

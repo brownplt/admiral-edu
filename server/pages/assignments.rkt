@@ -9,7 +9,8 @@
          (prefix-in dashboard: "assignments/dashboard.rkt")
          (prefix-in list: "assignments/list.rkt")
          (prefix-in action: "assignments/action.rkt")
-         (prefix-in student-view: "assignments/student-view.rkt"))
+         (prefix-in student-view: "assignments/student-view.rkt")
+         (prefix-in status: "assignments/status.rkt"))
 
 (provide load)
 (define (load post)
@@ -24,7 +25,7 @@
 
 (define (show-instructor-view session url message [post #f])
   (let ((action (if (empty? url) action:LIST (first url)))
-        (rest-url (if (empty? url) '() (rest url))))
+        (rest-url (if (empty? url) url (rest url))))
     ((lookup-action-function action) session rest-url message post)))
 
 (provide export)
@@ -54,7 +55,8 @@
         action:DASHBOARD dashboard:load
         action:OPEN dashboard:open
         action:CLOSE dashboard:close
-        action:DELETE dashboard:delete))
+        action:DELETE dashboard:delete
+        "status" status:load))
 
 (define (lookup-action-function action)
   (cond [(hash-has-key? action-functions action) (hash-ref action-functions action)]

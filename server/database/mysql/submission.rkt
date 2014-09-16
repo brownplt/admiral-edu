@@ -165,6 +165,18 @@
     (release conn)
     (vector-ref result 0)))
 
+(provide count-step)
+(define (count-step assignment class step)
+  (let* ((q (merge "SELECT COUNT(*)"
+                   "FROM" table
+                   "WHERE" assignment-id "=? AND"
+                           class-id "=? AND"
+                           step-id "=?"
+                   "LIMIT 1"))
+         (result (run query-row q assignment class step)))
+    (vector-ref result 0)))
+         
+
 ;; Given an assignment, class, step, and user, returns the number of entries that have been created
 ;; This function returns one of the following:
 ;; number? - If successful, a timestamp and version number are generated and returns #t

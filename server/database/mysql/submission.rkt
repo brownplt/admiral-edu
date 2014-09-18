@@ -52,6 +52,19 @@
     (query-exec conn create)
     (release conn)))
 
+(provide(struct-out record))
+(struct record (assignment class step user time-stamp) #:transparent)
+
+(define record-select (merge assignment-id "," class-id "," step-id "," user-id "," time-stamp))
+
+(define (vector->record vec)
+  (let ((assignment (vector-ref vec 0))
+        (class (vector-ref vec 1))
+        (step (vector-ref vec 2))
+        (user (vector-ref vec 3))
+        (time-stamp (vector-ref vec 4)))
+    (record assignment class step user time-stamp)))
+
 
 ;;TODO Add Instructor-solution field and mark true
 (provide create-instructor-solution)
@@ -84,9 +97,6 @@
        (query-exec conn prep assignment class step user)
        (release conn)
        #t)]))
-
-(provide record record? record-assignment record-class record-step record-user record-time-stamp)
-(struct record (assignment class step user time-stamp) #:transparent)
 
 ;; Given an assignment, class, step, and user, lists all entries ordered by
 ;; their version number
@@ -238,3 +248,13 @@
                        "WHERE" assignment-id "=? AND"
                                class-id "=?")))
     (run query-exec query assignment class)))
+
+(provide select-all)
+(define (select-all assignment class step)
+  (let* ((query (merge "SELECT" record-select
+                       "FROM" table
+                       "WHERE" assignment-id "=? AND"
+                               class-id "=? AND"
+                               step-id "=?"))
+         (results (run query-rows query assignment class step)))
+    (map vector->record results)))

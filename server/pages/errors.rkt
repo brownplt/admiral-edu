@@ -77,6 +77,10 @@
   (response/xexpr
    '(html (body (p "404")))))
 
+(provide four-oh-four-xexpr)
+(define four-oh-four-xexpr
+  '((h2 "404 - The resource does not exist")))
+
 (provide error-page)
 (define (error-page . message)
   (let ([display-message (apply string-append message)])

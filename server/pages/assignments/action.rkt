@@ -54,3 +54,10 @@
 
 (define (action-item url context)
   `(a ((href ,url)) ,context))
+
+(provide STATUS)
+(define STATUS "status")
+
+(provide status)
+(define (status assignment-id context)
+  (action-item (string-append base-url "status/" assignment-id "/") context))

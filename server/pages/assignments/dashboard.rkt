@@ -16,7 +16,7 @@
            `((h1 ,(action:assignments "Assignments"))
              (h2 ,assignment-id)
              ,(when message message)
-             (p ,(string-append "Status: " status))
+             (h3 ,(action:status assignment-id "Status") " : " ,status)
              ,(when ready
                 (cond [open `(p ,(action:close assignment-id "Close Assignment"))]
                       [else `(p ,(action:open assignment-id "Open Assignment"))]))

@@ -294,8 +294,21 @@
                            class-id "=? AND"
                            step-id "=? AND"
                            review-id "=? AND"
-                           completed "=?"))
+                           completed "=?"
+                   "LIMIT 1"))
          (result (run query-row q assignment class step review 1)))
+    (vector-ref result 0)))
+
+(provide count-all-assigned-reviews)
+(define (count-all-assigned-reviews assignment class step review)
+  (let* ((q (merge "SELECT COUNT(*)"
+                   "FROM" table
+                   "WHERE" assignment-id "=? AND"
+                           class-id "=? AND"
+                           step-id "=? AND"
+                           review-id "=?"
+                   "LIMIT 1"))
+         (result (run query-row q assignment class step review)))
     (vector-ref result 0)))
 
 (define (random-hash)

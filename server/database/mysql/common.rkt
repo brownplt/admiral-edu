@@ -34,6 +34,7 @@
         (disconnect conn))
       #f))
 
+(provide connect)
 (define (connect)
   (let ((new-conn (mysql-connect #:user username
                                  #:database password

@@ -53,8 +53,8 @@
                 (string-join output "\n"))]))
 
 (define (render-result result)
-  (cond [(Success? result) (string-append "<p>" (Success-uid result) " added.</p>")]
-        [(Failure? result) (string-append "<p style='font-weight:bold; color:red'>Could not add " (Failure-uid result) ": " (Failure-message result))]))
+  (cond [(Success? result) (string-append "<p>" (Success-result result) " added.</p>")]
+        [(Failure? result) (string-append "<p style='font-weight:bold; color:red'>" (Failure-message result) "</p>")]))
 
 (define (do-load session rest message)
   (let* ((start-url (hash-ref (ct-session-table session) 'start-url))

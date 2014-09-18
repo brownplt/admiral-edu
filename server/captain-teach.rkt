@@ -4,7 +4,8 @@
          "dispatch.rkt"
          "base.rkt")
 
-(initialize)
+(let ((result (initialize)))
+  (when (Failure? result) (error (format "Could not initialize system: ~a\n"))))
 
 (define stop
   (serve #:dispatch (dispatch/servlet ct-rules)

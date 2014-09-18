@@ -99,17 +99,6 @@
 ;; take-dependencies: assignment-id -> dependency -> file-name -> file-data -> Either Success Failure
 (provide (struct-out AssignmentHandler))
 (struct AssignmentHandler (next-action do-submit-step get-dependencies take-dependency))
-         
-
-(provide (struct-out Success))
-(struct Success (message))
-
-(provide (struct-out Failure))
-(struct Failure (message))
-
-(provide failure)
-(define (failure . messages)
-  (Failure (apply string-append messages)))
 
 (provide dependency-submission-name)
 (define (dependency-submission-name review-id n)

@@ -27,9 +27,11 @@
 (define user-id "user_id")
 (define user-id-type user:uid-type)
 
-(provide time-stamp time-stamp-type)
+(provide time-stamp time-stamp-type time-stamp-type-1)
 (define time-stamp "time_stamp")
-(define time-stamp-type "TIMESTAMP")
+(define time-stamp-type "TIMESTAMP DEFAULT 0")
+(define time-stamp-type-0 "TIMESTAMP")
+(define time-stamp-type-1 "TIMESTAMP DEFAULT 0")
 
 (provide times-reviewed times-reviewed-type)
 (define times-reviewed "times_reviewed")
@@ -51,6 +53,7 @@
     (query-exec conn drop)
     (query-exec conn create)
     (release conn)))
+
 
 (provide(struct-out record))
 (struct record (assignment class step user time-stamp) #:transparent)
@@ -174,17 +177,6 @@
          (result (apply query-row arg-list)))
     (release conn)
     (vector-ref result 0)))
-
-(provide count-step)
-(define (count-step assignment class step)
-  (let* ((q (merge "SELECT COUNT(*)"
-                   "FROM" table
-                   "WHERE" assignment-id "=? AND"
-                           class-id "=? AND"
-                           step-id "=?"
-                   "LIMIT 1"))
-         (result (run query-row q assignment class step)))
-    (vector-ref result 0)))
          
 
 ;; Given an assignment, class, step, and user, returns the number of entries that have been created
@@ -255,6 +247,19 @@
                        "FROM" table
                        "WHERE" assignment-id "=? AND"
                                class-id "=? AND"
-                               step-id "=?"))
+                               step-id "=? AND"
+                               user-id "NOT LIKE \"default-submission%\""))
          (results (run query-rows query assignment class step)))
     (map vector->record results)))
+
+(provide count-step)
+(define (count-step assignment class step)
+  (let* ((q (merge "SELECT COUNT(*)"
+                   "FROM" table
+                   "WHERE" assignment-id "=? AND"
+                           class-id "=? AND"
+                           step-id "=? AND"
+                           user-id "NOT LIKE \"default-submission%\""
+                   "LIMIT 1"))
+         (result (run query-row q assignment class step)))
+    (vector-ref result 0)))

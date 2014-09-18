@@ -128,8 +128,8 @@
      (list (string->bytes/utf-8 (render-result assignment-id result))))))
 
 (define (render-result assignment-id result)
-  (cond [(assign:Success? result) (assignment-dependencies assignment-id (string-append "<p>" (assign:Success-message result) "</p>"))]
-        [(assign:Failure? result) (error:error (assign:Failure-message result))]
+  (cond [(Success? result) (assignment-dependencies assignment-id (string-append "<p>" (Success-result result) "</p>"))]
+        [(Failure? result) (error:error (Failure-message result))]
         [else (raise (format "Unknown result: ~a" result))]))
 
 

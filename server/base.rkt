@@ -3,12 +3,14 @@
 (require "storage/storage.rkt"
          "database/mysql.rkt"
          "configuration.rkt"
-         "ct-session.rkt")
+         "ct-session.rkt"
+         "util/basic-types.rkt")
 
 (provide (all-from-out "configuration.rkt"))
 (provide (all-from-out "database/mysql.rkt"))
 (provide (all-from-out "storage/storage.rkt"))
 (provide (all-from-out "ct-session.rkt"))
+(provide (all-from-out "util/basic-types.rkt"))
 
 
 
@@ -19,16 +21,13 @@
 (define student-role 2)
 
 
-;; Initializes the database.
-;; Creates a class called cmpsci220 with two users: arjunguha and jcollard. 
-;; Creates three roles: Instructor, Teaching Assistant, and Student. Instructors
-;;   and teaching assistants have the can-edit field set to true. Students have
-;;   the can-edit field set to false.
-;; Create two role associations for cmpsci220: arjunguha/instructor, jcollard/ta
+;; ( -> Result void?)
+;; Initializes the database, creating tables and migrating if necessary.
 (provide initialize)
 (define (initialize)
   (if (init-db?) #t
-      (force-initialize)))
+      (force-initialize))
+  (migrate:check-migrated))
 
 (provide force-initialize)
 (define (force-initialize)

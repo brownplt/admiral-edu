@@ -31,9 +31,11 @@
 (define reviewer-id "reviewer_id")
 (define reviewer-id-type submission:user-id-type)
 
-(provide time-stamp time-stamp-type)
+(provide time-stamp time-stamp-type time-stamp-type-1)
 (define time-stamp "time_stamp")
-(define time-stamp-type "TIMESTAMP")
+(define time-stamp-type "TIMESTAMP DEFAULT 0")
+(define time-stamp-type-0 "TIMESTAMP")
+(define time-stamp-type-1 "TIMESTAMP DEFAULT 0")
 
 (provide review-id review-id-type)
 (define review-id "review_id")

@@ -1,6 +1,7 @@
 #lang racket
 
-(require "../../base.rkt"
+(require db
+         "../../base.rkt"
          "../../authoring/assignment.rkt"
          (prefix-in error: "../errors.rkt")
          (prefix-in action: "action.rkt"))
@@ -40,9 +41,39 @@
 
 (define (submission-record->xexpr record)
   (let ((user-id (submission:record-user record))
-        (time-stamp (submission:record-time-stamp record)))
+        (time-stamp (format-time-stamp (submission:record-time-stamp record))))
     `(li ,(format "~a - ~a" user-id time-stamp))))
-  
+
+(define (format-time-stamp time-stamp)
+  (let ((year (number->string (sql-timestamp-year time-stamp)))
+        (month (month->string (sql-timestamp-month time-stamp)))
+        (day (number->string (sql-timestamp-day time-stamp)))
+        (hour (number->string (sql-timestamp-hour time-stamp)))
+        (minute (ensure-leading-zero (number->string (sql-timestamp-minute time-stamp))))
+        (second (ensure-leading-zero (number->string (sql-timestamp-second time-stamp)))))
+    (string-append month " " day " " year " " hour ":" minute ":" second)))
+
+(define (ensure-leading-zero str)
+  (let ((len (string-length str)))
+  (cond [(= len 1) (string-append "0" str)]
+        [else str])))
+
+(define (month->string month)
+  (match month
+    [1 "January"]
+    [2 "February"]
+    [3 "March"]
+    [4 "April"]
+    [5 "May"]
+    [6 "June"]
+    [7 "July"]
+    [8 "August"]
+    [9 "September"]
+    [10 "October"]
+    [11 "November"]
+    [12 "December"]
+    [_ (error (format "Could not convert month ~a to string." month))]))
+    
 
 (define (display-review assignment-id step-id review-id message)
   #f)

@@ -41,7 +41,7 @@
   (let ((result (submit-step assignment step uid filename data))
         (start-url (hash-ref (ct-session-table session) 'start-url)))
     (cond [(Success? result) 
-           (let ((message (Success-message result)))
+           (let ((message (Success-result result)))
              (render-html (string-append "<p>" message "</p>"
                                          "<p><a href='" start-url "../../../next/" assignment "/'>Continue</a></p>" )))]
           [(Failure? result)

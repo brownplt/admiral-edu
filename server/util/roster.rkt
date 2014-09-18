@@ -19,11 +19,11 @@
 (provide register-uid)
 (define (register-uid uid)
   (let ((okay (not (regexp-match " " uid))))
-    (cond [(not okay) (Failure uid "User IDs may not contain spaces.")]
+    (cond [(not okay) (Failure (format "Received '~a' but User IDs may not contain spaces." uid))]
           [else (begin
                   (when (not (user:exists? uid)) (user:create uid))
                   (let ((registered (role:exists? class-name uid)))
-                    (cond [registered (Failure uid "User ID is already registered in the class.")]
+                    (cond [registered (Failure (format "Received '~a' but User ID is already registered in the class." uid))]
                           [else (begin
                                   (role:associate class-name uid student-role)
                                   (Success uid))])))])))
@@ -45,7 +45,7 @@
                                          [(eq? new-role 'student-role) (role:set-role class-name uid student-role)]
                                          [(eq? new-role 'ta-role) (role:set-role class-name uid ta-role)]
                                          [else #f])))
-                       (if (not action) (Failure uid "No such role")
+                       (if (not action) (Failure (format "Could not change role of '~a' to '~a': No such role" uid new-role))
                            (Success uid))))))
     (is-registered->run uid do-action)))
                            
@@ -55,10 +55,5 @@
 (define (is-registered->run uid f . args)
   (let* ((clean (string-trim uid))
          (exists? (role:exists? class-name clean)))
-    (cond [(not exists?) (Failure uid "The User ID is not registered in the class.")]
+    (cond [(not exists?) (Failure (format "The User ID '~a' is not registered in the class." uid))]
           [else (apply f (cons clean args))])))
-                  
-
-(provide (struct-out Success) (struct-out Failure))
-(struct Success (uid) #:transparent)
-(struct Failure (uid message) #:transparent)

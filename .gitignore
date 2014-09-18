@@ -9,3 +9,5 @@ config
 
 .cloud-keys
 .smtp-credentials
+
+test-class/

@@ -63,3 +63,10 @@
 (define (prepare-statement conn q args)
     (append (list conn (virtual-statement q)) args))
 
+(provide order->string)
+(define (order->string order)
+  (match order
+    ['asc "ASC"]
+    ['desc "DESC"]
+    [_ (error (format "Could not convert ~a to order." order))]))
+

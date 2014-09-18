@@ -37,6 +37,12 @@
 (define times-reviewed "times_reviewed")
 (define times-reviewed-type "INT")
 
+(define valid-columns `(,class-id ,step-id ,user-id ,time-stamp ,times-reviewed))
+
+(define (valid-column string)
+  (let ((result (member string valid-columns string=?)))
+    (if result #t #f)))
+
 ;; Initializes the assignment table.
 (provide init)
 (define (init)
@@ -242,13 +248,15 @@
     (run query-exec query assignment class)))
 
 (provide select-all)
-(define (select-all assignment class step)
-  (let* ((query (merge "SELECT" record-select
+(define (select-all assignment class step sort-by order)
+  (let* ((sort-by (if (valid-column sort-by) sort-by user-id))
+         (query (merge "SELECT" record-select
                        "FROM" table
                        "WHERE" assignment-id "=? AND"
                                class-id "=? AND"
                                step-id "=? AND"
-                               user-id "NOT LIKE \"default-submission%\""))
+                               user-id "NOT LIKE \"default-submission%\""
+                       "ORDER BY" sort-by (order->string order)))
          (results (run query-rows query assignment class step)))
     (map vector->record results)))
 

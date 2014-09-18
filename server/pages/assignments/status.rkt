@@ -10,7 +10,7 @@
 (define (load session url message [post #f])
   (match url
     [(list assignment-id) (display-assignment assignment-id message)]
-    [(list assignment-id step-id) (display-step assignment-id step-id message)]
+    [(list assignment-id step-id) (display-step session assignment-id step-id message)]
     [(list assignment-id step-id review-id) (display-review assignment-id step-id review-id message)]
     [_ error:four-oh-four-xexpr]))
   
@@ -31,18 +31,25 @@
     (h3 ,(action:status assignment-id "Status") " : " ,status)
     ,(when message message))))
 
-(define (display-step assignment-id step-id message)
-  (let ((count (number->string (submission:count-step assignment-id class-name step-id)))
-        (submission-records (submission:select-all assignment-id class-name step-id)))
+(define (display-step session assignment-id step-id message)
+  (let* ((order (get-order session))
+         (sort-by (get-binding session 'sort-by))
+         (next-order (symbol->string (opposite-order order)))
+         (count (number->string (submission:count-step assignment-id class-name step-id)))
+         (submission-records (submission:select-all assignment-id class-name step-id sort-by order)))
   (append (header assignment-id message)
           `((h4 ,step-id)
             (p "Submissions : " ,count))
-          (map submission-record->xexpr submission-records))))
+          `(,(append `(table
+                       (tr (th (a ((href ,(string-append "?sort-by=user_id&order=" next-order))) "Student ID")) 
+                           (th (a ((href ,(string-append "?sort-by=time_stamp&order=" next-order))) "Submission Date"))))
+                     (map submission-record->xexpr submission-records))))))
+
 
 (define (submission-record->xexpr record)
   (let ((user-id (submission:record-user record))
         (time-stamp (format-time-stamp (submission:record-time-stamp record))))
-    `(li ,(format "~a - ~a" user-id time-stamp))))
+    `(tr (td ,user-id) (td ,time-stamp))))
 
 (define (format-time-stamp time-stamp)
   (let ((year (number->string (sql-timestamp-year time-stamp)))

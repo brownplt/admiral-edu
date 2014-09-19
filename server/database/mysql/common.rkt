@@ -1,7 +1,8 @@
 #lang racket
 
 (require db)
-(require "../../configuration.rkt")
+(require "../../configuration.rkt"
+         "../../ct-session.rkt")
 
 (provide intercalate merge)
 
@@ -69,4 +70,25 @@
     ['asc "ASC"]
     ['desc "DESC"]
     [_ (error (format "Could not convert ~a to order." order))]))
+
+; ((Listof String) Symbol -> (ct-session -> Symbol))
+(provide common:get-sort-by)
+(define (common:get-sort-by valid-columns default)
+  (lambda (session)
+    (let ((table (ct-session-table session)))
+      (cond [(not (hash-has-key? table 'sort-by)) default]
+            [else (let ((dir-string (hash-ref table 'sort-by)))
+                    (cond [(valid-column valid-columns dir-string) (string->symbol dir-string)]
+                          [else default]))]))))
+
+;((Listof String) -> (Symbol -> Boolean))
+(provide common:sort-by?)
+(define (common:sort-by? valid-columns)
+  (lambda (symbol)
+    (valid-column valid-columns (symbol->string symbol))))
+
+;((Listof String) String -> Boolean)
+(define (valid-column valid-columns string)
+  (let ((result (member string valid-columns string=?)))
+    (if result #t #f)))
 

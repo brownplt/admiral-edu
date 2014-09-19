@@ -28,7 +28,8 @@
          (prefix-in submit: "pages/submit.rkt")
          (prefix-in dep: "pages/dependencies.rkt")
          (prefix-in feedback: "pages/feedback.rkt")
-         (prefix-in roster: "pages/roster.rkt"))
+         (prefix-in roster: "pages/roster.rkt")
+         (prefix-in browse: "pages/browse.rkt"))
 
 (define (any? x)
   #t)
@@ -80,6 +81,7 @@
     [(cons "export" rest) (assignments:export session (role session) rest)]
     [(cons "exception" rest) (error "Test an exception occurring.")]
     [(cons "roster" rest) (if post (render-html session (roster:post post-data bindings) rest) (render-html session roster:load rest))]
+    [(cons "browse" rest) (render-html session browse:load rest)]
     ;[(cons "reset-db" rest) (require-auth session run-init)]
     [else (error:four-oh-four)]))
 

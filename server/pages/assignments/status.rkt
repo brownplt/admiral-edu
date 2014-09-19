@@ -3,6 +3,7 @@
 (require db
          "../../base.rkt"
          "../../authoring/assignment.rkt"
+         (prefix-in browse: "../browse.rkt")
          (prefix-in error: "../errors.rkt")
          (prefix-in action: "action.rkt"))
 
@@ -11,7 +12,7 @@
   (match url
     [(list assignment-id) (display-assignment assignment-id message)]
     [(list assignment-id step-id) (display-step session assignment-id step-id message)]
-    [(list assignment-id step-id review-id) (display-review assignment-id step-id review-id message)]
+    [(list assignment-id step-id review-id) (display-review session assignment-id step-id review-id message post)]
     [_ error:four-oh-four-xexpr]))
   
 (define (display-assignment assignment-id message)
@@ -33,23 +34,34 @@
 
 (define (display-step session assignment-id step-id message)
   (let* ((order (get-order session))
-         (sort-by (get-binding session 'sort-by))
-         (next-order (symbol->string (opposite-order order)))
+         (sort-by (submission:get-sort-by session))
+         (next-order (opposite-order order))
          (count (number->string (submission:count-step assignment-id class-name step-id)))
          (submission-records (submission:select-all assignment-id class-name step-id sort-by order)))
   (append (header assignment-id message)
           `((h4 ,step-id)
-            (p "Submissions : " ,count))
+            (p "Submissions : " ,count)
+            (p "Select a User ID to view their submission."))
           `(,(append `(table
-                       (tr (th (a ((href ,(string-append "?sort-by=user_id&order=" next-order))) "Student ID")) 
-                           (th (a ((href ,(string-append "?sort-by=time_stamp&order=" next-order))) "Submission Date"))))
+                       (tr (th ,(sort-by-action "user_id" next-order "Student ID"))
+                           (th ,(sort-by-action "time_stamp" next-order "Submission Date"))))
                      (map submission-record->xexpr submission-records))))))
 
+; (String Order String -> Xexpr)
+(define (sort-by-action field order context)
+    `(a ((href ,(string-append "?sort-by=" field "&order=" (symbol->string order)))) ,context))
 
 (define (submission-record->xexpr record)
   (let ((user-id (submission:record-user record))
         (time-stamp (format-time-stamp (submission:record-time-stamp record))))
-    `(tr (td ,user-id) (td ,time-stamp))))
+    `(tr (td ,(view-submission-action record user-id))
+         (td ,time-stamp))))
+
+(define (view-submission-action record user-id)
+  (let ((user (submission:record-user record))
+        (assignment (submission:record-assignment record))
+        (step (submission:record-step record)))
+  `(a ((href ,(string-append "/" class-name "/browse/" user "/" assignment "/" step "/"))) ,user-id)))
 
 (define (format-time-stamp time-stamp)
   (let ((year (number->string (sql-timestamp-year time-stamp)))
@@ -82,16 +94,105 @@
     [_ (error (format "Could not convert month ~a to string." month))]))
     
 
-(define (display-review assignment-id step-id review-id message)
-  #f)
+(define (display-review session assignment-id step-id review-id message post)
+  (when post (set! message (check-for-action session)))
+  (let* ((assigned (number->string (review:count-completed-reviews assignment-id class-name step-id review-id)))
+         (completed (number->string (review:count-all-assigned-reviews assignment-id class-name step-id review-id)))
+         (sort-by (review:get-sort-by session))
+         (order (get-order session))
+         (next-order (opposite-order order))
+         (review-records (review:select-all assignment-id class-name step-id review-id sort-by order))
+         (reviews (apply append (map review-record->xexpr review-records))))
+    (append (header assignment-id message)
+            `((h4 ,step-id " > " ,review-id)
+              (p "Assigned : " ,assigned)
+              (p "Completed : " ,completed)
+              (p "Selecting a students ID will bring you to the students view of a review."))
+            `(,(append `(table
+                         (th ,(sort-by-action review:reviewer-id next-order "Reviewer ID"))
+                         (th ,(sort-by-action review:reviewee-id next-order "Reviewee ID"))
+                         (th ,(sort-by-action review:completed next-order "Completed"))
+                         (th ,(sort-by-action review:flagged next-order "Flagged"))
+                         (th "Actions"))
+                       reviews)))))
 
+
+(define test-session
+  (ct-session "test-class" "jcollard@umass.edu" (hash 'sort-by "reviewee_id")))
+
+(define (review-record->xexpr record)
+  (let ((reviewee (review:record-reviewee-id record))
+        (reviewer (review:record-reviewer-id record))
+        (time-stamp (review:record-time-stamp record))
+        (completed (if (review:record-completed record) "Yes" ""))
+        (actions (if (review:record-completed record) 
+                     (mark-incomplete-action record "Mark Incomplete") 
+                     (mark-complete-action record "Mark Complete")))
+        (flagged (review:record-flagged record)))
+  `((tr
+     (td ,(view-review-action record reviewer))
+     (td ,(view-feedback-action record reviewee))
+     (td ,completed)
+     (td ,(if flagged '(b "FLAGGED") ""))
+     (td ,actions)))))
+
+(define (mark-incomplete-action record context)
+  (let ((hash (review:record-hash record)))
+    `(form ((method "post"))
+           (input ((type "hidden") (name "action") (value "mark-incomplete")))
+           (input ((type "hidden") (name "review-hash") (value ,hash)))
+           (input ((type "submit") (value "Mark Incomplete"))))))
+
+(define (mark-complete-action record context)
+  (let ((hash (review:record-hash record)))
+    `(form ((method "post"))
+           (input ((type "hidden") (name "action") (value "mark-complete")))
+           (input ((type "hidden") (name "review-hash") (value ,hash)))
+           (input ((type "submit") (value "Mark Complete"))))))
+
+
+(define (check-for-action session)
+  (let ((action (get-binding 'action session)))
+    (cond [(Failure? action) `(p (b ,(Failure-message action)))]
+          [else (do-action (Success-result action) session)])))
+
+(define (do-action action session)
+  (cond [(string=? action "mark-incomplete") (do-mark-incomplete session)]
+        [(string=? action "mark-complete") (do-mark-complete session)]
+        [else `(p (b "No such action: " ,action))]))
+
+(define (do-mark-incomplete session)
+  (let ((hash (get-binding 'review-hash session)))
+    (cond [(Failure? hash) `(p (b ,(Failure-message hash)))]
+          [else (begin
+                  (review:mark-incomplete (Success-result hash))
+                  '(p (b "Review marked incomplete.")))])))
+
+(define (do-mark-complete session)
+  (let ((hash (get-binding 'review-hash session)))
+    (cond [(Failure? hash) `(p (b ,(Failure-message hash)))]
+          [else (begin
+                  (review:mark-complete (Success-result hash))
+                  '(p (b "Review marked complete.")))])))
+
+(define (view-review-action record context)
+  (let ((hash (review:record-hash record))
+        (reviewer (review:record-reviewer-id record)))
+    `(a ((href ,(string-append "/" class-name "/su/" reviewer "/review/" hash "/"))) ,context)))
+
+(define (view-feedback-action record context)
+  (let ((hash (review:record-hash record))
+        (reviewee (review:record-reviewee-id record)))
+    `(a ((href ,(string-append "/" class-name "/su/" reviewee "/feedback/view/" hash "/"))) ,context)))
+
+  ;(struct record (class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged) #:transparent)
 
 (define (step->statistic assignment-id)
   (lambda (step)
     (let* ((step-id (Step-id step))
            (submissions (number->string (submission:count-step assignment-id class-name step-id)))
-           (reviews (map (review->statistic assignment-id step-id) (Step-reviews step))))
-      `((li "Step : " ,step-id)
+           (reviews (apply append (map (review->statistic assignment-id step-id) (Step-reviews step)))))
+      `((li "Step : " ,(action:step-status assignment-id step-id step-id))
         ,(append `(ul 
                    (li "Submissions: " ,submissions))
                  reviews)))))
@@ -101,11 +202,8 @@
     (let* ((review-id (Review-id review))
            (completed (number->string (review:count-completed-reviews assignment-id class-name step-id review-id)))
            (assigned (number->string (review:count-all-assigned-reviews assignment-id class-name step-id review-id))))
-      `(li ,(string-append "Reviews : " review-id)
+      `((li "Reviews : " ,(action:review-status assignment-id step-id review-id review-id))
         (ul 
          (li  "Completed: " ,completed)
          (li "Assigned: " ,assigned))))))
       
-
-  
-  

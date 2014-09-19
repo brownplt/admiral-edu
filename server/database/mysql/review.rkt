@@ -2,6 +2,7 @@
 
 (require db
          "common.rkt"
+         "../../ct-session.rkt"
          (prefix-in submission: "submission.rkt")
          (prefix-in class: "class.rkt")
          (prefix-in assignment: "assignment.rkt")
@@ -56,6 +57,15 @@
 (provide flagged flagged-type)
 (define flagged "flagged")
 (define flagged-type "BOOL")
+
+(define valid-columns `(,assignment-id ,class-id ,step-id ,reviewee-id ,reviewer-id ,time-stamp ,completed ,instructor-solution ,flagged))
+
+; ct-session -> (U 'class_id 'step_id 'user_id 'time_stamp 'times_reviewed)
+(provide get-sort-by)
+(define get-sort-by (common:get-sort-by valid-columns (string->symbol reviewer-id)))
+
+(provide sort-by?)
+(define sort-by? (common:sort-by? valid-columns))
 
 ;; Initializes the review table.
 (provide init)
@@ -128,10 +138,10 @@
     (release conn)))
 
 (provide (struct-out record))
-(struct record (class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged) #:transparent)
+(struct record (class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged time-stamp) #:transparent)
 
 (define record-fields
-  (string-join (list class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged) ", "))
+  (string-join (list class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged time-stamp) ", "))
 
 (define (vector->record result)
   (let* (
@@ -144,7 +154,8 @@
          (completed (= 1 (vector-ref result 6)))
          (hash (vector-ref result 7))
          (flagged (= 1(vector-ref result 8)))
-         (rec (record class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged)))
+         (time-stamp (vector-ref result 9))
+         (rec (record class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged time-stamp)))
     rec))
 
 (provide count-assigned-reviews)
@@ -312,6 +323,22 @@
                    "LIMIT 1"))
          (result (run query-row q assignment class step review)))
     (vector-ref result 0)))
+
+(provide select-all)
+(define (select-all assignment class step review sort-by order)
+  (let* ((sort-field reviewer-id)
+         (direction (order->string order))
+         (sort-field (if (sort-by? sort-by) (symbol->string sort-by) reviewer-id))
+         (q (merge "SELECT" record-fields
+                   "FROM" table
+                   "WHERE" assignment-id "=? AND"
+                           class-id "=? AND"
+                           step-id "=? AND"
+                           review-id "=?"
+                   "ORDER BY" sort-field direction))
+         (result (run query-rows q assignment class step review)))
+    (map vector->record result)))
+                           
 
 (define (random-hash)
   (for/fold ([s ""])

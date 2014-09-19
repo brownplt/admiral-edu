@@ -2,6 +2,7 @@
 
 (require db
          "common.rkt"
+         "../../ct-session.rkt"
          (prefix-in class: "class.rkt")
          (prefix-in assignment: "assignment.rkt")
          (prefix-in user: "user.rkt")
@@ -39,9 +40,13 @@
 
 (define valid-columns `(,class-id ,step-id ,user-id ,time-stamp ,times-reviewed))
 
-(define (valid-column string)
-  (let ((result (member string valid-columns string=?)))
-    (if result #t #f)))
+; ct-session -> (U 'class_id 'step_id 'user_id 'time_stamp 'times_reviewed)
+(provide get-sort-by)
+(define get-sort-by (common:get-sort-by valid-columns 'user_id))
+
+(provide sort-by?)
+(define sort-by? (common:sort-by? valid-columns))
+
 
 ;; Initializes the assignment table.
 (provide init)
@@ -249,7 +254,7 @@
 
 (provide select-all)
 (define (select-all assignment class step sort-by order)
-  (let* ((sort-by (if (valid-column sort-by) sort-by user-id))
+  (let* ((sort-by (if (sort-by? sort-by) (symbol->string sort-by) user-id))
          (query (merge "SELECT" record-select
                        "FROM" table
                        "WHERE" assignment-id "=? AND"

@@ -61,3 +61,11 @@
 (provide status)
 (define (status assignment-id context)
   (action-item (string-append base-url "status/" assignment-id "/") context))
+
+(provide step-status)
+(define (step-status assignment-id step-id context)
+  (action-item (string-append base-url "status/" assignment-id "/" step-id "/") context))
+
+(provide review-status)
+(define (review-status assignment-id step-id review-id context)
+  (action-item (string-append base-url "status/" assignment-id "/" step-id "/" review-id "/") context))

@@ -94,14 +94,18 @@
         (step-id (Step-id step)))
     ;(upload-submission class user assignment step data)
     (upload-submission class-name uid assignment-id step-id file-name data)
-    (let ((group (lookup-group assignment-id uid)))
+    (let* ((group (lookup-group assignment-id uid))
+           (extra-message (cond [(eq? group 'gets-reviewed) "You don't need to do any reviewing.  But, you will receive reviews, so you can wait for feedback if you want before you submit your final implementation and tests."]
+                                [(eq? group 'does-reviews) "You have been assigned reviews for this assignment, and must complete them.  If enough reviews aren't available right now, you'll receive notifications as they are assigned to you."]
+                                [(eq? group 'no-reviews) "You don't need to do any reviewing, and you won't receive any reviews for this assignment.  Submit your implementation and final tests at any time."])))
       ;; TODO: look to see if there are any pending reviewers
-      (if (eq? group 'gets-reviewed) (maybe-assign-reviewers assignment-id step uid) (printf "Skipping maybe-assign review. uid: ~a, group: ~a\n" uid group)))
+      (if (eq? group 'gets-reviewed) (maybe-assign-reviewers assignment-id step uid) (printf "Skipping maybe-assign review. uid: ~a, group: ~a\n" uid group))
+      (send-email uid "Your submission has been received." (string-append "Your submission to '" assignment-id "' has been received. Note: " extra-message))
     ;; Assign reviews to the student if applicable
-    (let ((next (three-next-action assignment steps uid)))
-      (cond
-        [(MustReviewNext? next) (three-assign-reviews assignment-id (MustReviewNext-step next) uid)])
-      (Success "Assignment submitted."))))
+      (let ((next (three-next-action assignment steps uid)))
+        (cond
+          [(MustReviewNext? next) (three-assign-reviews assignment-id (MustReviewNext-step next) uid)])
+        (Success (string-append "Assignment submitted. <b>Note : " extra-message "</b>"))))))
 
 (define (maybe-assign-reviewers assignment-id step uid)
   (let* ((reviews (Step-reviews step))

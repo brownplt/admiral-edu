@@ -15,6 +15,15 @@
 (define (get-db-address)
   db-address)
 
+(: db-user-name (U 'nil String))
+(define db-user-name 'nil)
+
+(: db-password (U 'nil String))
+(define db-password 'nil)
+
+(: db-name (U 'nil String))
+(define db-name 'nil)
+
 (: server-name (U 'nil String))
 (define server-name 'nil)
 
@@ -73,5 +82,8 @@
   (set! cloud-access-key-id (ref "cloud-access-key-id"))
   (set! cloud-secret-key (ref "cloud-secret-key"))
   (set! cloud-host (ref "cloud-host"))
-  (set! storage-mode (ref "storage-mode")))
+  (set! storage-mode (ref "storage-mode"))
+  (set! db-name (ref "db-name"))
+  (set! db-user-name (ref "db-user-name"))
+  (set! db-password (ref "db-password")))
 

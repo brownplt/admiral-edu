@@ -4,24 +4,14 @@
 (require "../../configuration.rkt"
          "../../ct-session.rkt")
 
-(provide intercalate merge)
+;; Helper functions
 
- ;; Helper functions
-(define (intercalate v ls)
-  (cdr 
-   (foldr 
-    (lambda (x xs) 
-      (cons v (cons x xs))) 
-    '() ls)))
 
+(provide merge)
+;(: merge (String * -> String))
 (define (merge . strings)
-  (foldr string-append ""
-         (intercalate " " strings)))
+  (string-join strings " "))
 
-;; Database Information
-(define username "captain_teach")
-(define password "captain_teach")
-(define database "captain_teach")
 
 (provide make-sql-conn)
 (define (make-sql-conn)
@@ -37,9 +27,9 @@
 
 (provide connect)
 (define (connect)
-  (let ((new-conn (mysql-connect #:user username
-                                 #:database password
-                                 #:password database
+  (let ((new-conn (mysql-connect #:user db-user-name
+                                 #:database db-name
+                                 #:password db-password
                                  #:server (get-db-address))))
 
     new-conn))

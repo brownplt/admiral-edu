@@ -36,6 +36,13 @@
     ['asc 'desc]
     ['desc 'asc]))
 
+(: clean-bindings ((Listof Any) -> (Listof (Pairof Symbol String))))
+(define (clean-bindings ls)
+  (match ls
+    ['() '()]
+    [(cons `(,symbol . ,string) tail) (cond [(and (symbol? symbol) (string? string)) (cons `(,symbol . ,string) (clean-bindings tail))]
+                                            [else (clean-bindings tail)])]))
+
 (: okay-binding? ((Pairof Symbol Any) -> Boolean))
 (define (okay-binding? pair)
   (let ((symbol (car pair)))
@@ -45,9 +52,9 @@
 
 ;(: make-table (String (Listof (Pairof Symbol String)) -> (HashTable Symbol String)))
 (provide make-table)
-(: make-table (String (Listof (Pairof Symbol String)) -> (HashTable Symbol String)))
+(: make-table (String (Listof Any) -> (HashTable Symbol String)))
 (define (make-table start-rel-url bindings)
-  (let ((pairs (cons `(start-url . ,start-rel-url) (filter okay-binding? bindings))))
+  (let ((pairs (cons `(start-url . ,start-rel-url) (filter okay-binding? (clean-bindings bindings)))))
     (make-hash pairs)))
           
 ;  (let ((args (append (list 'start-url start-rel-url) (filter (compose not reserved?) (flatten bindings)))))

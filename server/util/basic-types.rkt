@@ -1,17 +1,8 @@
 #lang typed/racket
 
-(require/typed "basic-types-untyped.rkt"
-               [#:struct Failure ([message : String])]
-               [wrap-failure (All (A) (-> A) -> (U A Failure))])
 
-; (struct Failure (message) #:transparent)
 (provide (struct-out Failure))
-
-; (All (A) ((-> A) -> (U A Failure))))
-; Given a thunk, attempts to evaluate it. If an exception is raised
-; returns a Failure with diagnostic information about the exception.
-; Otherwise returns A.
-(provide wrap-failure)
+(struct Failure ([message : String]) #:transparent)
 
 (provide Result)
 (define-type (Result A) (U (Success A) Failure))

@@ -1,11 +1,9 @@
 #lang racket
 
+(require "basic-types.rkt")
 
-(provide (struct-out Failure))
-(struct Failure (message) #:transparent)
-
-(provide wrap-failure)
-(define (wrap-failure procedure)
+(provide untyped-wrap-failure)
+(define (untyped-wrap-failure procedure)
   (let ((wrap-failure-prime (lambda (exn) (Failure (format "An exception was raised: ~a\n" (log-exception exn))))))
     (with-handlers [(exn? wrap-failure-prime)] (procedure))))
   

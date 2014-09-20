@@ -13,7 +13,7 @@
 (provide can-edit)
 (define (can-edit session f . args)
   (let* ((session-role (role session))
-         (can-edit (roles:role-can-edit session-role)))
+         (can-edit (roles:Record-can-edit session-role)))
     (cond [can-edit (apply f args)]
           [else (error:not-authorized)])))
   

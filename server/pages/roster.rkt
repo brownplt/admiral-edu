@@ -124,7 +124,7 @@
 (define (is-role? id)
   (lambda (record)
     (let* ((role (role:record-role record))
-           (role-id (roles:role-id role)))
+           (role-id (roles:Record-id role)))
       (= role-id id))))
 
 (define is-instructor? (is-role? instructor-role))

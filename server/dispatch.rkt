@@ -93,12 +93,12 @@
 
 (define (require-auth session f)
   (let* ((user-role (role session))
-         (can-sudo (if user-role (roles:role-can-edit user-role) #f)))
+         (can-sudo (if user-role (roles:Record-can-edit user-role) #f)))
     (if can-sudo (f) (error:not-authorized))))
 
 (define (with-sudo post post-data uid session bindings raw-bindings path)
   (let* ((user-role (role session))
-         (can-sudo (if user-role (roles:role-can-edit user-role) #f))
+         (can-sudo (if user-role (roles:Record-can-edit user-role) #f))
          (new-session (ct-session (ct-session-class session) uid (ct-session-table session))))
     (if (not can-sudo) (error:four-oh-four)
         (handlerPrime post post-data new-session bindings raw-bindings path))))

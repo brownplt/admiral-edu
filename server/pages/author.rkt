@@ -23,7 +23,7 @@
 
 (provide load)
 (define (load session role rest [message '()])
-  (if (not (roles:role-can-edit role)) (error:not-authorized)
+  (if (not (roles:Record-can-edit role)) (error:not-authorized)
       (let* ((len (length rest))
              (action (if (= 0 len) NEW-ACTION (car rest))))
         (cond [(equal? NEW-ACTION action) (authoring session role rest message)]

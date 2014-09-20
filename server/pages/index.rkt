@@ -43,11 +43,11 @@
 (define (user-info session role)
   `((h2 "User Information")
     (p ,(string-append "User ID: " (ct-session-uid session)))
-    (p ,(string-append "User Role: " (roles:role-name role)))))
+    (p ,(string-append "User Role: " (roles:Record-name role)))))
 
 (define (render-menu session role)
   (let ((start-url (hash-ref (ct-session-table session) 'start-url)))
-    (if (not (roles:role-can-edit role)) (student-view start-url) (instructor-view start-url))))
+    (if (not (roles:Record-can-edit role)) (student-view start-url) (instructor-view start-url))))
 
 (define (instructor-view start-url)
   (append

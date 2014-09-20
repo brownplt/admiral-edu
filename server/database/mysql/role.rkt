@@ -84,7 +84,7 @@
         (let ((id (vector-ref result 0))
               (name (vector-ref result 1))
               (can-edit (= 1 (vector-ref result 2))))
-          (roles:role id name can-edit)))))
+          (roles:Record id name can-edit)))))
 
 ;; Returns #t if the class, user combination exists and #f otherwise
 (provide exists?)

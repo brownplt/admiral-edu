@@ -1,7 +1,6 @@
-#lang racket
+#lang typed/racket
 
-(require db
-         "common.rkt")
+(require "typed-db.rkt")
 
 ;; The roles table defines roles and their associated permissions
 (provide table id id-type name name-type can-edit can-edit-type)
@@ -17,46 +16,47 @@
 (define can-edit-type "BOOLEAN")
 
 (provide init)
+(: init (-> Void))
 (define (init)
-  (let* ((conn (make-sql-conn))
-         (drop (prepare conn (merge "DROP TABLE IF EXISTS" table)))
-        (create (prepare conn (merge "CREATE TABLE" table "("
-                                         id id-type ","
-                                         name name-type ","
-                                         can-edit can-edit-type ","
-                                         "PRIMARY KEY (" id "))"))))
-    (query-exec conn drop)
-    (query-exec conn create)
-    (release conn)))
+  (let ((drop (merge "DROP TABLE IF EXISTS" table))
+        (create (merge "CREATE TABLE" table "("
+                       id id-type ","
+                       name name-type ","
+                       can-edit can-edit-type ","
+                       "PRIMARY KEY (" id "))")))
+    (query-exec drop)
+    (query-exec create)))
 
 (provide create)
+(: create (Integer String (U 0 1) -> Void))
 (define (create id role can-edit)
-  (let* ((conn (make-sql-conn))
-         (query (merge "INSERT INTO" table "VALUES(?,?,?)"))
-        (prep (prepare conn query)))
-    (query-exec conn prep id role can-edit)
-    (release conn)))
+  (let ((query (merge "INSERT INTO" table "VALUES(?,?,?)")))
+    (query-exec query id role can-edit)))
 
-(provide role role-id role-name role-can-edit)
-(struct role (id name can-edit) #:transparent)
+(provide (struct-out Record))
+(struct: Record ([id : Integer] [name : String] [can-edit : Boolean]) #:transparent)
+
+(define record-fields (string-join (list id name can-edit) ","))
+(define-type Record-Vector (Vector Integer String Integer))
+
+(: vector->role (Record-Vector -> Record))
+(define (vector->role vec)
+  (let ((id (vector-ref vec 0))
+        (name (vector-ref vec 1))
+        (can-edit (= (vector-ref vec 2) 1)))
+    (Record id name can-edit)))
 
 (provide get-role)
+(: get-role (Integer -> Record))
 (define (get-role s-id)
-  (let* ((conn (make-sql-conn))
-         (query (merge "SELECT" name "," can-edit "FROM" table "WHERE" id "=? LIMIT 1"))
-         (prep (prepare conn query))
-         (result (query-row conn prep s-id))
-         (name (vector-ref result 0))
-         (can-edit (not (= 0 (vector-ref result 1)))))
-    (release conn)
-    (role s-id name can-edit)))
+  (let* ((query (merge "SELECT" record-fields "FROM" table "WHERE" id "=? LIMIT 1"))
+         (result (cast (query-row query s-id) Record-Vector)))
+    (vector->role result)))
 
 (provide all)
+(: all (-> (Listof Record)))
 (define (all)
-  (let* ((conn (make-sql-conn))
-         (query (merge "SELECT" id "," name "," can-edit "FROM" table))
-         (prep (prepare conn query))
-         (result (query-rows conn prep))
-         (to-record (lambda (vec) (role (vector-ref vec 0) (vector-ref vec 1) (vector-ref vec 2)))))
-    (release conn)
-    (map to-record result)))
+  (let* ((query (merge "SELECT" record-fields
+                       "FROM" table))
+         (results (cast (query-rows query) (Listof Record-Vector))))
+    (map vector->role results)))

@@ -19,7 +19,7 @@
           [body (string-join
                  (map xexpr->string
                       (filter (compose not void?)
-                              (cond [(not (roles:role-can-edit role)) (student-view:load session rest message post)]
+                              (cond [(not (roles:Record-can-edit role)) (student-view:load session rest message post)]
                                     [else (show-instructor-view session rest message post)]))))])
       (include-template "html/plain.html"))))
 
@@ -31,7 +31,7 @@
 (provide export)
 (define (export session role rest)
   (let ((assignment-id (car rest)))
-    (if (not (roles:role-can-edit role)) (fail-auth)
+    (if (not (roles:Record-can-edit role)) (fail-auth)
         (let ((data (export-assignment class-name assignment-id)))
           (response/full
            200 #"Okay"

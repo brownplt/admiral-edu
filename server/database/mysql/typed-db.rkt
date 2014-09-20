@@ -47,6 +47,11 @@
 (define (query-row query . args)
   (safe-vector (cast (native:run 'query-row query args) (Vectorof Any))))
 
+(: query-row-list (String (Listof QueryArgument) -> (Vectorof QueryResult)))
+(provide query-row-list)
+(define (query-row-list query args)
+  (safe-vector (cast (native:run 'query-row query args) (Vectorof Any))))
+
 (provide query-rows)
 (: query-rows (String QueryArgument * -> (Listof (Vectorof QueryResult))))
 (define (query-rows query . args)
@@ -78,5 +83,30 @@
                                       (native:sql-timestamp-second any))]
         [else (error "Invalid type.")]))
 
+(provide common:get-sort-by)
+(: common:get-sort-by ((Listof String) Symbol -> (ct-session -> Symbol)))
+(define (common:get-sort-by valid-columns default)
+  (lambda (session)
+    (let ((table (ct-session-table session)))
+      (cond [(not (hash-has-key? table 'sort-by)) default]
+            [else (let ((dir-string (hash-ref table 'sort-by)))
+                    (cond [(valid-column valid-columns dir-string) (string->symbol dir-string)]
+                          [else default]))]))))
 
-    
+(: common:sort-by? ((Listof String) -> (Symbol -> Boolean)))
+(provide common:sort-by?)
+(define (common:sort-by? valid-columns)
+  (lambda (symbol)
+    (valid-column valid-columns (symbol->string symbol))))
+
+(: valid-column ((Listof String) String -> Boolean))
+(define (valid-column valid-columns string)
+  (let ((result (member string valid-columns string=?)))
+    (if result #t #f)))
+
+(provide order->string)
+(: order->string ((U 'asc 'desc) -> String))
+(define (order->string order)
+  (match order
+    ['asc "ASC"]
+    ['desc "DESC"]))

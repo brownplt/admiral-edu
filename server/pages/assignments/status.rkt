@@ -52,15 +52,15 @@
     `(a ((href ,(string-append "?sort-by=" field "&order=" (symbol->string order)))) ,context))
 
 (define (submission-record->xexpr record)
-  (let ((user-id (submission:record-user record))
-        (time-stamp (format-time-stamp (submission:record-time-stamp record))))
+  (let ((user-id (submission:Record-user record))
+        (time-stamp (format-time-stamp (submission:Record-time-stamp record))))
     `(tr (td ,(view-submission-action record user-id))
          (td ,time-stamp))))
 
 (define (view-submission-action record user-id)
-  (let ((user (submission:record-user record))
-        (assignment (submission:record-assignment record))
-        (step (submission:record-step record)))
+  (let ((user (submission:Record-user record))
+        (assignment (submission:Record-assignment record))
+        (step (submission:Record-step record)))
   `(a ((href ,(string-append "/" class-name "/browse/" user "/" assignment "/" step "/"))) ,user-id)))
 
 (define (format-time-stamp time-stamp)

@@ -41,7 +41,7 @@
   (lambda (record)
     (let* ((assignment-id (assignment:Record-id record))
            (closed (not (assignment:Record-open record)))
-           (has-submitted (submission:has-submitted assignment-id class-name uid)))
+           (has-submitted (submission:has-submitted? assignment-id class-name uid)))
       (and closed has-submitted))))
 
 (define (closed-assignment-element start-url)

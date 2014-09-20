@@ -1,7 +1,6 @@
-#lang racket
+#lang typed/racket
 
-(require db
-         "common.rkt"
+(require "typed-db.rkt"
          "../../ct-session.rkt"
          (prefix-in class: "class.rkt")
          (prefix-in assignment: "assignment.rkt")
@@ -42,53 +41,49 @@
 
 ; ct-session -> (U 'class_id 'step_id 'user_id 'time_stamp 'times_reviewed)
 (provide get-sort-by)
+(: get-sort-by (ct-session -> Symbol))
 (define get-sort-by (common:get-sort-by valid-columns 'user_id))
 
 (provide sort-by?)
+(: sort-by? (Symbol -> Boolean))
 (define sort-by? (common:sort-by? valid-columns))
-
 
 ;; Initializes the assignment table.
 (provide init)
 (define (init)
-  (let* ((conn (make-sql-conn))
-         (drop (prepare conn (merge "DROP TABLE IF EXISTS" table)))
-        (create (prepare conn (merge "CREATE TABLE" table "(" 
+  (let* ((drop (merge "DROP TABLE IF EXISTS" table))
+         (create (merge "CREATE TABLE" table "(" 
                                          assignment-id assignment-id-type ","
                                          class-id class-id-type ","
                                          step-id step-id-type ","
                                          user-id user-id-type ","
                                          time-stamp time-stamp-type ","
                                          times-reviewed times-reviewed-type ","
-                                         "PRIMARY KEY (" assignment-id "," class-id "," step-id "," user-id "))"))))
-    (query-exec conn drop)
-    (query-exec conn create)
-    (release conn)))
+                                         "PRIMARY KEY (" assignment-id "," class-id "," step-id "," user-id "))")))
+    (query-exec drop)
+    (query-exec create)))
 
-
-(provide(struct-out record))
-(struct record (assignment class step user time-stamp) #:transparent)
+(provide(struct-out Record))
+(struct Record ([assignment : String] [class : String] [step : String] [user : String] [time-stamp : TimeStamp]) #:transparent)
 
 (define record-select (merge assignment-id "," class-id "," step-id "," user-id "," time-stamp))
+(define-type Vector-Record (Vector String String String String TimeStamp))
 
+(: vector->record (Vector-Record -> Record))
 (define (vector->record vec)
   (let ((assignment (vector-ref vec 0))
         (class (vector-ref vec 1))
         (step (vector-ref vec 2))
         (user (vector-ref vec 3))
         (time-stamp (vector-ref vec 4)))
-    (record assignment class step user time-stamp)))
-
+    (Record assignment class step user time-stamp)))
 
 ;;TODO Add Instructor-solution field and mark true
 (provide create-instructor-solution)
+(: create-instructor-solution (String String String String -> Void))
 (define (create-instructor-solution assignment class step user)
-     (let* ((conn (make-sql-conn))
-            (query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),9001)"))
-            (prep (prepare conn query)))
-       (query-exec conn prep assignment class step user)
-       (release conn)
-       #t))
+  (let ((query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),9001)")))
+    (query-exec query assignment class step user)))
 
 ;; Creates a record for the specified assignment, class, step, and user.
 ;; This function returns one of the following:
@@ -98,6 +93,7 @@
 ;; 'no-such-user - if the specified user does not exist
 ;; 'no-such-user-in-class - if the specified user exists but is not registered for the class
 (provide create)
+(: create (String String String String -> (U #t 'no-such-class 'no-such-assignment 'no-such-user 'no-such-user-in-class)))
 (define (create assignment class step user)
   (cond
     [(not (class:exists? class)) 'no-such-class]
@@ -105,11 +101,8 @@
     [(not (user:exists? user)) 'no-such-user]
     [(not (role:exists? class user)) 'no-such-user-in-class]
     [else
-     (let* ((conn (make-sql-conn))
-            (query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),0)"))
-            (prep (prepare conn query)))
-       (query-exec conn prep assignment class step user)
-       (release conn)
+     (let ((query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),0)")))
+       (query-exec query assignment class step user)
        #t)]))
 
 ;; Given an assignment, class, step, and user, lists all entries ordered by
@@ -121,6 +114,7 @@
 ;; 'no-such-user - if the specified user does not exist
 ;; 'no-such-user-in-class - if the specified user exists but is not registered for the class
 (provide list)
+(: list (String String String String -> (U (Listof Record) 'no-such-class 'no-such-assignment 'no-such-user 'no-such-user-in-class)))
 (define (list assignment class step user)
   (cond
     [(not (class:exists? class)) 'no-such-class]
@@ -128,53 +122,47 @@
     [(not (user:exists? user)) 'no-such-user]
     [(not (role:exists? class user)) 'no-such-user-in-class]
     [else
-     (let* ((conn (make-sql-conn))
-            (query (merge "SELECT" time-stamp
+     (let* ((query (merge "SELECT" record-select
                           "FROM" table 
                           "WHERE" assignment-id "=? AND"
                                   class-id "=? AND"
                                   step-id "=? AND"
                                   user-id "=?"
                           "ORDER BY" time-stamp "DESC"))
-            (prep (prepare conn query))
-            (result (query-rows conn prep assignment class step user))
-            (to-record (lambda (vec) (record assignment class step user (vector-ref vec 0)))))
-       (release conn)
-       (map to-record result))]))
+            (result (cast (query-rows query assignment class step user) (Listof Vector-Record))))
+       (map vector->record result))]))
 
 (provide reviewed)
+(: reviewed (String String String String -> Exact-Nonnegative-Integer))
 (define (reviewed assignment class step user)
-  (let* ((conn (make-sql-conn))
-         (query (merge "SELECT" times-reviewed
+  (let* ((query (merge "SELECT" times-reviewed
                        "FROM" table
                        "WHERE" assignment-id "=? AND"
                                class-id "=? AND"
                                step-id "=? AND"
                                user-id "=? LIMIT 1"))
-         (prep (prepare conn query))
-         (result (query-row conn prep assignment class step user)))
-    (release conn)
-    (vector-ref result 0)))
+         (result (query-row query assignment class step user))
+         (reviewed-times (vector-ref result 0)))
+    (cast reviewed-times Exact-Nonnegative-Integer)))
 
+;; TODO: Need to have a Transaction here
 (provide increment-reviewed)
+(: increment-reviewed (String String String String -> Void))
 (define (increment-reviewed assignment class step user)
-  (let* ((conn (make-sql-conn))
-         (current (reviewed assignment class step user))
+  (let* ((current (reviewed assignment class step user))
          (plusOne (+ current 1))
          (query (merge "UPDATE" table
                        "SET" times-reviewed "=?"
                        "WHERE" assignment-id "=? AND"
                                class-id "=? AND"
                                step-id "=? AND"
-                               user-id "=?"))
-         (prep (prepare conn query)))
-    (query-exec conn prep plusOne assignment class step user)
-    (release conn)))
+                               user-id "=?")))
+    (query-exec query plusOne assignment class step user)))
 
 (provide select-least-reviewed)
+(: select-least-reviewed (String String String (Listof String) -> String))
 (define (select-least-reviewed assignment class step not-users)
-  (let* ((conn (make-sql-conn))
-         (user-commas (string-join (build-list (length not-users) (lambda (n) "?")) ","))
+  (let* ((user-commas (string-join (build-list (length not-users) (lambda (n) "?")) ","))
          (query (merge "SELECT" user-id
                        "FROM" table
                        "WHERE" assignment-id "=? AND"
@@ -183,13 +171,11 @@
                                user-id " NOT IN (" user-commas ")"
                        "ORDER BY" times-reviewed "ASC"
                        "LIMIT 1"))
-         (prep (prepare conn query))
-         (arg-list (append `(,conn ,prep ,assignment ,class ,step) not-users))
-         (result (apply query-row arg-list)))
-    (release conn)
-    (vector-ref result 0)))
+         (arg-list (append `(,assignment ,class ,step) not-users))
+         (result (query-row-list query arg-list))
+         (id (vector-ref result 0)))
+    (cast id String)))
          
-
 ;; Given an assignment, class, step, and user, returns the number of entries that have been created
 ;; This function returns one of the following:
 ;; number? - If successful, a timestamp and version number are generated and returns #t
@@ -198,6 +184,7 @@
 ;; 'no-such-user - if the specified user does not exist
 ;; 'no-such-user-in-class - if the specified user exists but is not registered for the class
 (provide count)
+(: count (String String String String -> (U Exact-Nonnegative-Integer 'no-such-class 'no-such-assignment 'no-such-user 'no-such-user-in-class)))
 (define (count assignment class step user)
   (cond
     [(not (class:exists? class)) 'no-such-class]
@@ -205,54 +192,52 @@
     [(not (user:exists? user)) 'no-such-user]
     [(not (role:exists? class user)) 'no-such-user-in-class]
     [else
-     (let* ((conn (make-sql-conn))
-            (query (merge "SELECT COUNT(*)"
+     (let* ((query (merge "SELECT COUNT(*)"
                           "FROM" table 
                           "WHERE" assignment-id "=? AND"
                                   class-id "=? AND"
                                   step-id "=? AND"
                                   user-id "=?"
                           "LIMIT 1"))
-            (prep (prepare conn query))
-            (result (vector-ref (query-row conn prep assignment class step user) 0)))
-       (release conn)
-       result)]))
+            (result (query-value query assignment class step user)))
+       (cast result Exact-Nonnegative-Integer))]))
 
 (provide exists?)
+(: exists? (String String String String -> Boolean))
 (define (exists? assignment class step user)
-         (let* ((conn (make-sql-conn))
-                (query (merge "SELECT COUNT(*)"
+         (let* ((query (merge "SELECT COUNT(*)"
                               "FROM" table
                               "WHERE" assignment-id "=? AND"
                                       class-id "=? AND"
                                       step-id "=? AND"
                                       user-id "=?"
                               "LIMIT 1"))
-                (prep (prepare conn query))
-                (result (vector-ref (query-row conn prep assignment class step user) 0)))
-           (release conn)
-           (> result 0)))
+                (result (query-value query assignment class step user)))
+           (> (cast result Exact-Nonnegative-Integer) 0)))
 
-(provide has-submitted)
-(define (has-submitted assignment class user)
+(provide has-submitted?)
+(: has-submitted? (String String String -> Boolean))
+(define (has-submitted? assignment class user)
   (let* ((q (merge "SELECT COUNT(*)"
                    "FROM" table
                    "WHERE" assignment-id "=? AND"
                            class-id "=? AND"
                            user-id "=?"
                    "LIMIT 1"))
-         (result (run query-row q assignment class user))
+         (result (query-row q assignment class user))
          (value (vector-ref result 0)))
-    (> value 0)))
+    (> (cast value Exact-Nonnegative-Integer) 0)))
 
 (provide delete-assignment)
+(: delete-assignment (String String -> Void))
 (define (delete-assignment class assignment)
   (let ((query (merge "DELETE FROM" table
                        "WHERE" assignment-id "=? AND"
                                class-id "=?")))
-    (run query-exec query assignment class)))
+    (query-exec query assignment class)))
 
 (provide select-all)
+(: select-all (String String String Symbol (U 'asc 'desc) -> (Listof Record)))
 (define (select-all assignment class step sort-by order)
   (let* ((sort-by (if (sort-by? sort-by) (symbol->string sort-by) user-id))
          (query (merge "SELECT" record-select
@@ -262,10 +247,11 @@
                                step-id "=? AND"
                                user-id "NOT LIKE \"default-submission%\""
                        "ORDER BY" sort-by (order->string order)))
-         (results (run query-rows query assignment class step)))
-    (map vector->record results)))
+         (results (query-rows query assignment class step)))
+    (map vector->record (cast results (Listof Vector-Record)))))
 
 (provide count-step)
+(: count-step (String String String -> Exact-Nonnegative-Integer))
 (define (count-step assignment class step)
   (let* ((q (merge "SELECT COUNT(*)"
                    "FROM" table
@@ -274,5 +260,5 @@
                            step-id "=? AND"
                            user-id "NOT LIKE \"default-submission%\""
                    "LIMIT 1"))
-         (result (run query-row q assignment class step)))
-    (vector-ref result 0)))
+         (result (query-value q assignment class step)))
+    (cast result Exact-Nonnegative-Integer)))

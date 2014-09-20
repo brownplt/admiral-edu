@@ -1,45 +1,39 @@
-#lang racket
-(require db
-         "common.rkt")
+#lang typed/racket
+(require "typed-db.rkt")
 
 ;; User Table
 (provide table uid uid-type)
+
 (define table "user")
 (define uid "uid")
-(define uid-type "varchar(255)")
+(define uid-type "VARCHAR(255) UNIQUE")
 
-;; Initializes the user table.
+;; Creates the user table removing any previously existing table.
 (provide init)
+(: init (-> Void))
 (define (init)
-  (let* ((conn (make-sql-conn))
-         (drop (prepare conn (merge "DROP TABLE IF EXISTS" table)))
-         (create (prepare conn (merge "CREATE TABLE" table "(" uid uid-type "unique)"))))
-    (query-exec conn drop)
-    (query-exec conn create)
-    (release conn)))
+  (let ((drop (merge "DROP TABLE IF EXISTS" table))
+        (create (merge "CREATE TABLE" table "(" uid uid-type ")")))
+    (query-exec drop)
+    (query-exec create)))
 
-;; Creates a record in the user table
+;; Creates a record with the specified username.
 (provide create)
+(: create (String -> Void))
 (define (create username)
-  (let* ((conn (make-sql-conn))
-         (query (prepare conn (merge "INSERT INTO" table "values (?)"))))
-    (query-exec conn query username)
-    (release conn)))
+  (let ((query (merge "INSERT INTO" table "values (?)")))
+    (query-exec query username)))
 
-;; Retrieves all users
 (provide all)
+(: all (-> (Listof (Vectorof QueryResult))))
 (define (all)
-  (let* ((conn (make-sql-conn))
-         (query (prepare conn (merge "SELECT * FROM" table)))
-         (result (query-rows conn query)))
-    (release conn)
-    result))
+  (let ((query (merge "SELECT * FROM" table)))
+    (query-rows query)))
 
 (provide exists?)
+(: exists? (String -> Boolean))
 (define (exists? s-uid)
-  (let* ((conn (make-sql-conn))
-         (query (merge "SELECT COUNT(" uid ") FROM" table "WHERE" uid "=?"))
-         (prep (prepare conn query))
-         (result (vector-ref (query-row conn prep s-uid) 0)))
-    (release conn)
-    (> result 0)))
+  (let* ((query (merge "SELECT COUNT(" uid ") FROM" table "WHERE" uid "=?"))
+         (result (query-row query s-uid))
+         (count (vector-ref result 0)))
+    (> (cast count Exact-Nonnegative-Integer) 0)))

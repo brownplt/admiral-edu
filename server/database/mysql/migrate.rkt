@@ -1,8 +1,6 @@
 #lang racket
 
-(require db
-         "common.rkt"
-         "../../util/basic-types.rkt"
+(require "../../util/basic-types.rkt"
          (prefix-in system: "system.rkt")
          (prefix-in v1: "migrate-0-1.rkt"))
 

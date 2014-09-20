@@ -5,7 +5,8 @@
          "../../util/basic-types.rkt"
          "../../util/failure.rkt")
 
-(provide (all-from-out "../../util/basic-types.rkt"))
+(provide (all-from-out "../../util/basic-types.rkt")
+         (all-from-out "../../util/failure.rkt"))
 
 (require/typed (prefix-in native: "untyped-db.rkt")
                [native:sql-timestamp? (Any -> Boolean)]

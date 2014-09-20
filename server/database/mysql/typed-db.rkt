@@ -18,7 +18,7 @@
                [native:sql-timestamp-second (Any -> Nonnegative-Integer)]
                [native:run ((U 'query-rows 'query-row 'query-exec 'query-value) String (Listof QueryArgument) -> Any)])
 
-(provide TimeStamp)
+(provide (struct-out TimeStamp))
 (struct: TimeStamp ([year : Nonnegative-Integer] 
                     [month : Nonnegative-Integer]
                     [day : Nonnegative-Integer]

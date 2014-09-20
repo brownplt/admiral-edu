@@ -1,6 +1,6 @@
 #lang racket
 
-(require db
+(require "../../database/mysql/typed-db.rkt"
          "../../base.rkt"
          "../../authoring/assignment.rkt"
          (prefix-in browse: "../browse.rkt")
@@ -64,12 +64,12 @@
   `(a ((href ,(string-append "/" class-name "/browse/" user "/" assignment "/" step "/"))) ,user-id)))
 
 (define (format-time-stamp time-stamp)
-  (let ((year (number->string (sql-timestamp-year time-stamp)))
-        (month (month->string (sql-timestamp-month time-stamp)))
-        (day (number->string (sql-timestamp-day time-stamp)))
-        (hour (number->string (sql-timestamp-hour time-stamp)))
-        (minute (ensure-leading-zero (number->string (sql-timestamp-minute time-stamp))))
-        (second (ensure-leading-zero (number->string (sql-timestamp-second time-stamp)))))
+  (let ((year (number->string (TimeStamp-year time-stamp)))
+        (month (month->string (TimeStamp-month time-stamp)))
+        (day (number->string (TimeStamp-day time-stamp)))
+        (hour (number->string (TimeStamp-hour time-stamp)))
+        (minute (ensure-leading-zero (number->string (TimeStamp-minute time-stamp))))
+        (second (ensure-leading-zero (number->string (TimeStamp-second time-stamp)))))
     (string-append month " " day " " year " " hour ":" minute ":" second)))
 
 (define (ensure-leading-zero str)

@@ -17,14 +17,14 @@
 ; string-url -> (listof xexpr? void?)
 (define (list-open-assignments start-url)
   (let* ((assignments (assignment:list class-name))
-         (open-assignments (filter assignment:record-open assignments)))
+         (open-assignments (filter assignment:Record-open assignments)))
     (cond [(empty? open-assignments) '((p "There are currently no open assignments."))]
           [else (map (open-assignment-element start-url) open-assignments)])))
 
 ; string-url -> (listof xexpr? void?)
 (define (open-assignment-element start-url)
   (lambda (record)
-    (let ((assignment-id (assignment:record-id record)))
+    (let ((assignment-id (assignment:Record-id record)))
     `(li ,assignment-id " : "
         (a ((href ,(string-append start-url "../next/" assignment-id "/"))) "Next Step") " - "
         (a ((href ,(string-append start-url "../feedback/" assignment-id "/"))) "Assignment Feedback")))))
@@ -39,13 +39,13 @@
 
 (define (show-closed? uid)
   (lambda (record)
-    (let* ((assignment-id (assignment:record-id record))
-           (closed (not (assignment:record-open record)))
+    (let* ((assignment-id (assignment:Record-id record))
+           (closed (not (assignment:Record-open record)))
            (has-submitted (submission:has-submitted assignment-id class-name uid)))
       (and closed has-submitted))))
 
 (define (closed-assignment-element start-url)
   (lambda (record)
-    (let ((assignment-id (assignment:record-id record)))
+    (let ((assignment-id (assignment:Record-id record)))
       `(li ,assignment-id " : "
            (a ((href ,(string-append start-url "../feedback/" assignment-id "/"))) "Assignment Feedback")))))

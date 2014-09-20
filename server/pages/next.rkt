@@ -20,7 +20,7 @@
 (define (next session role rest [message '()])
   (let* ((assignment-id (car rest))
          (assignment-record (assignment:select class-name assignment-id))
-         (is-open (assignment:record-open assignment-record))
+         (is-open (assignment:Record-open assignment-record))
          (start-url (hash-ref (ct-session-table session) 'start-url)))
     (if (not is-open) (error:assignment-closed)
         (let* ((uid (ct-session-uid session))

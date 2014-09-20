@@ -10,7 +10,7 @@
   (let ((assignment-id (Assignment-id assignment))
         (step-id (Step-id step)))
     (let* ((assignment-record (assignment:select class-name assignment-id))
-           (is-open (assignment:record-open assignment-record)))
+           (is-open (assignment:Record-open assignment-record)))
       (if (not is-open) (Failure "This assignment is currently closed.")
           (let ((result (upload-submission class-name uid assignment-id step-id file-name data)))
             (if (not result) (Failure "The submission failed. This is most likely because the file uploaded was not a zip archive.")

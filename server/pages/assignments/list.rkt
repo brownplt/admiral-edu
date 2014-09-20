@@ -7,8 +7,8 @@
 (provide load)
 (define (load session url message [post #f])
     (let* ((assign-list (assignment:list class-name))
-           (open-assignments (filter assignment:record-open assign-list))
-           (closed-assignments (filter (lambda (x) (not (assignment:record-open x))) assign-list)))
+           (open-assignments (filter assignment:Record-open assign-list))
+           (closed-assignments (filter (lambda (x) (not (assignment:Record-open x))) assign-list)))
       `((h1 "Assignments")
         ,(when message message)
         (p (a ((href ,(string-append "/" class-name "/author/"))) "New Assignment"))
@@ -19,6 +19,6 @@
 
 
 (define (record->html record)
-    (let ((id (assignment:record-id record)))
+    (let ((id (assignment:Record-id record)))
       `(li ,(action:dashboard id id))))
       

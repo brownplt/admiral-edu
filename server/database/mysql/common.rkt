@@ -12,7 +12,6 @@
 (define (merge . strings)
   (string-join strings " "))
 
-
 (provide make-sql-conn)
 (define (make-sql-conn)
   (connect))
@@ -33,15 +32,6 @@
                                  #:server (get-db-address))))
 
     new-conn))
-
-;;TODO: We should really be using a connection pool. However,
-;; this eventually causes the system to hang after being idle and results
-;; in the annoying 502 proxy errors
-(define pool (connection-pool connect))
-
-(provide try-with-default)
-(define (try-with-default default f . args)
-  (with-handlers ([exn:fail? (lambda (exn) default)]) (apply f args)))
 
 (provide run)
 (define (run query-func q . args)

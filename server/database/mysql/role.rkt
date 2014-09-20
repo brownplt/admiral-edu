@@ -78,7 +78,7 @@
                        "LIMIT 1"))
          (conn (make-sql-conn))
          (prep (prepare conn query))
-         (result (try-with-default #f query-row conn prep class uid)))
+         (result (query-row conn prep class uid)))
     (release conn)
     (if (not result) result
         (let ((id (vector-ref result 0))
@@ -102,7 +102,7 @@
   ;; TODO: Validate that the class, uid, and role exist
   (let* ((conn (make-sql-conn))
          (create (prepare conn (merge "INSERT INTO" table "values(?,?,?)")))
-         (result (if (eq? #f (try-with-default #f query-exec conn create class uid role-id)) #f #t)))
+         (result (if (eq? #f (query-exec conn create class uid role-id)) #f #t)))
     (release conn)
     result))
 

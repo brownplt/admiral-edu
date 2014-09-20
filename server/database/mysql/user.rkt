@@ -24,16 +24,18 @@
   (let ((query (merge "INSERT INTO" table "values (?)")))
     (query-exec query username)))
 
+;; Return a list of all users in the system
 (provide all)
 (: all (-> (Listof (Vectorof QueryResult))))
 (define (all)
   (let ((query (merge "SELECT * FROM" table)))
     (query-rows query)))
 
+
+;; Returns #t if the user exists and #f otherwise.
 (provide exists?)
 (: exists? (String -> Boolean))
 (define (exists? s-uid)
   (let* ((query (merge "SELECT COUNT(" uid ") FROM" table "WHERE" uid "=?"))
-         (result (query-row query s-uid))
-         (count (vector-ref result 0)))
-    (> (cast count Exact-Nonnegative-Integer) 0)))
+         (result (query-value query s-uid)))
+    (> (cast result Exact-Nonnegative-Integer) 0)))

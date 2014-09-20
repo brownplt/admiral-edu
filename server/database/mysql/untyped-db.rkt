@@ -20,7 +20,8 @@
          (query-args (prepare-statement conn q args))
          (func (cond [(eq? query-func 'query-rows) query-rows]
                      [(eq? query-func 'query-row) query-row]
-                     [(eq? query-func 'query-exec) query-exec]))
+                     [(eq? query-func 'query-exec) query-exec]
+                     [(eq? query-func 'query-value) query-value]))
          (result (apply func query-args)))
     (disconnect conn)
     result))

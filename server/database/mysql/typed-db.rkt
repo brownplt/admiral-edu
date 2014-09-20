@@ -16,7 +16,7 @@
                [native:sql-timestamp-hour (Any -> Nonnegative-Integer)]
                [native:sql-timestamp-minute (Any -> Nonnegative-Integer)]
                [native:sql-timestamp-second (Any -> Nonnegative-Integer)]
-               [native:run ((U 'query-rows 'query-row 'query-exec) String (Listof QueryArgument) -> Any)])
+               [native:run ((U 'query-rows 'query-row 'query-exec 'query-value) String (Listof QueryArgument) -> Any)])
 
 (provide TimeStamp)
 (struct: TimeStamp ([year : Nonnegative-Integer] 
@@ -51,6 +51,11 @@
 (: query-rows (String QueryArgument * -> (Listof (Vectorof QueryResult))))
 (define (query-rows query . args)
   (map safe-vector (cast (native:run 'query-rows query args) (Listof (Vectorof Any)))))
+
+(provide query-value)
+(: query-value (String QueryArgument * -> QueryResult))
+(define (query-value query . args)
+  (->query-result (native:run 'query-value query args)))
 
 ;; Converts a Vectorof Any to a Vectorof QueryResults
 (: safe-vector ((Vectorof Any) -> (Vectorof QueryResult)))

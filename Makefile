@@ -4,7 +4,6 @@ TAG = admiraledu
 
 ENV = -e ClientID=$(ClientID) \
 	-e ClientSecret=$(ClientSecret) \
-	-e AdminEmail=$(AdminEmail) \
 	-e RedirectUri=$(RedirectUri) \
 	-e BaseUrl=$(BaseUrl) \
 	-e CryptoPassphrase=$(CryptoPassphrase) \

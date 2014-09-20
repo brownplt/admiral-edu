@@ -5,6 +5,8 @@
          "../../util/basic-types.rkt"
          "../../util/failure.rkt")
 
+(provide (all-from-out "../../util/basic-types.rkt"))
+
 (require/typed (prefix-in native: "untyped-db.rkt")
                [native:sql-timestamp? (Any -> Boolean)]
                [native:sql-timestamp-year (Any -> Nonnegative-Integer)]
@@ -28,33 +30,26 @@
 (define (merge . strings)
   (string-join strings " "))
 
+(provide QueryArgument)
 (define-type QueryArgument (U String Number))
+
+(provide QueryResult)
 (define-type QueryResult (U String Number TimeStamp))
 
-;; Attempts to execute a query.
-(: query-exec (String QueryArgument * -> (Result Void)))
+(: query-exec (String QueryArgument * -> Void))
 (provide query-exec)
 (define (query-exec query . args)
-  (let ((result (wrap-failure (lambda () (cast (native:run 'query-exec query args) Void)))))
-    (cond [(Failure? result) (cast result Failure)]
-          [else (Success (void))])))
+  (cast (native:run 'query-exec query args) Void))
 
-;; Attempts to Query a single row.
-(: query-row (String QueryArgument * -> (Result (Vectorof QueryResult))))
+(: query-row (String QueryArgument * -> (Vectorof QueryResult)))
 (provide query-row)
 (define (query-row query . args)
-  (let*: ([thunk : (-> (Vectorof Any)) (lambda () (cast (native:run 'query-row query args) (Vectorof Any)))]
-          (try (wrap-failure thunk)))
-    (cond [(Failure? try) (cast try Failure)]
-          [else (Success (safe-vector (cast try (Vectorof Any))))])))
+  (safe-vector (cast (native:run 'query-row query args) (Vectorof Any))))
 
-;; Attempts to Query rows
 (provide query-rows)
-(: query-rows (String QueryArgument * -> (Result (Listof (Vectorof QueryResult)))))
+(: query-rows (String QueryArgument * -> (Listof (Vectorof QueryResult))))
 (define (query-rows query . args)
-  (let ((result (wrap-failure (lambda () (map safe-vector (cast (native:run 'query-rows query args) (Listof (Vectorof Any))))))))
-    (cond [(Failure? result) (cast result Failure)]
-          [else (cast (Success result) (Success (Listof (Vectorof QueryResult))))])))
+  (map safe-vector (cast (native:run 'query-rows query args) (Listof (Vectorof Any)))))
 
 ;; Converts a Vectorof Any to a Vectorof QueryResults
 (: safe-vector ((Vectorof Any) -> (Vectorof QueryResult)))

@@ -1,48 +1,34 @@
-#lang racket
+#lang typed/racket
 
-(require db
-         "common.rkt")
+(require "typed-db.rkt")
 
 ;; Class Table
 (provide table id id-type)
 (define table "class")
 (define id "id")
-(define id-type "varchar(255)")
+(define id-type "VARCHAR(255) UNIQUE")
 
-;; Initializes the class table.
 (provide init)
+(: init (-> Void))
 (define (init)
-  (let* ((conn (make-sql-conn))
-        (drop (prepare conn (merge "DROP TABLE IF EXISTS" table)))
-        (create (prepare conn (merge "CREATE TABLE" table "(" id id-type "unique)"))))
-    (query-exec conn drop)
-    (query-exec conn create)
-    (release conn)))
+  (let ((drop (merge "DROP TABLE IF EXISTS" table))
+        (create (merge "CREATE TABLE" table "(" id id-type ")")))
+    (query-exec drop)
+    (query-exec create)))
 
-;; Retrieve all classes
 (provide all)
+(: all (-> (Listof (Vectorof QueryResult))))
 (define (all)
-  (let* ((conn (make-sql-conn))
-         (query (prepare conn (merge "SELECT * FROM" table)))
-         (result (query-rows conn query)))
-    (release conn)
-    result))
+  (query-rows (merge "SELECT * FROM" table)))
 
-;; Creates a record in the class table
 (provide create)
+(: create (String -> Void))
 (define (create id)
-  (let* ((conn (make-sql-conn))
-         (create (prepare conn (merge "INSERT INTO" table "values(?)"))))
-    (query-exec conn create id)
-    (release conn)))
+  (query-exec (merge "INSERT INTO" table "values(?)") id))
 
-;; Checks that a class exists
 (provide exists?)
+(: exists? (String -> Boolean))
 (define (exists? class)
-  (let* ((conn (make-sql-conn))
-         (query (merge "SELECT COUNT(*) FROM" table "WHERE" id "=? LIMIT 1"))
-         (prepped (prepare conn query))
-         (result (vector-ref (query-row conn prepped class) 0)))
-    (release conn)
-    (= 1 result)))
-         
+  (let* ((query (merge "SELECT COUNT(*) FROM" table "WHERE" id "=? LIMIT 1"))
+         (result (cast (query-value query class) Exact-Nonnegative-Integer)))
+    (= result 1)))

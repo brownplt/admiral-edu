@@ -59,5 +59,5 @@
    `((p (a ((href ,(string-append start-url "assignments/"))) "Assignments")))))
     
 (define (show-record record)
-  `(p ,(role:user-uid record)))
+  `(p ,(role:Record-uid record)))
 

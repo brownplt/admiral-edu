@@ -123,7 +123,7 @@
 
 (define (is-role? id)
   (lambda (record)
-    (let* ((role (role:record-role record))
+    (let* ((role (role:Record-role record))
            (role-id (roles:Record-id role)))
       (= role-id id))))
 
@@ -144,5 +144,5 @@
 
 (define (render-record start-url)
   (lambda (record)
-    (let* ((uid (role:record-uid record)))
+    (let* ((uid (role:Record-uid record)))
       (string-append "<p>" uid " - <a href='" start-url EDIT-USER "/" uid "/'>Edit User</a></p>"))))

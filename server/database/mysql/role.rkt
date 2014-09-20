@@ -1,7 +1,6 @@
-#lang racket
+#lang typed/racket
 
-(require db
-         "common.rkt"
+(require "typed-db.rkt"
          (prefix-in user: "user.rkt")
          (prefix-in class: "class.rkt")
          (prefix-in roles: "roles.rkt"))
@@ -18,53 +17,53 @@
 (define role-id "role_id")
 (define role-id-type roles:id-type)
 
-;; Initializes the role table.
 (provide init)
+(: init (-> Void))
 (define (init)
-  (let* ((conn (make-sql-conn))
-         (drop-query (merge "DROP TABLE IF EXISTS" table))
-         (drop (prepare conn drop-query))
-         (create-query (merge "CREATE TABLE" table "(" 
+  (let ((drop (merge "DROP TABLE IF EXISTS" table))
+        (create (merge "CREATE TABLE" table "(" 
                                          class-id class-id-type ","
                                          user-id user-id-type ","
                                          role-id role-id-type ","
-                                         "PRIMARY KEY (" class-id "," user-id "))"))
-         (create (prepare conn create-query)))
-    (query-exec conn drop)
-    (query-exec conn create)
-    (release conn)))
+                                         "PRIMARY KEY (" class-id "," user-id "))")))
+    (query-exec drop)
+    (query-exec create)))
 
 (provide delete)
+(: delete (String String -> Void))
+(provide delete)
 (define (delete class-name uid)
-  (let* ((query (merge "DELETE FROM" table
+  (let ((query (merge "DELETE FROM" table
                        "WHERE" class-id "=? AND"
-                               user-id "=?"))
-         (result (run query-exec query class-name uid)))
-    result))
+                               user-id "=?")))
+    (query-exec query class-name uid)))
 
-(provide (struct-out record))
-(struct record (class uid role) #:transparent)
+(provide (struct-out Record))
+(struct: Record ([class : String] [uid : String] [role : roles:Record]) #:transparent)
 
 (define record-cols (string-join (list class-id user-id role-id) ","))
+(define-type Record-Vector (Vector String String Integer))
 
+(: vector->record (Record-Vector -> Record))
 (define (vector->record vec)
   (let* ((class (vector-ref vec 0))
          (uid (vector-ref vec 1))
          (role (roles:get-role (vector-ref vec 2)))
-         (result (record class uid role)))
+         (result (Record class uid role)))
     result))
 
 (provide all)
+(: all (String -> (Listof Record)))
 (define (all class)
   (let* ((query (merge "SELECT" record-cols
                        "FROM" table
                        "WHERE" class-id "=?"))
-         (results (run query-rows query class))
+         (results (cast (query-rows query class) (Listof Record-Vector)))
          (records (map vector->record results)))
     records))
 
-;; Retrieve a roles:role for a class/user
 (provide select)
+(: select (String String -> roles:Record))
 (define (select class uid)
   (let* ((query (merge "SELECT" roles:table "." roles:id ","
                                 roles:table "." roles:name ","
@@ -76,59 +75,28 @@
                                table "." class-id "=? AND"
                                table "." user-id "=?" 
                        "LIMIT 1"))
-         (conn (make-sql-conn))
-         (prep (prepare conn query))
-         (result (query-row conn prep class uid)))
-    (release conn)
-    (if (not result) result
-        (let ((id (vector-ref result 0))
-              (name (vector-ref result 1))
-              (can-edit (= 1 (vector-ref result 2))))
-          (roles:Record id name can-edit)))))
+         (result (roles:vector->Record (cast (query-row query class uid) (Vector Integer String Integer)))))
+    result))
 
-;; Returns #t if the class, user combination exists and #f otherwise
 (provide exists?)
+(: exists? (String String -> Boolean))
 (define (exists? class user)
-  (let* ((conn (make-sql-conn))
-         (query (merge "SELECT COUNT(*) FROM" table "WHERE" class-id "=? AND" user-id "=? LIMIT 1"))
-         (prep (prepare conn query))
-         (result (vector-ref (query-row conn prep class user) 0)))
-    (release conn)
+  (let* ((query (merge "SELECT COUNT(*) FROM" table "WHERE" class-id "=? AND" user-id "=? LIMIT 1"))
+         (result (cast (query-value query class user) Integer)))
     (= 1 result)))
     
-;; Associates a class and user id with the specified role id. Returns #t if successful and #f otherwise.
+(provide associate)
+(: associate (String String Integer -> Void))
 (provide associate)
 (define (associate class uid role-id)
-  ;; TODO: Validate that the class, uid, and role exist
-  (let* ((conn (make-sql-conn))
-         (create (prepare conn (merge "INSERT INTO" table "values(?,?,?)")))
-         (result (if (eq? #f (query-exec conn create class uid role-id)) #f #t)))
-    (release conn)
-    result))
+  (let ((create (merge "INSERT INTO" table "values(?,?,?)")))
+    (query-exec create class uid role-id)))
 
 (provide set-role)
+(: set-role (String String Integer -> Void))
 (define (set-role class uid  new-role)
-  (let* ((query (merge "UPDATE" table
-                       "SET" role-id "=?"
-                       "WHERE" class-id "=? AND"
-                               user-id "=?"))
-         (result (run query-exec query new-role class uid)))
-    result))
-
-;; Retrieve all students for a class
-(provide in-class)
-(define (in-class class s-role limit page)
-  (let* ((conn (make-sql-conn))
-         (lower (* limit page))
-         (upper (+ lower limit))
-         (query (merge "SELECT" user-id "FROM" table "WHERE" class-id "=? AND" role-id "=? LIMIT ?, ?"))
-         (prepped (prepare conn query))
-         (to-record (lambda (result) (user (vector-ref result 0) class 0)))
-         (result (map to-record (query-rows conn query class s-role lower upper))))
-    (release conn)
-    result))
-
-(provide user user-uid user-class user-role)
-(struct user (uid class role) #:transparent)
-
-;; (define (select-students-in-class class limit page) (internal-select-students-in-class class limit page))
+  (let ((query (merge "UPDATE" table
+                      "SET" role-id "=?"
+                      "WHERE" class-id "=? AND"
+                              user-id "=?")))
+    (query-exec query new-role class uid)))

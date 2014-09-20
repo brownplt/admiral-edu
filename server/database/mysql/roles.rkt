@@ -39,8 +39,9 @@
 (define record-fields (string-join (list id name can-edit) ","))
 (define-type Record-Vector (Vector Integer String Integer))
 
-(: vector->role (Record-Vector -> Record))
-(define (vector->role vec)
+(provide vector->Record)
+(: vector->Record (Record-Vector -> Record))
+(define (vector->Record vec)
   (let ((id (vector-ref vec 0))
         (name (vector-ref vec 1))
         (can-edit (= (vector-ref vec 2) 1)))
@@ -51,7 +52,7 @@
 (define (get-role s-id)
   (let* ((query (merge "SELECT" record-fields "FROM" table "WHERE" id "=? LIMIT 1"))
          (result (cast (query-row query s-id) Record-Vector)))
-    (vector->role result)))
+    (vector->Record result)))
 
 (provide all)
 (: all (-> (Listof Record)))
@@ -59,4 +60,4 @@
   (let* ((query (merge "SELECT" record-fields
                        "FROM" table))
          (results (cast (query-rows query) (Listof Record-Vector))))
-    (map vector->role results)))
+    (map vector->Record results)))

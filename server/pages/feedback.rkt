@@ -36,7 +36,7 @@
 (define (post->do-feedback-submit session review-hash bindings)
   (let* ((review (review:select-by-hash review-hash))
          (uid (ct-session-uid session))
-         (reviewee (review:record-reviewee-id review))
+         (reviewee (review:Record-reviewee-id review))
          (match (equal? uid reviewee))
          (feedback (if (exists-binding? 'feedback bindings) (extract-binding/single 'feedback bindings) ""))
          (flag (if (exists-binding? 'flag bindings) #t #f)))
@@ -67,8 +67,8 @@
 (define (gen-reviews-helper reviews cur start-url)
   (if (null? reviews) ""
       (let* ((review (car reviews))
-             (hash (review:record-hash review))
-             (step (review:record-step-id review))
+             (hash (review:Record-hash review))
+             (step (review:Record-step-id review))
              (rest (cdr reviews)))
         (string-append "<p><a href='" start-url "../view/" hash "/'>Review #" (number->string cur) ": " step "</a></p>" (gen-reviews-helper rest (+ 1 cur) start-url)))))
          
@@ -76,13 +76,13 @@
   (let* ((start-url (hash-ref (ct-session-table session) 'start-url))
          (r-hash (car rest))
          (review (review:select-by-hash r-hash))
-         (assignment (review:record-assignment-id review))
-         (step (review:record-step-id review))
+         (assignment (review:Record-assignment-id review))
+         (step (review:Record-step-id review))
          (updir (apply string-append (repeat "../" (+ (length rest) 1))))
          (root-url updir)
          [display-message message]
          [review-feedback (load-review-feedback review)]
-         [review-flagged (if (review:record-flagged review) "CHECKED" "")]
+         [review-flagged (if (review:Record-flagged review) "CHECKED" "")]
          [submit-url (string-append start-url root-url "review/submit/" r-hash "/")]
          (updir-rubric (apply string-append (repeat "../" (- (length rest) 1))))
          [file-container (string-append start-url updir "file-container/" (to-path rest))]
@@ -94,7 +94,7 @@
 
 (define (validate review session)
   (let ((uid (ct-session-uid session))
-        (reviewee (review:record-reviewee-id review)))
+        (reviewee (review:Record-reviewee-id review)))
     (equal? uid reviewee)))
 
 (define (do-file-container session role rest [message '()])
@@ -102,9 +102,9 @@
          (r-hash (car rest))
          (review (review:select-by-hash r-hash))
          (class (ct-session-class session))
-         [assignment (review:record-assignment-id review)]
-         (stepName (review:record-step-id review))
-         (reviewee (review:record-reviewee-id review))
+         [assignment (review:Record-assignment-id review)]
+         (stepName (review:Record-step-id review))
+         (reviewee (review:Record-reviewee-id review))
          [default-mode (determine-mode-from-filename (last rest))]
          [load-url (string-append "'" start-url "load" "'")]
          [step (to-step-link stepName (- (length rest) 2))]
@@ -200,11 +200,11 @@
 (define (post->load session path review)
   (let* (
          (class (ct-session-class session))
-         (assignment (review:record-assignment-id review))
-         (stepName (review:record-step-id review))
-         (reviewer (review:record-reviewer-id review))
+         (assignment (review:Record-assignment-id review))
+         (stepName (review:Record-step-id review))
+         (reviewer (review:Record-reviewer-id review))
          (reviewee (ct-session-uid session))
-         (review-id (review:record-review-id review))
+         (review-id (review:Record-review-id review))
          (data (load-review-comments class assignment stepName review-id reviewer reviewee path)))
     (response/full
      200 #"Okay"
@@ -221,11 +221,11 @@
   
 (define (post->load-rubric session review)
   (let* ((class (ct-session-class session))
-         (assignment (review:record-assignment-id review))
-         (stepName (review:record-step-id review))
-         (reviewer (review:record-reviewer-id review))
+         (assignment (review:Record-assignment-id review))
+         (stepName (review:Record-step-id review))
+         (reviewer (review:Record-reviewer-id review))
          (reviewee (ct-session-uid session))
-         (review-id (review:record-review-id review))
+         (review-id (review:Record-review-id review))
          (data (retrieve-rubric class assignment stepName review-id reviewer reviewee)))
     (response/full
      200 #"Okay"

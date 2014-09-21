@@ -266,12 +266,12 @@
       data)))
 
 (define (get-review-path review)
-  (let* ((class (review:record-class-id review))
-         (assignment (review:record-assignment-id review))
-         (step (review:record-step-id review))
-         (review-id (review:record-review-id review))
-         (reviewer (review:record-reviewer-id review))
-         (reviewee (review:record-reviewee-id review)))
+  (let* ((class (review:Record-class-id review))
+         (assignment (review:Record-assignment-id review))
+         (step (review:Record-step-id review))
+         (review-id (review:Record-review-id review))
+         (reviewer (review:Record-reviewer-id review))
+         (reviewee (review:Record-reviewee-id review)))
     (string-append class "/" assignment "/reviews/" step "/" review-id "/" reviewer "/" reviewee "/")))
 
 (define (review-feedback-path review)

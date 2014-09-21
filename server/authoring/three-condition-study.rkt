@@ -123,8 +123,8 @@
 (define (assign-reviewer assignment-id step-id uid)
   (lambda (hash)
     (let* ((review (review:select-by-hash hash))
-           (reviewer (review:record-reviewer-id review))
-           (assignment-id (review:record-assignment-id review))
+           (reviewer (review:Record-reviewer-id review))
+           (assignment-id (review:Record-assignment-id review))
            (q (merge "UPDATE" review:table
                      "SET" review:reviewee-id "=?"
                      "WHERE" review:hash "=?"))

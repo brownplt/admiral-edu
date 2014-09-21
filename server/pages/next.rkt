@@ -55,8 +55,8 @@
 (define (review-link start-url)
   (lambda (hash)
     (let* ((review (review:select-by-hash hash))
-           (completed (review:record-completed review))
-           (reviewee (review:record-reviewee-id review)))
+           (completed (review:Record-completed review))
+           (reviewee (review:Record-reviewee-id review)))
       (cond [completed ""]
             [(string=? reviewee "HOLD") (string-append "<p>This review is on hold. You will be notified when this review is assigned.</p>")]
             [else (string-append "<p><a href='" start-url "../../review/" hash "/'>Review</a></p>")]))))

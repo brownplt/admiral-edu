@@ -1,7 +1,6 @@
-#lang racket
+#lang typed/racket
 
-(require db
-         "common.rkt"
+(require "typed-db.rkt"
          "../../ct-session.rkt"
          (prefix-in submission: "submission.rkt")
          (prefix-in class: "class.rkt")
@@ -62,90 +61,97 @@
 
 ; ct-session -> (U 'class_id 'step_id 'user_id 'time_stamp 'times_reviewed)
 (provide get-sort-by)
+(: get-sort-by (ct-session -> Symbol))
 (define get-sort-by (common:get-sort-by valid-columns (string->symbol reviewer-id)))
 
 (provide sort-by?)
+(: sort-by? (Symbol -> Boolean))
 (define sort-by? (common:sort-by? valid-columns))
+
 
 ;; Initializes the review table.
 (provide init)
+(: init (-> Void))
 (define (init)
-  (let* ((conn (make-sql-conn))
-         (drop (prepare conn (merge "DROP TABLE IF EXISTS" table)))
-         (create (prepare conn (merge "CREATE TABLE" table "("
-                                         assignment-id assignment-id-type "," ; 0
-                                         class-id class-id-type "," ;1
-                                         step-id step-id-type "," ;2
-                                         reviewee-id reviewee-id-type "," ;3
-                                         reviewer-id reviewer-id-type "," ;4
-                                         time-stamp time-stamp-type "," ;5
-                                         completed completed-type "," ;6
-                                         hash hash-type "," ;7
-                                         review-id review-id-type "," ;8
-                                         instructor-solution instructor-solution-type "," ;9
-                                         flagged flagged-type "," ; 10
-                                         "PRIMARY KEY (" hash "))"))))
-    (query-exec conn drop)
-    (query-exec conn create)
-    (release conn)))
+  (let* ((drop (merge "DROP TABLE IF EXISTS" table))
+         (create (merge "CREATE TABLE" table "(" assignment-id assignment-id-type "," ; 0
+                                                 class-id class-id-type "," ;1
+                                                 step-id step-id-type "," ;2
+                                                 reviewee-id reviewee-id-type "," ;3
+                                                 reviewer-id reviewer-id-type "," ;4
+                                                 time-stamp time-stamp-type "," ;5
+                                                 completed completed-type "," ;6
+                                                 hash hash-type "," ;7
+                                                 review-id review-id-type "," ;8
+                                                 instructor-solution instructor-solution-type "," ;9
+                                                 flagged flagged-type "," ; 10
+                                                 "PRIMARY KEY (" hash "))")))
+    (query-exec drop)
+    (query-exec create)))
 
-(provide create)
+
+(: ok-reviewee (String String String String -> Boolean))
 (define (ok-reviewee assignment class step reviewee)
   (or (string=? reviewee "HOLD") (submission:exists? assignment class step reviewee)))
 
+
+(provide create)
+(: create (String String String String String String -> Void))
 (define (create assignment class step reviewee reviewer id)
   ;; TODO(joe): should this be an error?
   (when (not (ok-reviewee assignment class step reviewee)) 'no-such-submission)
                                                   ;0 1 2 3 4     5     6 7 8     9   10
-  (let* ((conn (make-sql-conn))
-         (query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,false, false)"))
-         (prep (prepare conn query)))
-                              ; 0           1     2    3           4        7         8
-    (query-exec conn prep assignment class step reviewee reviewer (random-hash) id)
-    (release conn)
+  (let ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,false, false)")))
+                ; 0           1     2    3           4        7         8
+    (query-exec assignment class step reviewee reviewer (random-hash) id)
     ;; TODO: This is not concurrently safe.
     (when (not (string=? reviewee "HOLD"))
       (submission:increment-reviewed assignment class step reviewee))
     
-    #t))
+    (void)))
 
-
+(: random-hash (-> String))
+(define (random-hash)
+  (for/fold ([s ""])
+      ([x (in-range 32)])
+    (string-append s
+                   (number->string (truncate (random 15)) 16))))
 
 (provide assign-student-reviews)
+(: assign-student-reviews (String String String String String Exact-Nonnegative-Integer -> Void))
 (define (assign-student-reviews assignment class step uid review-id amount)
-  (cond [(<= amount 0) #t]
+  (cond [(<= amount 0) (void)]
         [else (assign-student-review assignment class step uid review-id)
               (assign-student-reviews assignment class step uid review-id (- amount 1))]))
 
-
+(: assign-student-review (String String String String String -> Void))
 (define (assign-student-review assignment class step uid review-id)
   ;; TODO(joe): Probably a performance hit to run this query in this way. Would be faster to just get all of them at once.
-  (let* (
-         (not-users (map record-reviewee-id (map select-by-hash (select-assigned-reviews assignment class step uid)))) 
+  (let* ((not-users (map Record-reviewee-id (map select-by-hash (select-assigned-reviews assignment class step uid)))) 
          (reviewee (submission:select-least-reviewed assignment class step (cons uid not-users))))
     (cond [(eq? reviewee 'no-reviews) #f]
           [else (create assignment class step reviewee uid review-id)])))
 
-(provide assign-instructor-solution)
-(define (assign-instructor-solution assignment class step reviewee reviewer review-id)
-  (create-instructor-review assignment class step reviewee reviewer review-id))
 
-(define (create-instructor-review assignment class step reviewee reviewer id)
-  (let* ((conn (make-sql-conn))
-         (query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,true,false)"))
-         (prep (prepare conn query)))
-    (query-exec conn prep assignment class step reviewee reviewer (random-hash) id)
-    (release conn)))
-
-(provide (struct-out record))
-(struct record (class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged time-stamp) #:transparent)
+(provide (struct-out Record))
+(struct: Record ([class-id : String] 
+                 [assignment-id : String]
+                 [step-id : String]
+                 [review-id : String]
+                 [reviewee-id : String] 
+                 [reviewer-id : String] 
+                 [completed : Boolean]
+                 [hash : String] 
+                 [flagged : Boolean] 
+                 [time-stamp : TimeStamp]) #:transparent)
 
 (define record-fields
   (string-join (list class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged time-stamp) ", "))
+(define-type Vector-Record (Vector String String String String String String Integer String Integer TimeStamp))
 
+(: vector->record (Vector-Record -> Record))
 (define (vector->record result)
-  (let* (
-         (class-id (vector-ref result 0))
+  (let* ((class-id (vector-ref result 0))
          (assignment-id (vector-ref result 1))
          (step-id (vector-ref result 2))
          (review-id (vector-ref result 3))
@@ -155,10 +161,44 @@
          (hash (vector-ref result 7))
          (flagged (= 1(vector-ref result 8)))
          (time-stamp (vector-ref result 9))
-         (rec (record class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged time-stamp)))
+         (rec (Record class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged time-stamp)))
     rec))
 
+(provide select-by-hash)
+(: select-by-hash (String -> Record))
+(define (select-by-hash the-hash)
+  (let* ((query (merge "SELECT" record-fields
+                       "FROM" table
+                       "WHERE" hash "=? LIMIT 1"))
+         (result (query-row query the-hash)))
+    (vector->record (cast result Vector-Record))))
+
+(provide select-assigned-reviews)
+(: select-assigned-reviews (String String String String -> (Listof String)))
+(define (select-assigned-reviews assignment class step uid)
+  (let* ((query (merge "SELECT" hash
+                       "FROM" table
+                       "WHERE" class-id "=? AND"
+                               assignment-id "=? AND"
+                               step-id "=? AND"
+                               reviewer-id "=?"))
+         (results (query-rows query class assignment step uid)) ; (Listof (Vectorof QueryResult))
+         (lists (map (cast vector->list (-> (Vectorof QueryResult) (Listof QueryResult))) results))
+         (hashes (apply append lists)))
+    (cast hashes (Listof String))))
+
+(provide assign-instructor-solution)
+(: assign-instructor-solution (String String String String String String -> Void))
+(define (assign-instructor-solution assignment class step reviewee reviewer review-id)
+  (create-instructor-review assignment class step reviewee reviewer review-id))
+
+(: create-instructor-review (String String String String String String -> Void))
+(define (create-instructor-review assignment class step reviewee reviewer id)
+  (let ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,true,false)")))
+    (query-exec query assignment class step reviewee reviewer (random-hash) id)))
+
 (provide count-assigned-reviews)
+(: count-assigned-reviews (String String String String String -> Exact-Nonnegative-Integer))
 (define (count-assigned-reviews class assignment uid step review)
   (let* ((q (merge "SELECT COUNT(*)"
                    "FROM" table
@@ -167,89 +207,59 @@
                            reviewer-id "=? AND"
                            step-id "=? AND"
                            review-id "=?"))
-         (result (run query-row q class assignment uid step review)))
-    (vector-ref result 0)))
+         (result (query-value q class assignment uid step review)))
+    (cast result Exact-Nonnegative-Integer)))
 
 (provide select-feedback)
+(: select-feedback (String String String -> (Listof Record)))
 (define (select-feedback class assignment uid)
-  (let* ((conn (make-sql-conn))
-         (query (merge "SELECT" record-fields
+  (let* ((query (merge "SELECT" record-fields
                        "FROM" table
                        "WHERE" class-id "=? AND"
                                assignment-id "=? AND"
                                reviewee-id "=? AND"
                                completed "=true"
                        "ORDER BY" time-stamp "ASC"))
-         (prep (prepare conn query))
-         (result (query-rows conn prep class assignment uid)))
-    (release conn)
-    (map vector->record result)))
-
-                       
-(provide select-by-hash)
-(define (select-by-hash the-hash)
-  (let* ((conn (make-sql-conn))
-         (query (merge "SELECT" record-fields
-                       "FROM" table
-                       "WHERE" hash "=? LIMIT 1"))
-         (prep (prepare conn query))
-         (result (query-row conn prep the-hash)))
-    (release conn)
-    (vector->record result)))
-                   
+         (result (query-rows query class assignment uid)))
+    (map vector->record (cast result (Listof Vector-Record)))))
+              
 (provide mark-complete)
+(: mark-complete (String -> Void))
 (define (mark-complete the-hash)
-  (let* ((conn (make-sql-conn))
-         (query (merge "UPDATE" table
+  (let  ((query (merge "UPDATE" table
                        "SET" completed "=1"
-                       "WHERE" hash "=?"))
-         (prep (prepare conn query)))
-    (query-exec conn prep the-hash)
-    (release conn)))
+                       "WHERE" hash "=?")))
+    (query-exec query the-hash)))
 
 (provide mark-incomplete)
+(: mark-incomplete (String -> Void))
 (define (mark-incomplete the-hash)
-  (let* ((q (merge "UPDATE" table
+  (let  ((q (merge "UPDATE" table
                    "SET" completed "=0"
                    "WHERE" hash "=?")))
-    (run query-exec q the-hash)))
-
+    (query-exec q the-hash)))
+     
 (provide set-flagged)
+(: set-flagged (String Boolean -> Void))
 (define (set-flagged the-hash flag)
   (let* ((set-to (if flag 1 0))
          (q (merge "UPDATE" table
                    "SET" flagged "=?"
                    "WHERE" hash "=?")))
-    (run query-exec q set-to the-hash)))
+    (query-exec q set-to the-hash)))
 
 (provide select-reviews)
+(: select-reviews (String -> (Listof String)))
 (define (select-reviews reviewee)
-  (let* ((conn (make-sql-conn))
-         (query (merge "SELECT" hash "FROM" table "WHERE" reviewee-id "=?"))
-         (prep (prepare conn query))
-         (result (query-rows conn prep reviewee)))
-    (release conn)
-    (flatten (map vector->list result))))
-
-(provide select-assigned-reviews)
-(define (select-assigned-reviews assignment class step uid)
-  (let* ((conn (make-sql-conn))
-         (query (merge "SELECT" hash
-                       "FROM" table
-                       "WHERE" class-id "=? AND"
-                               assignment-id "=? AND"
-                               step-id "=? AND"
-                               reviewer-id "=?"))
-         (prep (prepare conn query))
-         (result (query-rows conn prep class assignment step uid)))
-    (release conn)
-    (flatten (map vector->list result))))
-    
+  (let* ((query (merge "SELECT" hash "FROM" table "WHERE" reviewee-id "=?"))
+         (result (query-rows query reviewee))
+         (flat (apply append (map (cast vector->list (-> (Vectorof QueryResult) (Listof QueryResult))) result))))
+    (cast flat (Listof String))))
 
 (provide completed?)
+(: completed? (String String String String String -> Boolean))
 (define (completed? assignment class step reviewer id)
-  (let* ((conn (make-sql-conn))
-         (query (merge "SELECT COUNT(" completed ")"
+  (let* ((query (merge "SELECT COUNT(" completed ")"
                        "FROM" table
                        "WHERE" assignment-id "=? AND"
                                class-id "=? AND"
@@ -257,15 +267,13 @@
                                reviewer-id "=? AND"
                                review-id "=? AND"
                                completed "=true"))
-         (prep (prepare conn query))
-         (result (vector-ref (query-row conn prep assignment class step reviewer id) 0)))
-    (release conn)
-    (> result 0)))
-
+         (result (query-value query assignment class step reviewer id)))
+    (> (cast result Exact-Nonnegative-Integer) 0)))
+    
 (provide count-completed)
+(: count-completed (String String String String String -> Exact-Nonnegative-Integer))
 (define (count-completed assignment class step reviewer id)
-  (let* ((conn (make-sql-conn))
-         (query (merge "SELECT COUNT(*)"
+  (let* ((query (merge "SELECT COUNT(*)"
                        "FROM" table
                        "WHERE" assignment-id "=? AND"
                                class-id "=? AND"
@@ -273,33 +281,31 @@
                                reviewer-id "=? AND"
                                completed "=1 AND"
                                review-id "=?"))
-         (prep (prepare conn query))
-         (result (vector-ref (query-row conn prep assignment class step reviewer id) 0)))
-    (release conn)
-    result))
+         (result (query-value query assignment class step reviewer id)))
+    (cast result Exact-Nonnegative-Integer)))
 
 (provide count)
+(: count (String String String String -> Exact-Nonnegative-Integer))
 (define (count assignment class step reviewee)
-  (let* ((conn (make-sql-conn))
-         (query (merge "SELECT COUNT(*)"
+  (let* ((query (merge "SELECT COUNT(*)"
                        "FROM" table
                        "WHERE" assignment-id "=? AND"
                                class-id "=? AND"
                                step-id "=? AND"
                                reviewee-id "=?"))
-         (prep (prepare conn query))
-         (result (vector-ref (query-row conn prep assignment class step reviewee) 0)))
-    (release conn)
-    result))
+         (result (query-value query assignment class step reviewee)))
+    (cast result Exact-Nonnegative-Integer)))
 
 (provide delete-assignment)
+(: delete-assignment (String String -> Void))
 (define (delete-assignment class assignment)
   (let ((query (merge "DELETE FROM" table
                        "WHERE" assignment-id "=? AND"
                                class-id "=?")))
-    (run query-exec query assignment class)))
+    (query-exec query assignment class)))
 
 (provide count-completed-reviews)
+(: count-completed-reviews (String String String String -> Exact-Nonnegative-Integer))
 (define (count-completed-reviews assignment class step review)
   (let* ((q (merge "SELECT COUNT(*)"
                    "FROM" table
@@ -309,10 +315,11 @@
                            review-id "=? AND"
                            completed "=?"
                    "LIMIT 1"))
-         (result (run query-row q assignment class step review 1)))
-    (vector-ref result 0)))
+         (result (query-value q assignment class step review 1)))
+    (cast result Exact-Nonnegative-Integer)))
 
 (provide count-all-assigned-reviews)
+(: count-all-assigned-reviews (String String String String -> Exact-Nonnegative-Integer))
 (define (count-all-assigned-reviews assignment class step review)
   (let* ((q (merge "SELECT COUNT(*)"
                    "FROM" table
@@ -321,10 +328,11 @@
                            step-id "=? AND"
                            review-id "=?"
                    "LIMIT 1"))
-         (result (run query-row q assignment class step review)))
-    (vector-ref result 0)))
+         (result (query-value q assignment class step review)))
+    (cast result Exact-Nonnegative-Integer)))
 
 (provide select-all)
+(: select-all (String String String String Symbol (U 'asc 'desc) -> (Listof Record)))
 (define (select-all assignment class step review sort-by order)
   (let* ((sort-field reviewer-id)
          (direction (order->string order))
@@ -336,12 +344,5 @@
                            step-id "=? AND"
                            review-id "=?"
                    "ORDER BY" sort-field direction))
-         (result (run query-rows q assignment class step review)))
-    (map vector->record result)))
-                           
-
-(define (random-hash)
-  (for/fold ([s ""])
-      ([x (in-range 32)])
-    (string-append s
-                   (number->string (truncate (random 15)) 16))))
+         (results (query-rows q assignment class step review)))
+    (map vector->record (cast results (Listof Vector-Record)))))

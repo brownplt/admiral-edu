@@ -26,9 +26,9 @@
   (let* ((start-url (hash-ref (ct-session-table session) 'start-url))
          (r-hash (car rest))
          (review (review:select-by-hash r-hash))
-         (assignment (review:record-assignment-id review))
-         (step (review:record-step-id review))
-         (completed (review:record-completed review))
+         (assignment (review:Record-assignment-id review))
+         (step (review:Record-step-id review))
+         (completed (review:Record-completed review))
          (updir (apply string-append (repeat "../" (+ (length rest) 1))))
          (root-url updir)
          [no-modifications (if completed "<p>This review has already been submitted. Modifications will not be saved.</p>" "")]
@@ -49,18 +49,18 @@
 
 (define (validate review session)
   (let ((uid (ct-session-uid session))
-        (reviewer (review:record-reviewer-id review)))
+        (reviewer (review:Record-reviewer-id review)))
     (equal? uid reviewer)))
 
 (define (do-submit-review session role rest message)
   (let* ((start-url (hash-ref (ct-session-table session) 'start-url))
          (r-hash (cadr rest))
          (review (review:select-by-hash r-hash))
-         (assignment (review:record-assignment-id review))
-         (step (review:record-step-id review))
+         (assignment (review:Record-assignment-id review))
+         (step (review:Record-step-id review))
          (updir (apply string-append (repeat "../" (+ (length rest) 1))))
          (root-url updir)
-         (completed (review:record-completed review)))
+         (completed (review:Record-completed review)))
     (cond [completed (error:error "The review you were trying to submit has already been submitted. You may not submit it again.")]
           [else
            (begin
@@ -71,9 +71,9 @@
                             "<p><a href='" start-url root-url "next/" assignment "/'>Continue</a></p>"))])))
 
 (define (send-review-ready-email review)
-  (let* ((uid (review:record-reviewee-id review))
-         [assignment-id (review:record-assignment-id review)]
-         [step-id (review:record-step-id review)]
+  (let* ((uid (review:Record-reviewee-id review))
+         [assignment-id (review:Record-assignment-id review)]
+         [step-id (review:Record-step-id review)]
          [access-url (string-append "https://" sub-domain server-name "/" class-name "/feedback/" assignment-id "/")]
          (message (include-template "../email/templates/review-ready.txt")))
     (send-email uid "Someone has completed a review of your work." message)))
@@ -92,14 +92,14 @@
 (define (post->save-rubric session post-data review)
   (let ((data (jsexpr->string (bytes->jsexpr post-data)))
         (class (ct-session-class session))
-        (assignment (review:record-assignment-id review))
-        (stepName (review:record-step-id review))
-        (reviewee (review:record-reviewee-id review))
+        (assignment (review:Record-assignment-id review))
+        (stepName (review:Record-step-id review))
+        (reviewee (review:Record-reviewee-id review))
         (reviewer (ct-session-uid session))
-        (review-id (review:record-review-id review)))
+        (review-id (review:Record-review-id review)))
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
         (begin
-          (when (not (review:record-completed review)) (save-rubric class assignment stepName review-id reviewer reviewee data))
+          (when (not (review:Record-completed review)) (save-rubric class assignment stepName review-id reviewer reviewee data))
           (response/full
            200 #"Okay"
            (current-seconds) #"application/json; charset=utf-8"
@@ -108,11 +108,11 @@
   
 (define (post->load-rubric session review)
   (let* ((class (ct-session-class session))
-         (assignment (review:record-assignment-id review))
-         (stepName (review:record-step-id review))
-         (reviewee (review:record-reviewee-id review))
+         (assignment (review:Record-assignment-id review))
+         (stepName (review:Record-step-id review))
+         (reviewee (review:Record-reviewee-id review))
          (reviewer (ct-session-uid session))
-         (review-id (review:record-review-id review))
+         (review-id (review:Record-review-id review))
          (data (retrieve-rubric class assignment stepName review-id reviewer reviewee)))
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
         (response/full
@@ -135,14 +135,14 @@
 (define (push->save session post-data path review)
   (let ((data (jsexpr->string (bytes->jsexpr post-data)))
         (class (ct-session-class session))
-        (assignment (review:record-assignment-id review))
-        (stepName (review:record-step-id review))
-        (reviewee (review:record-reviewee-id review))
+        (assignment (review:Record-assignment-id review))
+        (stepName (review:Record-step-id review))
+        (reviewee (review:Record-reviewee-id review))
         (reviewer (ct-session-uid session))
-        (review-id (review:record-review-id review)))
+        (review-id (review:Record-review-id review)))
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
         (begin
-          (when (not (review:record-completed review)) (save-review-comments class assignment stepName review-id reviewer reviewee path data))
+          (when (not (review:Record-completed review)) (save-review-comments class assignment stepName review-id reviewer reviewee path data))
           (response/full
            200 #"Okay"
            (current-seconds) #"application/json; charset=utf-8"
@@ -151,11 +151,11 @@
 
 (define (push->load session path review)
   (let* ((class (ct-session-class session))
-         (assignment (review:record-assignment-id review))
-         (stepName (review:record-step-id review))
-         (reviewee (review:record-reviewee-id review))
+         (assignment (review:Record-assignment-id review))
+         (stepName (review:Record-step-id review))
+         (reviewee (review:Record-reviewee-id review))
          (reviewer (ct-session-uid session))
-         (review-id (review:record-review-id review))
+         (review-id (review:Record-review-id review))
          (data (load-review-comments class assignment stepName review-id reviewer reviewee path)))
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
         (response/full
@@ -170,10 +170,10 @@
          (r-hash (car rest))
          (review (review:select-by-hash r-hash))
          (class (ct-session-class session))
-         [assignment (review:record-assignment-id review)]
+         [assignment (review:Record-assignment-id review)]
          [default-mode (determine-mode-from-filename (last rest))]
-         (stepName (review:record-step-id review))
-         (reviewee (review:record-reviewee-id review))
+         (stepName (review:Record-step-id review))
+         (reviewee (review:Record-reviewee-id review))
          [save-url (string-append "'" start-url "save'")]
          [load-url (string-append "'" start-url "load'")]
          [step (to-step-link stepName (- (length rest) 2))]

@@ -6,14 +6,14 @@
 
 (define table "user")
 (define uid "uid")
-(define uid-type "VARCHAR(255) UNIQUE")
+(define uid-type "VARCHAR(255)")
 
 ;; Creates the user table removing any previously existing table.
 (provide init)
 (: init (-> Void))
 (define (init)
   (let ((drop (merge "DROP TABLE IF EXISTS" table))
-        (create (merge "CREATE TABLE" table "(" uid uid-type ")")))
+        (create (merge "CREATE TABLE" table "(" uid uid-type "UNIQUE)")))
     (query-exec drop)
     (query-exec create)))
 

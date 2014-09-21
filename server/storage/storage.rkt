@@ -51,7 +51,6 @@
 
 ; Loads cloud-storage bindings
 (define (invoke-cloud-storage)
-  (invoke-unit cloud-storage@)
   (define-values/invoke-unit/infer cloud-storage@)
   (set-retrieve-file retrieve-file)
   (set-write-file write-file)
@@ -63,7 +62,6 @@
 
 ; Loads local storage bindings
 (define (invoke-local-storage)
-  (invoke-unit local-storage@)
   (define-values/invoke-unit/infer local-storage@)
   (set-retrieve-file retrieve-file)
   (set-write-file write-file)

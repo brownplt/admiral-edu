@@ -236,7 +236,7 @@
            (reviews (map review:select-by-hash hashes))
            (assigned-expected 1))
       (check-equal? (list user review-id-expected (length reviews)) (list user review-id-expected assigned-expected))
-      (check-equal? (review:record-review-id (first reviews)) review-id-expected))))
+      (check-equal? (review:Record-review-id (first reviews)) review-id-expected))))
 
 (define (test-reflection-assigned-submit-reviews step-id)
   (lambda (user)

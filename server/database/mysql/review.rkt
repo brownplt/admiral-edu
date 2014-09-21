@@ -100,10 +100,10 @@
 (define (create assignment class step reviewee reviewer id)
   ;; TODO(joe): should this be an error?
   (when (not (ok-reviewee assignment class step reviewee)) 'no-such-submission)
-                                                  ;0 1 2 3 4     5     6 7 8     9   10
-  (let ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,false, false)")))
+                                                 ;0 1 2 3 4     5     6 7 8     9   10
+  (let ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,false,false)")))
                 ; 0           1     2    3           4        7         8
-    (query-exec assignment class step reviewee reviewer (random-hash) id)
+    (query-exec query assignment class step reviewee reviewer (random-hash) id)
     ;; TODO: This is not concurrently safe.
     (when (not (string=? reviewee "HOLD"))
       (submission:increment-reviewed assignment class step reviewee))

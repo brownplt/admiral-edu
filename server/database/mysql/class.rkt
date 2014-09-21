@@ -6,13 +6,13 @@
 (provide table id id-type)
 (define table "class")
 (define id "id")
-(define id-type "VARCHAR(255) UNIQUE")
+(define id-type "VARCHAR(255)")
 
 (provide init)
 (: init (-> Void))
 (define (init)
   (let ((drop (merge "DROP TABLE IF EXISTS" table))
-        (create (merge "CREATE TABLE" table "(" id id-type ")")))
+        (create (merge "CREATE TABLE" table "(" id id-type "UNIQUE)")))
     (query-exec drop)
     (query-exec create)))
 

@@ -9,7 +9,6 @@
          "assignment-structs.rkt"
          (prefix-in default: "next-action.rkt")
          "util.rkt"
-         (prefix-in machine: "progress-machine.rkt")
          "../database/mysql/common.rkt")
 
 
@@ -45,7 +44,6 @@
                      [(not has-submitted) (MustSubmitNext step (Step-instructions step))]
                      [(eq? group 'no-reviews) (default:next-action (three-check-reviewed group) three-ensure-assigned-review assignment tail uid)]
                      [(eq? group 'does-reviews) (handle-does-reviews assignment steps uid group)]
-                     ;;TODO: Notify users that they are in get-reviews
                      [(eq? group 'gets-reviewed) (default:next-action (three-check-reviewed group) three-ensure-assigned-review assignment tail uid)]
                      [else (error (format "Unknown group type ~a" group))])))
       (cond
@@ -98,7 +96,7 @@
            (extra-message (cond [(eq? group 'gets-reviewed) "You don't need to do any reviewing.  But, you will receive reviews, so you can wait for feedback if you want before you submit your final implementation and tests."]
                                 [(eq? group 'does-reviews) "You have been assigned reviews for this assignment, and must complete them.  If enough reviews aren't available right now, you'll receive notifications as they are assigned to you."]
                                 [(eq? group 'no-reviews) "You don't need to do any reviewing, and you won't receive any reviews for this assignment.  Submit your implementation and final tests at any time."])))
-      ;; TODO: look to see if there are any pending reviewers
+      ;; look to see if there are any pending reviewers
       (if (eq? group 'gets-reviewed) (maybe-assign-reviewers assignment-id step uid) (printf "Skipping maybe-assign review. uid: ~a, group: ~a\n" uid group))
       (send-email uid "Your submission has been received." (string-append "Your submission to '" assignment-id "' has been received. Note: " extra-message))
     ;; Assign reviews to the student if applicable
@@ -244,9 +242,6 @@
 (define (dependency-file-name assignment-id)
   (string-append class-name "/" assignment-id "/three-condition-config.yaml"))
 
-;; TODO(3-study): 
-;; dependencies returns a list of identifiers 
-;; assignment-dependencies in assignment.rkt
 (define (three-get-deps assignment)
   (cons 
    (three-study-config-dependency (check-for-config-file (Assignment-id assignment)))
@@ -256,8 +251,6 @@
   (is-file? (dependency-file-name assignment-id)))
   
   
-;; TODO(3-study):
-;; What to do when you receive a dependency
 (define (three-take-deps assignment-id dependency bindings raw-bindings)
   (cond [(three-study-config-dependency? dependency) (take-config assignment-id bindings raw-bindings)]
         [else (default:default-take-dependency assignment-id dependency bindings raw-bindings)]))
@@ -267,7 +260,6 @@
     (write-file (dependency-file-name assignment-id) data)
     (Success "Configuration uploaded.")))
 
-;; TODO: write get-deps tak-deps
 (provide three-condition-study-handler)
 (define three-condition-study-handler
   (AssignmentHandler three-next-action three-do-submit-step three-get-deps three-take-deps))

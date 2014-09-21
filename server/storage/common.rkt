@@ -1,7 +1,5 @@
 #lang racket
 
-
-
  ;; Helper functions
 (provide intercalate)
 (define (intercalate v ls)

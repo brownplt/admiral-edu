@@ -2,7 +2,8 @@
 
 (provide (all-from-out "assignment-structs.rkt"))
 
-(require (planet esilkensen/yaml:3:1)
+(require "../storage/storage.rkt"
+         (planet esilkensen/yaml:3:1)
          json
          "assignment-structs.rkt"
          "assignment-parser.rkt"

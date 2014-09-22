@@ -7,7 +7,8 @@
          json
          (planet esilkensen/yaml:3:1))
 
-(require "../base.rkt"
+(require "../storage/storage.rkt"
+         "../base.rkt"
          (prefix-in error: "errors.rkt")
          "../authoring/assignment.rkt")
 

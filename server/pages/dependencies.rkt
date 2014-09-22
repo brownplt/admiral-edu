@@ -7,7 +7,8 @@
          xml
          json)
 
-(require "../base.rkt"
+(require "../storage/storage.rkt"
+         "../base.rkt"
          (prefix-in assign: "../authoring/assignment.rkt")
          (prefix-in error: "errors.rkt"))
 

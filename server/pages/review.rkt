@@ -5,7 +5,8 @@
          xml
          json)
 
-(require "../base.rkt"
+(require "../storage/storage.rkt"
+         "../base.rkt"
          "../email/email.rkt"
          "../util/file-extension-type.rkt"
          (prefix-in error: "errors.rkt"))

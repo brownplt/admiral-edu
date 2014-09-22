@@ -1,6 +1,7 @@
 #lang racket
 
-(require web-server/http/bindings
+(require "../storage/storage.rkt"
+         web-server/http/bindings
          db
          (planet esilkensen/yaml:3:1)
          json

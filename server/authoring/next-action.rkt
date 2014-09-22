@@ -1,6 +1,7 @@
 #lang racket
 
-(require web-server/http/bindings
+(require "../storage/storage.rkt"
+         web-server/http/bindings
          web-server/http/request-structs
          "assignment-structs.rkt"
          "../base.rkt")

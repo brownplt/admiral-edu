@@ -1,14 +1,12 @@
 #lang racket
 
-(require "storage/storage.rkt"
-         "database/mysql.rkt"
+(require "database/mysql.rkt"
          "configuration.rkt"
          "ct-session.rkt"
          "util/basic-types.rkt")
 
 (provide (all-from-out "configuration.rkt"))
 (provide (all-from-out "database/mysql.rkt"))
-(provide (all-from-out "storage/storage.rkt"))
 (provide (all-from-out "ct-session.rkt"))
 (provide (all-from-out "util/basic-types.rkt"))
 

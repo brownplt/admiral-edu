@@ -4,7 +4,8 @@
           web-server/templates
          xml)
 
-(require "../base.rkt"
+(require "../storage/storage.rkt"
+         "../base.rkt"
          (prefix-in error: "errors.rkt")
          (prefix-in dashboard: "assignments/dashboard.rkt")
          (prefix-in list: "assignments/list.rkt")

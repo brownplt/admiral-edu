@@ -7,7 +7,8 @@
          web-server/http/bindings
          (planet esilkensen/yaml:3:1))
 
-(require "../base.rkt"
+(require "../storage/storage.rkt"
+         "../base.rkt"
          (prefix-in error: "errors.rkt")
          "../util/file-extension-type.rkt"
          "../authoring/assignment.rkt")

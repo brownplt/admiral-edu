@@ -57,8 +57,8 @@
 (: cloud-host (U 'nil String))
 (define cloud-host 'nil)
 
-(: class-name (U 'nil String))
-(define class-name 'nil)
+(: class-name String)
+(define class-name "")
 
 (: ct-port (U 'nil Integer))
 (define ct-port 'nil)

@@ -25,6 +25,7 @@
          (prefix-in author: "pages/author.rkt")
          "pages/next.rkt"
          (prefix-in assignments: "pages/assignments.rkt")
+         (prefix-in export: "pages/export.rkt")
          (prefix-in submit: "pages/submit.rkt")
          (prefix-in dep: "pages/dependencies.rkt")
          (prefix-in feedback: "pages/feedback.rkt")
@@ -78,7 +79,7 @@
                                                                                             (error:error (string-append "<p>You've accessed this page in an invalid way.</p>"
                                                                                                                   "<p>Try returning to <a href='https://" sub-domain server-name "/" class-name "/'>Class Home</a> and trying again.</p>"))))]
     [(cons "feedback" rest) (if post (feedback:post session role rest bindings post-data) (render-html session feedback:load rest))]
-    [(cons "export" rest) (assignments:export session (role session) rest)]
+    [(cons "export" rest) (export:load session (role session) rest)]
     [(cons "exception" rest) (error "Test an exception occurring.")]
     [(cons "roster" rest) (if post (render-html session (roster:post post-data bindings) rest) (render-html session roster:load rest))]
     [(cons "browse" rest) (render-html session browse:load rest)]

@@ -4,8 +4,7 @@
           web-server/templates
          xml)
 
-(require "../storage/storage.rkt"
-         "../base.rkt"
+(require "../base.rkt"
          (prefix-in error: "errors.rkt")
          (prefix-in dashboard: "assignments/dashboard.rkt")
          (prefix-in list: "assignments/list.rkt")
@@ -28,24 +27,6 @@
   (let ((action (if (empty? url) action:LIST (first url)))
         (rest-url (if (empty? url) url (rest url))))
     ((lookup-action-function action) session rest-url message post)))
-
-(provide export)
-(define (export session role rest)
-  (let ((assignment-id (car rest)))
-    (if (not (roles:Record-can-edit role)) (fail-auth)
-        (let ((data (export-assignment class-name assignment-id)))
-          (response/full
-           200 #"Okay"
-           (current-seconds) #"application/octet-stream; charset=ISO-8859-1"
-           empty
-           (list data))))))
-
-(define (fail-auth)
-  (response/full
-         200 #"Okay"
-         (current-seconds) TEXT/HTML-MIME-TYPE
-         empty
-         (list (string->bytes/utf-8 (error:error "You are not authorized to see this page.")))))
 
 (define (no-such-action action)
   (lambda args

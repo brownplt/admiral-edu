@@ -81,6 +81,12 @@
 (define four-oh-four-xexpr
   '((h2 "404 - The resource does not exist")))
 
+(provide xexpr->error-page)
+; (: xexpr->error-page ((Listof XExpr) -> String))
+(define (xexpr->error-page xexpr)
+  (let ([display-message (string-join (map xexpr->string xexpr) "\n")])
+    (include-template "html/error.html")))
+
 (provide error-page)
 (define (error-page . message)
   (let ([display-message (apply string-append message)])

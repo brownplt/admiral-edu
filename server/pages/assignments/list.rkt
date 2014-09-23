@@ -2,8 +2,6 @@
 
 (require/typed xml
                [xexpr->string (XExpr -> String)])
-(require/typed "../errors.rkt"
-               [xexpr->error-page ((Listof XExpr) -> String)])
 
 (require "../../base.rkt"
          "../typed-xml.rkt"
@@ -33,7 +31,3 @@
     (let*: ((id (assignment:Record-id (cast record assignment:Record)))
             [elem : XExpr (action:dashboard id id)])
       `(li () ,elem)))
-
-(: test (String -> Boolean))
-(define (test x)
-  #f)

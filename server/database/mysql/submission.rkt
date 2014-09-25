@@ -262,3 +262,15 @@
                    "LIMIT 1"))
          (result (query-value q assignment class step)))
     (cast result Exact-Nonnegative-Integer)))
+
+(provide select-from-assignment)
+(: select-from-assignment (String String String -> (Listof Record)))
+(define (select-from-assignment assignment class uid)
+  (let* ((q (merge "SELECT" record-select
+                   "FROM" table
+                   "WHERE" assignment-id "=? AND"
+                           class-id "=? AND"
+                           user-id "=?"
+                   "ORDER BY" time-stamp "DESC"))
+         (result (cast (query-rows q assignment class uid) (Listof Vector-Record))))
+    (map vector->record result)))

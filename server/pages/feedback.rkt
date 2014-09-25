@@ -59,9 +59,25 @@
          (start-url (hash-ref (ct-session-table session) 'start-url))
          (assignment (car rest))
          (reviews (review:select-feedback class-name assignment uid))
-         (results (if (null? reviews) "<p>You have no reviews at this time.</p>" (gen-reviews reviews start-url))))
+         (submissions (submission:select-from-assignment assignment class-name uid))
+         (results (if (and (empty? reviews)
+                           (empty? submissions)) "<p>You have no reviews at this time.</p>" 
+                                                 (string-append (gen-submissions submissions start-url)
+                                                                "<h2>Review Feedback</h2>"
+                                                                (gen-reviews reviews start-url)))))
     (string-append "<h1>" assignment "</h1>"
                    results)))
+
+(define (gen-submissions submissions start-url)
+  (string-join
+   (map xexpr->string
+        (append '((h2 "Browse Submission")) (map (gen-submission start-url) submissions)))))
+
+(define (gen-submission start-url)
+  (lambda (record)
+    (let ((assignment-id (submission:Record-assignment record))
+          (step-id (submission:Record-step record)))
+    `(p (a ((href ,(string-append start-url "../../browse/" assignment-id "/" step-id "/"))) ,step-id)))))
 
 (define (gen-reviews reviews start-url) (gen-reviews-helper reviews 1 start-url))
 

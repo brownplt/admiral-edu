@@ -3,7 +3,6 @@
 (require "../../database/mysql/typed-db.rkt"
          "../../base.rkt"
          "../../authoring/assignment.rkt"
-         (prefix-in browse: "../browse.rkt")
          (prefix-in error: "../errors.rkt")
          (prefix-in action: "action.rkt"))
 

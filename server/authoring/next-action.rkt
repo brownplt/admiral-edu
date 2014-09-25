@@ -7,20 +7,27 @@
          "../base.rkt")
 
 (provide do-submit-step)
+;; If file-name or data are #f, nothing is uploaded.
 (define (do-submit-step assignment step uid file-name data steps)
   (let ((assignment-id (Assignment-id assignment))
         (step-id (Step-id step)))
     (let* ((assignment-record (assignment:select class-name assignment-id))
            (is-open (assignment:Record-open assignment-record)))
       (if (not is-open) (Failure "This assignment is currently closed.")
-          (let ((result (upload-submission class-name uid assignment-id step-id file-name data)))
-            (if (not result) (Failure "The submission failed. This is most likely because the file uploaded was not a zip archive.")
-                (begin
+          (let ((result (if (or (eq? file-name #f)
+                                (eq? data #f)) #t
+                                               (upload-submission class-name uid assignment-id step-id file-name data))))
+            (cond 
+              [(Failure? result) result]
+              [(not result) (Failure "The submission failed. This is most likely because the file uploaded was not a zip archive.")]
+              [else                 
+               (begin
+                  (submission:create assignment-id class-name step-id uid)
                   ;; Assign reviews to the student if applicable
                   (let ((next (default-next-action assignment steps uid)))
                     (cond
                       [(MustReviewNext? next) (assign-reviews assignment-id next uid)])
-                    (Success "Assignment submitted.")))))))))
+                    (Success "Assignment submitted.")))]))))))
 
 (define (assign-reviews assignment-id next uid)
   (let* ((step (MustReviewNext-step next))

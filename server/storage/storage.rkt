@@ -1,6 +1,7 @@
 #lang racket
 
 (require "../configuration.rkt"
+         "../util/basic-types.rkt"
          "cloud-storage-unit.rkt"
          "local-storage-unit.rkt"
          "../database/mysql.rkt"
@@ -84,8 +85,6 @@
 (when (not (procedure? list-files)) (error "list-files not set."))
 (when (not (procedure? list-sub-files)) (error "list-sub-files not set."))
 (when (not (procedure? list-dirs)) (error "list-dirs not set."))
-
-
 
 ;; Start function definitions
 
@@ -199,12 +198,18 @@
 (provide upload-submission)
 (define (upload-submission class-id user-id assignment-id step-id file-name data)
   
-  ;; Write to storage
-  (cond [(is-zip? file-name) (do-unarchive-solution class-id user-id assignment-id step-id file-name data)]
-        [else (do-single-file-solution class-id user-id assignment-id step-id file-name data)])
+  ;; Ensure the students has not finalized their submission
+  (cond [(submission:exists? assignment-id class-id step-id user-id) (Failure "Submission already exists.")]
+        [else (begin  
+                ;; Delete previously uploaded files
+                (delete-path (submission-path class-id assignment-id user-id step-id))
   
-  ;; Create database entry
-  (submission:create assignment-id class-id step-id user-id))
+                ;; Write to storage
+                (cond [(is-zip? file-name) (do-unarchive-solution class-id user-id assignment-id step-id file-name data)]
+                      [else (do-single-file-solution class-id user-id assignment-id step-id file-name data)]))]))
+  
+; Create database entry
+;  (submission:create assignment-id class-id step-id user-id))
 
 (define (do-unarchive-solution class-id user-id assignment-id step-id file-name data)
   (let* ((temp-dir (get-local-temp-directory))

@@ -2,6 +2,7 @@
 
 (require "../base.rkt"
          "../database/mysql/common.rkt"
+         "../storage/storage.rkt"
          "assignment.rkt"
          "assignment-structs.rkt"
          "assignment-parser.rkt"

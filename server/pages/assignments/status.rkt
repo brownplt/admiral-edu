@@ -60,7 +60,7 @@
   (let ((user (submission:Record-user record))
         (assignment (submission:Record-assignment record))
         (step (submission:Record-step record)))
-  `(a ((href ,(string-append "/" class-name "/browse/" user "/" assignment "/" step "/"))) ,user-id)))
+  `(a ((href ,(string-append "/" class-name "/su/" user "/browse/" assignment "/" step "/"))) ,user-id)))
 
 (define (format-time-stamp time-stamp)
   (let ((year (number->string (TimeStamp-year time-stamp)))

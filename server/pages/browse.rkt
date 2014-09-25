@@ -20,30 +20,31 @@
     [else (cons val (repeat val (- n 1)))]))
 
 (provide load)
-(define (load session role rest [message '()])
-  (authorized:can-edit session do-file-container session rest message))
+(define (load session role url [message '()])
+  (do-file-container session (ct-session-uid session) (first url) (second url) (drop url 2) message))
 
-(define (do-file-container session rest [message '()])
+(define (do-file-container session user-id assignment-id stepName url [message '()])
   (let* ((start-url (hash-ref (ct-session-table session) 'start-url))
          (class (ct-session-class session))
-         [assignment (second rest)]
-         (stepName (third rest))
-         (user-id (first rest))
-         [default-mode (determine-mode-from-filename (last rest))]
+         [assignment assignment-id]
+         [default-mode (determine-mode-from-filename url)]
          [load-url (string-append "'" start-url "load" "'")]
-         [step (to-step-link stepName (- (length rest) 2))]
-         [path (to-path-html (cdddr rest))]
-         (file (to-path (cdddr rest)))
+         [step (to-step-link stepName (+ (length url) 1))]
+         [path (to-path-html url)]
+         (file (to-path url))
          (file-path (submission-file-path class assignment user-id stepName file))
          (contents (if (is-directory? file-path) (render-directory file-path start-url) (render-file file-path))))
         (string-append (include-template "html/browse-file-container-header.html")
                        contents
                        (include-template "html/file-container-footer.html"))))
 
-(define (determine-mode-from-filename filename)
-  (let* ((split (string-split filename "."))
-         (ext (if (null? split) "" (last split))))
-    (extension->file-type ext)))
+(define (determine-mode-from-filename url)
+  (cond [(empty? url) "directory"]
+        [else
+         (let* ((filename (last url))
+                (split (string-split filename "."))
+                (ext (if (null? split) "" (last split))))
+           (extension->file-type ext))]))
 
 (define (to-path-html input)
   (letrec ((helper (lambda (acc ls)

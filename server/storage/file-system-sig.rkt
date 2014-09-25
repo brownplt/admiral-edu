@@ -6,6 +6,8 @@
 retrieve-file 
 
 ; (path -> contents -> ())
+; TODO: Maybe have this return Success / Failure. Right now it might throw an exception but
+; each file system may use a different exception.
 ; Given a path and the contents to a file, writes that file (over writing any existing file).
 write-file    
 

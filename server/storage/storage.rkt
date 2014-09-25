@@ -200,10 +200,11 @@
   
   ;; Ensure the students has not finalized their submission
   (cond [(submission:exists? assignment-id class-id step-id user-id) (Failure "Submission already exists.")]
-        [else (begin  
+        [else (let ((path (submission-path class-id assignment-id user-id step-id)))
+                
                 ;; Delete previously uploaded files
-                (delete-path (submission-path class-id assignment-id user-id step-id))
-  
+                (delete-path path)
+                
                 ;; Write to storage
                 (cond [(is-zip? file-name) (do-unarchive-solution class-id user-id assignment-id step-id file-name data)]
                       [else (do-single-file-solution class-id user-id assignment-id step-id file-name data)]))]))
@@ -233,14 +234,17 @@
                           (let* ((s-name (submission-file-name file-name))
                                  (data (file->string file-name)))
                             (write-file s-name data)))))
+      ;; TODO: Potentially change write-file to return success / failure
       (map handle-file file-names))
     
     ;; Remove the temp directory
-    (system (string-append "rm \"" temp-dir "\" -rf"))))
+    (system (string-append "rm \"" temp-dir "\" -rf"))
+    (Success (void))))
       
 (define (do-single-file-solution class-id user-id assignment-id step-id file-name data)
   (let ((s-path (submission-file-path class-id assignment-id user-id step-id file-name)))
-    (write-file s-path data)))
+    (write-file s-path data)
+    (Success (void))))
 
 (define (assignment-path class-id assignment-id)
   (string-append class-id "/" assignment-id "/"))

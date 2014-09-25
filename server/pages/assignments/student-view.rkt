@@ -31,7 +31,7 @@
 (define (open-assignment-element start-url)
   (lambda (record)
     (let ((assignment-id (assignment:Record-id record)))
-    `(li ,assignment-id " : "
+    `(li () ,assignment-id " : "
         (a ((href ,(string-append start-url "../next/" assignment-id "/"))) "Next Step") " - "
         (a ((href ,(string-append start-url "../feedback/" assignment-id "/"))) "Assignment Feedback")))))
 
@@ -61,5 +61,5 @@
 (define (closed-assignment-element start-url)
   (lambda (record)
     (let ((assignment-id (assignment:Record-id record)))
-      `(li ,assignment-id " : "
+      `(li () ,assignment-id " : "
            (a ((href ,(string-append start-url "../feedback/" assignment-id "/"))) "Assignment Feedback")))))

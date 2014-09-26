@@ -16,7 +16,13 @@
                [list-sub-files (String -> (Listof String))])
 
 
-(provide (all-from-out "storage-basic.rkt"))
+(provide retrieve-file 
+         write-file 
+         delete-path
+         path-info
+         list-files
+         list-dirs
+         list-sub-files)
 
 
 ;; Start function definitions

@@ -27,7 +27,8 @@
   ; Writes the local file (over writing if necessary). Then, pushes the local file to the cloud.
   (define (write-file path contents)
     (local:write-file path contents)
-    (put/file (string-append bucket path) (string->path path)))
+    (put/file (string-append bucket path) (string->path path))
+    (void))
   
   ; Deletes the local copy and the remote copy
   (define (delete-path path)

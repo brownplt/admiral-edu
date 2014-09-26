@@ -1,8 +1,7 @@
 #lang racket
 
 (require "file-system-sig.rkt"
-         (prefix-in local: "local-storage.rkt")
-         "common.rkt")
+         (prefix-in local: "local-storage.rkt"))
 
 (provide local-storage@)
 (define-unit local-storage@

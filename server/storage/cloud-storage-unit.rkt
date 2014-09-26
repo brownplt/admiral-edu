@@ -3,7 +3,6 @@
 (require "file-system-sig.rkt"
          (planet gh/aws:1:5)
          "../configuration.rkt"
-         "common.rkt"
          (prefix-in local: "local-storage.rkt"))
 
 (provide cloud-storage@)

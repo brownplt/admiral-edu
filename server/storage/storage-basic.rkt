@@ -1,5 +1,7 @@
 #lang racket
 
+;; NOTE: This module is not typeable because it uses Units
+
 (require "../configuration.rkt"
          "cloud-storage-unit.rkt"
          "local-storage-unit.rkt")

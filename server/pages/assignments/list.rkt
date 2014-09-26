@@ -8,7 +8,7 @@
          (prefix-in action: "action.rkt"))
 
 (provide load)
-(: load (ct-session (Listof String) (U XExpr #f) Boolean -> (Listof (U XExpr Void))))
+(: load (->* (ct-session (Listof String) (U XExpr #f)) (Boolean) (Listof (U XExpr Void))))
 (define (load session url message [post #f])
       (match (assignment:list class-name)
         ['no-such-class '((h2 "No such class found."))]

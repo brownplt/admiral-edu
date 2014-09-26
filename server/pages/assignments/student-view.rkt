@@ -5,7 +5,7 @@
 
 ; ct-session -> (listof string) -> (#f xexpr?) -> bool? -> (listof xexpr? void?)
 (provide load)
-(: load (ct-session (Listof String) (U XExpr #f) Boolean -> (Listof (U XExpr Void))))
+(: load (->* (ct-session (Listof String) (U XExpr #f)) (Boolean) (Listof (U XExpr Void))))
 (define (load  session url message [post #f])
   (let*: ((start-url (hash-ref (ct-session-table session) 'start-url))
           [open : XExpr (cons 'ul (list-open-assignments start-url))]

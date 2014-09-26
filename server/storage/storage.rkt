@@ -8,7 +8,8 @@
 ;; These are our file-system-sig types
 (require/typed "storage-basic.rkt"
                [retrieve-file (String -> String)]
-               [write-file (String String -> Void)]
+               ; TODO: Revise from Any to some safe data type
+               [write-file (String Any -> Void)]
                [delete-path (String -> Void)]
                [path-info (String -> (U 'file 'directory 'does-not-exist))]
                [list-files (String -> (Listof String))]
@@ -151,7 +152,7 @@
 
 ; Uploads a dependency solution. If necessary, deletes the previous dependency that was uploaded 
 (provide upload-dependency-solution)
-(: upload-dependency-solution (String String String String String String -> Void))
+(: upload-dependency-solution (String String String String String Bytes -> Void))
 (define (upload-dependency-solution class-id user-id assignment-id step-id file-name data)
   (let ((path (submission-path class-id assignment-id user-id step-id)))
     ;; Delete previously uploaded files
@@ -166,7 +167,7 @@
 
 ; Uploads a student submission.
 (provide upload-submission)
-(: upload-submission (String String String String String String -> (Result Void)))
+(: upload-submission (String String String String String Bytes -> (Result Void)))
 (define (upload-submission class-id user-id assignment-id step-id file-name data)
   
   ;; Ensure the students has not finalized their submission
@@ -181,7 +182,7 @@
                       [else (do-single-file-solution class-id user-id assignment-id step-id file-name data)]))]))
 
 
-(: do-unarchive-solution (String String String String String String -> (Result Void)))
+(: do-unarchive-solution (String String String String String Bytes -> (Result Void)))
 (define (do-unarchive-solution class-id user-id assignment-id step-id file-name data)
   (let* ((temp-dir (get-local-temp-directory))
          (file-path (string-append temp-dir file-name))
@@ -212,7 +213,7 @@
     (Success (void))))
 
       
-(: do-single-file-solution (String String String String String String -> (Result Void)))
+(: do-single-file-solution (String String String String String Bytes -> (Result Void)))
 (define (do-single-file-solution class-id user-id assignment-id step-id file-name data)
   (let ((s-path (submission-file-path class-id assignment-id user-id step-id file-name)))
     (write-file s-path data)

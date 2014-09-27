@@ -1,13 +1,13 @@
 #lang racket
 
-(provide (all-from-out "assignment-structs.rkt"))
-
 (require "../storage/storage.rkt"
          (planet esilkensen/yaml:3:1)
          json
          "assignment-structs.rkt"
          "assignment-parser.rkt"
          "../base.rkt")
+
+(provide (all-from-out "assignment-structs.rkt"))
 
 ;; assignment-id -> void
 ;; Completely remove all trace of an assignment

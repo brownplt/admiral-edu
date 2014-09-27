@@ -1,16 +1,19 @@
-#lang racket
+#lang typed/racket
 
 (provide (all-defined-out))
 
+(: ors ((Listof Boolean) -> Boolean))
 (define (ors els) 
-  (cond
-    [(not ((listof boolean?) els)) (raise-argument-error 'ors "non-empty-listof boolean?" els)]
-    [else (match els
-            ['() #f]
-            [(cons head tail) (if head #t (ors tail))])]))
-
-(define (ands els) (foldr (lambda (x y) (and x y)) #t els))
+  (match els
+    ['() #f]
+    [(cons head tail) (if head #t (ors tail))]))
 
 
+(: ands ((Listof Boolean) -> Boolean))
+(define (ands els) 
+  (foldr (lambda: ([x : Boolean] [y : Boolean]) (and x y)) #t els))
+
+
+(: hash-has-keys? (All (A B) ((HashTable A B) A * -> Boolean)))
 (define (hash-has-keys? hash . els)
   (ands (map (lambda (x) (hash-has-key? hash x)) els)))

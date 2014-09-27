@@ -152,7 +152,7 @@
 
 ; Uploads a dependency solution. If necessary, deletes the previous dependency that was uploaded 
 (provide upload-dependency-solution)
-(: upload-dependency-solution (String String String String String Bytes -> Void))
+(: upload-dependency-solution (String String String String String (U String Bytes) -> Void))
 (define (upload-dependency-solution class-id user-id assignment-id step-id file-name data)
   (let ((path (submission-path class-id assignment-id user-id step-id)))
     ;; Delete previously uploaded files
@@ -167,7 +167,7 @@
 
 ; Uploads a student submission.
 (provide upload-submission)
-(: upload-submission (String String String String String Bytes -> (Result Void)))
+(: upload-submission (String String String String String (U String Bytes) -> (Result Void)))
 (define (upload-submission class-id user-id assignment-id step-id file-name data)
   
   ;; Ensure the students has not finalized their submission
@@ -182,7 +182,7 @@
                       [else (do-single-file-solution class-id user-id assignment-id step-id file-name data)]))]))
 
 
-(: do-unarchive-solution (String String String String String Bytes -> (Result Void)))
+(: do-unarchive-solution (String String String String String (U String Bytes) -> (Result Void)))
 (define (do-unarchive-solution class-id user-id assignment-id step-id file-name data)
   (let* ((temp-dir (get-local-temp-directory))
          (file-path (string-append temp-dir file-name))
@@ -213,7 +213,7 @@
     (Success (void))))
 
       
-(: do-single-file-solution (String String String String String Bytes -> (Result Void)))
+(: do-single-file-solution (String String String String String (U String Bytes) -> (Result Void)))
 (define (do-single-file-solution class-id user-id assignment-id step-id file-name data)
   (let ((s-path (submission-file-path class-id assignment-id user-id step-id file-name)))
     (write-file s-path data)

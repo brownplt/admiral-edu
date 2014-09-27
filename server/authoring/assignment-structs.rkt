@@ -30,6 +30,7 @@
 (define (step id instructions . reviews)
   (Step id instructions reviews))
 
+(provide Review)
 (define-type Review (U student-submission instructor-solution))
 
 (provide Review-id)
@@ -99,6 +100,7 @@
                     [text : String]) #:transparent)
 
 
+(provide RubricElement)
 (define-type RubricElement (U free-form likert instruction ))
 
 (provide rubric-element?)
@@ -121,8 +123,8 @@
 
 ;; Used to state a students next action is to review on a step
 (provide (struct-out MustReviewNext))
-(struct MustReviewNext ([step : Any] 
-                        [reviews : (Listof Review)]) #:transparent)
+(struct MustReviewNext ([step : Step] 
+                        [reviews : (Listof String)]) #:transparent)
 
 
 ;; Assignment Handler
@@ -133,12 +135,12 @@
 ;;   Given an assignment, a step, user id, file name being submitted, the data of the file, and a list of assignment steps
 ;;   attempts to submit the data for the specified assignment user and step.
 ;; get-dependencies: (assignment -> ListOf dependecy)
-;; take-dependencies: assignment-id -> dependency -> file-name -> file-data -> Either Success Failure
+;; take-dependencies: assignment-id -> dependency -> bindings -> raw-bindings -> Either Success Failure
 (provide (struct-out AssignmentHandler))
-(struct AssignmentHandler ([next-action : (Assignment (Listof Step) -> (U MustSubmitNext MustReviewNext #t))]
-                           [do-submit-step : (Assignment Step String String Bytes (Listof Step) -> (Result Void))]
+(struct AssignmentHandler ([next-action : (Assignment (Listof Step) String -> (U MustSubmitNext MustReviewNext #t))]
+                           [do-submit-step : (Assignment Step String String Bytes (Listof Step) -> (Result String))]
                            [get-dependencies : (Assignment -> (Listof Dependency))] 
-                           [take-dependency : (String Any String Bytes -> (Result Void))]))
+                           [take-dependency : (String review-dependency Any (Listof Any) -> (Result String))]))
 
 
 (provide dependency-submission-name)
@@ -155,6 +157,7 @@
 ;; instructor-solution: If this is an instructor solution dependency
 ;; met: #t if this dependency has been met and #f otherwise.
 
+(provide Dependency)
 (define-type Dependency dependency)
 
 (provide dependency-met)

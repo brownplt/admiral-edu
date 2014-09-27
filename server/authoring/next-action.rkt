@@ -1,7 +1,5 @@
 #lang typed/racket
 
-
-
 (require/typed web-server/http/bindings
                [extract-binding/single (Symbol Any -> String)])
 

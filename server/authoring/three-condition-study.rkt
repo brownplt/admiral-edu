@@ -1,33 +1,35 @@
-#lang racket
+#lang typed/racket
+
+(require/typed web-server/http/bindings
+               [extract-binding/single (Symbol Any -> String)])
 
 (require "../storage/storage.rkt"
-         web-server/http/bindings
-         db
-         (planet esilkensen/yaml:3:1)
-         json
+         "../database/mysql/typed-db.rkt"
          "../base.rkt"
          "../email/email.rkt"
          "assignment-structs.rkt"
-         (prefix-in default: "next-action.rkt")
-         "util.rkt"
-         "../database/mysql/common.rkt")
+         "typed-yaml.rkt"
+         (prefix-in default: "next-action.rkt"))
 
 
 ;; 3 different groups
 
 ;; assignment-id -> uid -> group
+(: lookup-group (String String -> (U 'does-reviews 'gets-reviewed 'no-reviews)))
 (define (lookup-group assignment-id uid)
   (let* ((yaml-string (retrieve-file (dependency-file-name assignment-id)))
          (yaml (string->yaml yaml-string))
-         (does-reviews (hash-ref yaml "does-reviews"))
-         (gets-reviewed (hash-ref yaml "gets-reviewed"))
-         (no-reviews (hash-ref yaml "no-reviews")))
+         (does-reviews (cast (hash-ref yaml "does-reviews") (Listof String)))
+         (gets-reviewed (cast (hash-ref yaml "gets-reviewed") (Listof String)))
+         (no-reviews (cast (hash-ref yaml "no-reviews") (Listof String))))
     (cond [(member uid does-reviews) 'does-reviews]
           [(member uid gets-reviewed) 'gets-reviewed]
           [(member uid no-reviews) 'no-reviews]
           [else (error (format "Could not find uid ~a in configuration file.\n\nYAML:~a\n\n" uid yaml-string))])))
 
+
 (provide three-next-action)
+(: three-next-action (Assignment (Listof Step) String -> (U MustSubmitNext MustReviewNext #t)))
 (define (three-next-action assignment steps uid)
   (let ((assignment-id (Assignment-id assignment)))
     (let ((group (lookup-group assignment-id uid)))
@@ -35,12 +37,13 @@
         [(null? steps) #t]
         [else (three-check-step assignment steps uid group)]))))
 
+(: three-check-step (Assignment (Listof Step) String (U 'does-reviews 'gets-reviewed 'no-reviews) -> (U MustReviewNext MustSubmitNext #t)))
 (define (three-check-step assignment steps uid group)
   (let ((assignment-id (Assignment-id assignment))
         (step (first steps))
         (tail (rest steps)))
     (let* ((step-id (Step-id step))
-           (has-submitted (> (submission:count assignment-id class-name step-id uid) 0))
+           (has-submitted (> (cast (submission:count assignment-id class-name step-id uid) Nonnegative-Integer) 0))
            (result (cond 
                      [(not has-submitted) (MustSubmitNext step (Step-instructions step))]
                      [(eq? group 'no-reviews) (default:next-action (three-check-reviewed group) three-ensure-assigned-review assignment tail uid)]
@@ -52,6 +55,8 @@
         [(eq? #t result) (check-final-review assignment (last steps) uid group)]
         [else result]))))
 
+
+(: handle-does-reviews (Assignment (Listof Step) String (U 'does-reviews 'gets-reviewed 'no-reviews) -> (U MustReviewNext MustSubmitNext #t)))
 (define (handle-does-reviews assignment steps uid group)
   (let* ((assignment-id (Assignment-id assignment))
          (step (first steps))
@@ -64,24 +69,27 @@
 ; Returns #t if the review has been completed and #f otherwise
 ; assignment-id -> step -> review -> user-id -> bool?
 (provide three-check-reviewed)
+(: three-check-reviewed ((U 'does-reviews 'gets-reviewed 'no-reviews) -> (String Step Review String -> Boolean)))
 (define (three-check-reviewed group)
   (lambda (assignment-id step review uid)
     (cond
       [(instructor-solution? review) 
            (let* ((review-id (Review-id review)))
-             (cond [(string=? (symbol->string group) review-id) (check-instructor-solution assignment-id uid step)]
+             (cond [(string=? (symbol->string group) review-id) (not (eq? #f (check-instructor-solution assignment-id uid step)))]
                    [else #t]))]
       [(student-submission? review) (default:default-check-reviewed assignment-id step review uid)])))
+
 
 ;; assignment -> step -> user-id -> group-symbol -> Either #t MustReviewNext
 ;; Checks to see if this is the final step. If it is, ensures that students are assigned
 ;; an instructor solution review.
+(: check-final-review (Assignment Step String Symbol -> (U #t MustReviewNext)))
 (define (check-final-review assignment step uid group)
   (let* ((assignment-id (Assignment-id assignment))
          (step-id (Step-id step))
-         (match-group-id (lambda (review) (string=? (symbol->string group) (Review-id review))))
+         (match-group-id (lambda ([review : Review]) (string=? (symbol->string group) (Review-id review))))
          (reviews (filter match-group-id (Step-reviews step)))
-         (check-review (lambda (review) (not (default:default-check-reviewed assignment-id step review uid)))))
+         (check-review (lambda ([review : Review]) (not (default:default-check-reviewed assignment-id step review uid)))))
     (map (three-ensure-assigned-review assignment-id uid step) reviews)
     ;; Filter out completed reviews. If the list is empty, there are no reviews left
     (cond [(null? (filter check-review reviews)) #t]
@@ -89,6 +97,7 @@
 
 (provide three-do-submit-step)
 ; If file-name or data is false, we don't upload anything
+(: three-do-submit-step (Assignment Step String (U #f String) (U #f Bytes String) (Listof Step) -> (Result String)))
 (define (three-do-submit-step assignment step uid file-name data steps)
   (let ((assignment-id (Assignment-id assignment))
         (step-id (Step-id step)))
@@ -108,19 +117,25 @@
           [(MustReviewNext? next) (three-assign-reviews assignment-id (MustReviewNext-step next) uid)])
         (Success (string-append "Assignment submitted. <b>Note : " extra-message "</b>"))))))
 
+(: maybe-assign-reviewers (String Step String -> Void))
 (define (maybe-assign-reviewers assignment-id step uid)
   (let* ((reviews (Step-reviews step))
          (step-id (Step-id step)))
-    (map (maybe-assign-reviewers-helper assignment-id step-id uid) reviews)))
+    (map (maybe-assign-reviewers-helper assignment-id step-id uid) reviews)
+    (void)))
 
+
+(: maybe-assign-reviewers-helper (String String String -> (Review -> Void)))
 (define (maybe-assign-reviewers-helper assignment-id step-id uid)
   (lambda (review)
     (cond [(student-submission? review) (let* ((amount (student-submission-amount review))
                                                (pending-reviews (get-pending-reviews assignment-id step-id amount)))
-                                          (map (assign-reviewer assignment-id step-id uid) (map (lambda (v) (vector-ref v 0)) pending-reviews)))]
-          [(instructor-solution? review) #f]
+                                          (map (assign-reviewer assignment-id step-id uid) (map (lambda ([v : (Vector String Integer)]) (vector-ref v 0)) pending-reviews))
+                                          (void))]
+          [(instructor-solution? review) (void)]
           [else (error "Ooops should not be here.")])))
 
+(: assign-reviewer (String String String -> (String -> Void)))
 (define (assign-reviewer assignment-id step-id uid)
   (lambda (hash)
     (let* ((review (review:select-by-hash hash))
@@ -129,16 +144,17 @@
            (q (merge "UPDATE" review:table
                      "SET" review:reviewee-id "=?"
                      "WHERE" review:hash "=?"))
-           (result (run query-exec q uid hash)))
+           (result (query-exec q uid hash)))
       (send-email reviewer "Captain Teach: A review is ready." 
                   (string-join 
                    (list "A review has been assigned to you."
                          (string-append "Assignment-id: " assignment-id)
                          "You can access the review at the following URL:"
-                         (string-append "https://" sub-domain server-name "/" class-name "/next/" assignment-id "/"))
+                         (string-append "https://" (assert sub-domain string?) (assert server-name string?) "/" class-name "/next/" assignment-id "/"))
                    "\n"))
       result)))
 
+(: get-pending-reviews (String String Exact-Nonnegative-Integer -> (Listof (Vector String Integer))))
 (define (get-pending-reviews assignment-id step-id amount)
   (let* ((q (merge "SELECT " review:hash ", count(*) as C"
                        "FROM" review:table
@@ -150,24 +166,30 @@
                        "ORDER BY" "C DESC,"
                        review:time-stamp "ASC"
                        "LIMIT ?"))
-         (result (run query-rows q assignment-id class-name step-id amount)))
+         (result (query-rows q assignment-id class-name step-id amount)))
     (printf "results of query: ~a\n" result)
-    result))
+    (cast result (Listof (Vector String Integer)))))
 
 ;; For a given assignment-id, step, and uid, assigns reviews that are not currently assigned.
+(: three-assign-reviews (String Step String -> Void))
 (define (three-assign-reviews assignment-id step uid)
   (let* ((reviews (Step-reviews step)))
-    (map (three-ensure-assigned-review assignment-id uid step) reviews)))
+    (map (three-ensure-assigned-review assignment-id uid step) reviews)
+    (void)))
 
+(: three-ensure-assigned-review (String String Step -> (Review -> Void)))
 (define (three-ensure-assigned-review assignment-id uid step)
   (lambda (review)
     (check-single-assigned assignment-id step uid review)))
 
+(: check-single-assigned (String Step String Review -> Void))
 (define (check-single-assigned assignment-id step uid review)
   (let ((result (cond [(student-submission? review) ((check-student-submission assignment-id uid step) review)]
                       [(instructor-solution? review) ((check-instructor-solution assignment-id uid step) review)])))
     (when result ((three-assign-review assignment-id (Step-id step) uid) result))))
 
+
+(: check-student-submission (String String Step -> (student-submission -> student-submission)))
 (define (check-student-submission assignment-id uid step)
   (lambda (review)
     (let* ((step-id (Step-id step))
@@ -181,6 +203,7 @@
 ; (assignment-id -> uid -> step-id -> (review -> Either review #f))
 ; Checks to see if an instructor review needs to be completed.
 ; Returns the specified review if the review has not been completed. Otherwise, returns #f
+(: check-instructor-solution (String String Step -> (instructor-solution -> (U instructor-solution #f))))
 (define (check-instructor-solution assignment-id uid step)
   (lambda (review)
     (let* ((step-id (Step-id step))
@@ -191,11 +214,13 @@
       ;; If the user-group matches the review-id, assign them to the review
       (cond [(string=? user-group review-id) (if (> count 0) #f review)]
             [else #f]))))
-  
+
+(: three-assign-single-review (String String String Review -> Void))
 (define (three-assign-single-review assignment-id step-id uid review)
   ((three-assign-review assignment-id step-id uid) review))
 
 ;; Student is in the does-reviews group
+(: three-assign-review (String String String -> (Review -> Void)))
 (define (three-assign-review assignment-id step-id uid)
   (lambda (review)
     (let ((review-id (Review-id review))
@@ -203,12 +228,16 @@
       (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id class-name step-id (dependency-submission-name review-id 1) uid review-id)]
             [(student-submission? review) (assign-student-reviews assignment-id class-name step-id uid review-id amount)]))))
 
+
+(: gets-reviewed-list (String String -> (Listof String)))
 (define (gets-reviewed-list assignment-id step-id)
   (let* ((yaml-string (retrieve-file (dependency-file-name assignment-id)))
          (yaml (string->yaml yaml-string))
-         (gets-reviewed (hash-ref yaml "gets-reviewed")))
+         (gets-reviewed (cast (hash-ref yaml "gets-reviewed") (Listof String))))
     gets-reviewed))
 
+
+(: assign-student-reviews (String String String String String Exact-Nonnegative-Integer -> Void))
 (define (assign-student-reviews assignment-id class-name step-id uid review-id amount)
   (let* ((students (gets-reviewed-list assignment-id step-id))
          (student-commas (string-join (build-list (length students) (lambda (n) "?")) ","))
@@ -221,49 +250,60 @@
                            submission:times-reviewed "<=?"
                    "ORDER BY" submission:times-reviewed "ASC," submission:time-stamp "ASC"
                    "LIMIT ?"))
-         (query-list (append (list query-rows q) students (list assignment-id class-name step-id amount amount)))
-         (result (apply run query-list))
+         (query-list (append students (list assignment-id class-name step-id amount amount)))
+         (result (cast (query-rows-list q query-list) (Listof (Vector String))))
          (total-found (length result))
          (hold-amount (- amount total-found)))
     (printf "Found ~a students to review, will hold ~a for later\n" total-found hold-amount)
     (map (assign-student-review assignment-id class-name step-id uid review-id) result)
     (assign-student-hold assignment-id class-name step-id uid review-id hold-amount)))
 
+(: assign-student-review (String String String String String -> ((Vector String) -> Void)))
 (define (assign-student-review assignment-id class-name step-id uid review-id)
   (lambda (vec)
     (let ((reviewee (vector-ref vec 0)))
       (printf "Assigning review between ~a and ~a\n" reviewee uid)
       (review:create assignment-id class-name step-id reviewee uid review-id))))
 
+
+(: assign-student-hold (String String String String String Integer -> Void))
 (define (assign-student-hold assignment-id class-name step-id uid review-id n)
   (printf "Assigning hold to ~a\n" uid)
-  (if (<= n 0) #t
+  (if (<= n 0) (void)
       (begin (review:create assignment-id class-name step-id "HOLD" uid review-id)
              (assign-student-hold assignment-id class-name step-id uid review-id (- n 1)))))
 
 (provide dependency-file-name)
+(: dependency-file-name (String -> String))
 (define (dependency-file-name assignment-id)
   (string-append class-name "/" assignment-id "/three-condition-config.yaml"))
 
+(: three-get-deps (Assignment -> (Listof Dependency)))
 (define (three-get-deps assignment)
   (cons 
    (three-study-config-dependency (check-for-config-file (Assignment-id assignment)))
    (filter instructor-solution-dependency? (default:default-get-dependencies assignment))))
 
+
+(: check-for-config-file (String -> Boolean))
 (define (check-for-config-file assignment-id)
   (is-file? (dependency-file-name assignment-id)))
-  
-  
+
+
+(: three-take-deps (String review-dependency Any (Listof Any) -> (Result String)))
 (define (three-take-deps assignment-id dependency bindings raw-bindings)
   (cond [(three-study-config-dependency? dependency) (take-config assignment-id bindings raw-bindings)]
         [else (default:default-take-dependency assignment-id dependency bindings raw-bindings)]))
 
+
+(: take-config (String Any (Listof Any) -> (Result String)))
 (define (take-config assignment-id bindings raw-bindings)
   (let* ((data (extract-binding/single 'three-condition-file bindings)))
     (write-file (dependency-file-name assignment-id) data)
     (Success "Configuration uploaded.")))
 
+
 (provide three-condition-study-handler)
+(: three-condition-study-handler AssignmentHandler)
 (define three-condition-study-handler
   (AssignmentHandler three-next-action three-do-submit-step three-get-deps three-take-deps))
-

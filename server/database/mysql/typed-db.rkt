@@ -57,6 +57,11 @@
 (define (query-rows query . args)
   (map safe-vector (cast (native:run 'query-rows query args) (Listof (Vectorof Any)))))
 
+(provide query-rows-list)
+(: query-rows-list (String (Listof QueryArgument) -> (Listof (Vectorof QueryResult))))
+(define (query-rows-list query args)
+  (map safe-vector (cast (native:run 'query-rows query args) (Listof (Vectorof Any)))))
+
 (provide query-value)
 (: query-value (String QueryArgument * -> QueryResult))
 (define (query-value query . args)

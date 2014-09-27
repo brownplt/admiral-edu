@@ -7,8 +7,6 @@
          json
          "assignment-structs.rkt"
          "assignment-parser.rkt"
-         "assignment-dependencies.rkt"
-         "util.rkt"
          "../base.rkt")
 
 ;; assignment-id -> void

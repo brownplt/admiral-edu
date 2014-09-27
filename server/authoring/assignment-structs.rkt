@@ -1,92 +1,129 @@
-#lang racket
+#lang typed/racket
+
+(require "../util/basic-types.rkt")
 
 ;; Assignment Description
 (provide (struct-out Assignment))
-(struct Assignment (name id description assignment-handler steps) #:transparent)
+(struct: Assignment ([name  : String]
+                     [id : String]
+                     [description : String]
+                     [assignment-handler : AssignmentHandler]
+                     [steps : (Listof Step)]) #:transparent)
+
+
 
 (provide assignment)
+(: assignment (String String String AssignmentHandler Step * -> Assignment))
 (define (assignment name id description assignment-handler . steps)
   (Assignment name id description assignment-handler steps))
 
+
 ;; Step Description
-(provide (contract-out
-         [struct Step ((id string?) (instructions string?) (reviews (listof review?)))]))
-(struct Step (id instructions reviews) #:transparent)
+(provide (struct-out Step))
+(struct: Step ([id : String]
+               [instructions : String]
+               [reviews : (Listof Review)]) #:transparent)
 
 ;; Review Description
 (provide step)
+(: step (String String Review * -> Step))
 (define (step id instructions . reviews)
   (Step id instructions reviews))
 
+(define-type Review (U student-submission instructor-solution))
+
 (provide Review-id)
+(: Review-id (Review -> String))
 (define (Review-id review)
   (cond [(student-submission? review) (student-submission-id review)]
         [(instructor-solution? review) (instructor-solution-id review)]))
 
+
 (provide Review-amount)
+(: Review-amount (Review -> Exact-Nonnegative-Integer))
 (define (Review-amount review)
   (cond [(student-submission? review) (student-submission-amount review)]
         [(instructor-solution? review) 1]))
 
+
 (provide Review-rubric)
+(: Review-rubric (Review -> Rubric))
 (define (Review-rubric review) 
   (cond [(student-submission? review) (student-submission-rubric review)]
         [(instructor-solution? review) (instructor-solution-rubric review)]
         [else (raise-user-error 'validate-step "Expected to find student-submissions / instructor-solution.")]))
 
 ;; Student Submission Review
-(provide (contract-out
-          [struct student-submission ((id string?) (amount integer?) (rubric Rubric?))]))
-(struct student-submission (id amount rubric) #:transparent)
+(provide (struct-out student-submission))
+(struct: student-submission ([id : String] 
+                            [amount : Exact-Nonnegative-Integer]
+                            [rubric : Rubric]) #:transparent)
+
 
 ;; Instructor Solution Review
-(provide (contract-out
-          [struct instructor-solution ((id string?) (rubric Rubric?))]))
-(struct instructor-solution (id rubric) #:transparent)
+(provide (struct-out instructor-solution))
+(struct: instructor-solution ([id : String]
+                             [rubric : Rubric]) #:transparent)
+
 
 ;; Rubric Description
-(provide (contract-out 
-          [struct Rubric ((elements (non-empty-listof rubric-element?)))]))
-(struct Rubric (elements) #:transparent)
+(provide (struct-out Rubric))
+(struct: Rubric ([elements : (Listof RubricElement)]) #:transparent)
+
 
 (provide rubric)
+(: rubric (RubricElement * -> Rubric))
 (define (rubric . elements)
   (Rubric elements))
+
 
 ;; Rubric Element Descriptions
 
 ;; Instruction
-(provide (contract-out
-          [struct instruction ((text string?))]))
-(struct instruction (text) #:transparent)
+(provide (struct-out instruction))
+(struct: instruction ([text : String]) #:transparent)
 
 ;; Likert
-(provide (contract-out
-          [struct likert ((id string?) (text string?) (min string?) (max string?) (granularity integer?))]))
-(struct likert (id text min max granularity) #:transparent)
+(provide (struct-out likert))
+(struct: likert ([id : String]
+                 [text : String]
+                 [min : String]
+                 [max : String]
+                 [granularity : Exact-Nonnegative-Integer]) #:transparent)
+
+
 
 ;; Free Form
-(provide (contract-out
-          [struct free-form ((id string?) (text string?))]))
-(struct free-form (id text) #:transparent)
+(provide (struct-out free-form))
+(struct: free-form ([id : String]
+                    [text : String]) #:transparent)
+
+
+(define-type RubricElement (U free-form likert instruction ))
 
 (provide rubric-element?)
-(define rubric-element? 
-  (or/c instruction? likert? free-form?))
+(: rubric-element? (Any -> Boolean : RubricElement))
+(define (rubric-element? any)
+  (or (instruction? any)
+      (likert? any)
+      (free-form? any)))
 
 (provide review?)
-(define review?
-  (or/c student-submission? instructor-solution?))
-
-
+(: review? (Any -> Boolean : Review))
+(define (review? any)
+  (or (student-submission? any)
+      (instructor-solution? any)))
 
 ;; Used to state a students next action is to submit to the step
 (provide (struct-out MustSubmitNext))
-(struct MustSubmitNext (step instructions) #:transparent)
+(struct MustSubmitNext ([step : Step]
+                        [instructions : String]) #:transparent)
 
 ;; Used to state a students next action is to review on a step
 (provide (struct-out MustReviewNext))
-(struct MustReviewNext (step reviews) #:transparent) 
+(struct MustReviewNext ([step : Any] 
+                        [reviews : (Listof Review)]) #:transparent)
+
 
 ;; Assignment Handler
 ;; next-action: (assignment -> steps -> (Either MustSubmitNext MustReviewNext #t))
@@ -98,11 +135,17 @@
 ;; get-dependencies: (assignment -> ListOf dependecy)
 ;; take-dependencies: assignment-id -> dependency -> file-name -> file-data -> Either Success Failure
 (provide (struct-out AssignmentHandler))
-(struct AssignmentHandler (next-action do-submit-step get-dependencies take-dependency))
+(struct AssignmentHandler ([next-action : (Assignment (Listof Step) -> (U MustSubmitNext MustReviewNext #t))]
+                           [do-submit-step : (Assignment Step String String Bytes (Listof Step) -> (Result Void))]
+                           [get-dependencies : (Assignment -> (Listof Dependency))] 
+                           [take-dependency : (String Any String Bytes -> (Result Void))]))
+
 
 (provide dependency-submission-name)
+(: dependency-submission-name (String Exact-Nonnegative-Integer -> String))
 (define (dependency-submission-name review-id n)
   (string-append "default-submission-" review-id "-" (number->string n)))
+
 
 ;;TODO(3-study): change instructor-solution to be a message
 ;; A dependency for an assignment to be open
@@ -112,14 +155,17 @@
 ;; instructor-solution: If this is an instructor solution dependency
 ;; met: #t if this dependency has been met and #f otherwise.
 
+(define-type Dependency dependency)
+
 (provide dependency-met)
-(struct dependency (met) #:transparent)
+(struct: dependency ([met : Boolean]) #:transparent)
 
 (provide (struct-out review-dependency)) 
-(struct review-dependency dependency (step-id review-id) #:transparent)
+(struct: review-dependency dependency ([step-id : String]
+                                       [review-id : String]) #:transparent)
 
 (provide (struct-out student-submission-dependency))
-(struct student-submission-dependency review-dependency (amount) #:transparent)
+(struct: student-submission-dependency review-dependency ([amount : Exact-Nonnegative-Integer]) #:transparent)
 
 (provide (struct-out instructor-solution-dependency))
 (struct instructor-solution-dependency review-dependency () #:transparent)

@@ -1,7 +1,7 @@
 #lang typed/racket
 
 (require/typed web-server/http/bindings
-               [extract-binding/single (Symbol Any -> String)])
+               [extract-binding/single (Symbol (Listof (Pairof Symbol (U String Bytes))) -> (U String Bytes))])
 
 (require "../storage/storage.rkt"
          "../database/mysql/typed-db.rkt"
@@ -290,13 +290,13 @@
   (is-file? (dependency-file-name assignment-id)))
 
 
-(: three-take-deps (String review-dependency Any (Listof Any) -> (Result String)))
+(: three-take-deps (String Dependency (Listof (Pairof Symbol (U Bytes String))) (Listof Any) -> (Result String)))
 (define (three-take-deps assignment-id dependency bindings raw-bindings)
   (cond [(three-study-config-dependency? dependency) (take-config assignment-id bindings raw-bindings)]
-        [else (default:default-take-dependency assignment-id dependency bindings raw-bindings)]))
+        [else (default:default-take-dependency assignment-id (assert dependency review-dependency?) bindings raw-bindings)]))
 
 
-(: take-config (String Any (Listof Any) -> (Result String)))
+(: take-config (String (Listof (Pairof Symbol (U Bytes String))) (Listof Any) -> (Result String)))
 (define (take-config assignment-id bindings raw-bindings)
   (let* ((data (extract-binding/single 'three-condition-file bindings)))
     (write-file (dependency-file-name assignment-id) data)

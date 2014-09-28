@@ -138,9 +138,10 @@
 ;; take-dependencies: assignment-id -> dependency -> bindings -> raw-bindings -> Either Success Failure
 (provide (struct-out AssignmentHandler))
 (struct AssignmentHandler ([next-action : (Assignment (Listof Step) String -> (U MustSubmitNext MustReviewNext #t))]
-                           [do-submit-step : (Assignment Step String String Bytes (Listof Step) -> (Result String))]
+                           ;; TODO(after-typed): Remove optional (U String #f) and (U Bytes #f)
+                           [do-submit-step : (Assignment Step String (U String #f) (U Bytes #f) (Listof Step) -> (Result String))]
                            [get-dependencies : (Assignment -> (Listof Dependency))] 
-                           [take-dependency : (String review-dependency Any (Listof Any) -> (Result String))]))
+                           [take-dependency : (String Dependency (Listof (Pairof Symbol (U String Bytes))) (Listof Any) -> (Result String))]))
 
 
 (provide dependency-submission-name)

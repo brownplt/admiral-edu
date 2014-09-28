@@ -1,7 +1,7 @@
 #lang typed/racket
 
 (require/typed web-server/http/bindings
-               [extract-binding/single (Symbol Any -> String)])
+               [extract-binding/single (Symbol (Listof (Pairof Symbol (U String Bytes))) -> (U String Bytes))])
 
 (require/typed web-server/http/request-structs
                [binding:file-filename (Any -> Bytes)])
@@ -13,7 +13,7 @@
 
 (provide do-submit-step)
 ;; If file-name or data are #f, nothing is uploaded.
-(: do-submit-step (Assignment Step String String Bytes (Listof Step) -> (Result String)))
+(: do-submit-step (Assignment Step String (U String #f) (U Bytes #f) (Listof Step) -> (Result String)))
 (define (do-submit-step assignment step uid file-name data steps)
   (let ((assignment-id (Assignment-id assignment))
         (step-id (Step-id step)))
@@ -185,17 +185,17 @@
 
 
 (provide default-take-dependency)
-(: default-take-dependency (String review-dependency Any (Listof Any) -> (Result String)))
+(: default-take-dependency (String Dependency (Listof (Pairof Symbol (U Bytes String))) (Listof Any) -> (Result String)))
 (define (default-take-dependency assignment-id dependency bindings raw-bindings)
-  (let ((review-id (review-dependency-review-id dependency))
-        (step-id (review-dependency-step-id dependency)))
+  (let ((review-id (review-dependency-review-id (assert dependency review-dependency?)))
+        (step-id (review-dependency-step-id (assert dependency review-dependency?))))
   (cond [(instructor-solution-dependency? dependency) (run-submissions class-name assignment-id step-id review-id bindings raw-bindings 1)]
         [(student-submission-dependency? dependency) (run-submissions class-name assignment-id step-id review-id bindings raw-bindings (student-submission-dependency-amount dependency))]
         [else (raise (format "Unknown dependency: ~a" dependency))])))
 
 
 
-(: run-submissions (String String String String Any (Listof Any) Exact-Nonnegative-Integer -> (Result String)))
+(: run-submissions (String String String String (Listof (Pairof Symbol (U Bytes String))) (Listof Any) Exact-Nonnegative-Integer -> (Result String)))
 (define (run-submissions class assignment stepName review-id bindings raw-bindings amount)
   (letrec: ((helper : (Exact-Nonnegative-Integer -> (Result String))
                     (lambda ([n : Exact-Nonnegative-Integer])

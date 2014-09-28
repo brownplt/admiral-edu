@@ -189,6 +189,9 @@
   (let* ((assignment (assignment-id->assignment assignment-id))
          (handler (Assignment-assignment-handler assignment))
          (take-dependency (AssignmentHandler-take-dependency handler)))
+    (printf "Assignment: ~a\n" assignment)
+    (printf "Handle-Dependency: ~a\n" dependency)
+    (printf "Handler: ~a\n" handler)
     (take-dependency assignment-id dependency bindings raw-bindings)))
          
 

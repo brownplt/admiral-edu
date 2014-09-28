@@ -306,4 +306,4 @@
 (provide three-condition-study-handler)
 (: three-condition-study-handler AssignmentHandler)
 (define three-condition-study-handler
-  (AssignmentHandler three-next-action three-do-submit-step three-get-deps three-take-deps))
+  (AssignmentHandler three-next-action three-do-submit-step three-get-deps three-take-deps "three-condition-study"))

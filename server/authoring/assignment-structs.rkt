@@ -141,7 +141,8 @@
                            ;; TODO(after-typed): Remove optional (U String #f) and (U Bytes #f)
                            [do-submit-step : (Assignment Step String (U String #f) (U Bytes #f) (Listof Step) -> (Result String))]
                            [get-dependencies : (Assignment -> (Listof Dependency))] 
-                           [take-dependency : (String Dependency (Listof (Pairof Symbol (U String Bytes))) (Listof Any) -> (Result String))]))
+                           [take-dependency : (String Dependency (Listof (Pairof Symbol (U String Bytes))) (Listof Any) -> (Result String))]
+                           [key : String]))
 
 
 (provide dependency-submission-name)

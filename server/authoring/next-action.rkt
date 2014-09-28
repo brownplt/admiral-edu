@@ -211,4 +211,4 @@
 
 (provide default-assignment-handler)
 (: default-assignment-handler AssignmentHandler)
-(define default-assignment-handler (AssignmentHandler default-next-action do-submit-step default-get-dependencies default-take-dependency))
+(define default-assignment-handler (AssignmentHandler default-next-action do-submit-step default-get-dependencies default-take-dependency "default"))

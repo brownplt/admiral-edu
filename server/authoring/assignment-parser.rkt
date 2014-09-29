@@ -14,8 +14,8 @@
 (define free-form-class "FreeFormElement")
 
 (define assignment-handlers 
-  `#hash((,(AssignmentHandler-key default-assignment-handler) . ,default-assignment-handler)
-         (,(AssignmentHandler-key three-condition-study-handler) . ,three-condition-study-handler)))
+  (make-hash (list (cons (AssignmentHandler-key default-assignment-handler) default-assignment-handler)
+                   (cons (AssignmentHandler-key three-condition-study-handler) three-condition-study-handler))))
 
 ;; Assignment
 ;; TODO(3 study): Parse next-action-function
@@ -45,6 +45,7 @@
 (define-type Assignment-YAML (HashTable String (U String AssignmentHandler (Listof Step-YAML))))
 
 ;; TODO(3 study): Output next-action-function
+(provide assignment->yaml)
 (: assignment->yaml (Assignment -> Assignment-YAML))
 (define (assignment->yaml assignment)
   (cond [(not (Assignment? assignment)) (raise-argument-error 'assignment->yaml "Assignment" assignment)]
@@ -58,6 +59,7 @@
 
 (define-type Step-YAML (HashTable String (U String (Listof Review-YAML))))
 ;; Step
+(provide step->yaml)
 (: step->yaml (Step -> Step-YAML))
 (define (step->yaml step)
   (cond [(not (Step? step)) (raise-argument-error 'step->yaml "Step" step)]
@@ -68,6 +70,7 @@
                 (make-hash (if (null? reviews) partial (cons `("reviews" . ,reviews) partial))))]))
 
 
+(provide yaml->step)
 (: yaml->step (Step-YAML -> Step))
 (define (yaml->step yaml)
   (cond [(not (or (= 2 (hash-count yaml)) (= 3 (hash-count yaml)))) (raise-user-error "Expected two or three fields: `id`, `instructions`, and optionally `reviews`." yaml)]
@@ -83,6 +86,8 @@
 ;; Reviews
 ;; Student Submission
 (define-type student-submission-YAML (HashTable String (HashTable String (U String Nonnegative-Integer Rubric-YAML))))
+
+(provide student-submission->yaml)
 (: student-submission->yaml (student-submission -> student-submission-YAML))
 (define (student-submission->yaml submission) 
   (cond [(not (student-submission? submission)) (raise-argument-error 'student-submission->yaml "student-submission" submission)]
@@ -92,6 +97,7 @@
                      (inner `#hash(("id" . ,id) ("amount" . ,amount) ("rubric" . ,rubric))))
                 `#hash(("student-submission" . ,inner)))]))
 
+(provide yaml->student-submission)
 (: yaml->student-submission (student-submission-YAML -> student-submission))
 (define (yaml->student-submission yaml) 
   (cond [(not (= 1 (hash-count yaml))) (raise-user-error "Expected a single record `student-submission`." yaml)]
@@ -106,16 +112,22 @@
 
 
 ;; Instructor Solution
-(define-type instructor-solution-YAML (HashTable String (HashTable String (U String Rubric-YAML))))
+;(define-type student-submission-YAML (HashTable String (HashTable String (U String Nonnegative-Integer Rubric-YAML))))
+
+;; FIXME: Without the Nonnegative-Integer here the contract for review->yaml fails on untyped modules when taking an instructor-solution
+(define-type instructor-solution-YAML (HashTable String (HashTable String (U String Nonnegative-Integer Rubric-YAML))))
+
+(provide instructor-solution->yaml)
 (: instructor-solution->yaml (instructor-solution -> instructor-solution-YAML))
 (define (instructor-solution->yaml solution)
   (cond [(not (instructor-solution? solution)) (raise-argument-error 'instructor-solution->yaml "instructor-solution" solution)]
         [else (let*: ([id : String (instructor-solution-id solution)]
                       [rubric : Rubric-YAML (rubric->yaml (instructor-solution-rubric solution))]
-                      [inner : (HashTable String (U String Rubric-YAML)) `#hash(("id" . ,id) ("rubric" . ,rubric))])
+                      [inner : (HashTable String (U String Nonnegative-Integer Rubric-YAML)) `#hash(("id" . ,id) ("rubric" . ,rubric))])
                 `#hash(("instructor-solution" . ,inner)))]))
 
 
+(provide yaml->instructor-solution)
 (: yaml->instructor-solution (instructor-solution-YAML -> instructor-solution))
 (define (yaml->instructor-solution yaml)
   (cond [(not (= 1 (hash-count yaml))) (raise-user-error "Expected a single record `instructor-solution`." yaml)]
@@ -128,15 +140,17 @@
                               (instructor-solution id (yaml->rubric rubric)))]))]))
 
 ;; Generic
+(provide Review-YAML)
 (define-type Review-YAML (U student-submission-YAML
                             instructor-solution-YAML))
 
+(provide review->yaml)
 (: review->yaml (Review -> Review-YAML))
 (define (review->yaml review)
-  (cond [(not (review? review)) (raise-argument-error 'review->yaml "review" review)]
-        [(instructor-solution? review) (instructor-solution->yaml review)]
+  (cond [(instructor-solution? review) (instructor-solution->yaml review)]
         [(student-submission? review) (student-submission->yaml review)]))
 
+(provide yaml->review)
 (: yaml->review (Review-YAML -> Review))
 (define (yaml->review yaml)
   (cond [(not (= 1 (hash-count yaml))) (raise-user-error "Expected one field either `instructor-solution` or `student-submission`." yaml)]
@@ -147,12 +161,14 @@
 (define-type Rubric-YAML (Listof RubricElement-YAML))
 
 ;; Rubric
+(provide rubric->yaml)
 (: rubric->yaml (Rubric -> Rubric-YAML))
 (define (rubric->yaml rubric)
   (cond [(not (Rubric? rubric)) (raise-argument-error 'rubric->yaml "Rubric" rubric)]
         [else (let ((elements (Rubric-elements rubric)))
                 (map rubric-element->yaml elements))]))
 
+(provide yaml->rubric)
 (: yaml->rubric (Rubric-YAML -> Rubric))
 (define (yaml->rubric yaml)
   (cond [else (let ((elems (map yaml->element yaml)))
@@ -172,6 +188,7 @@
 ;; Rubric elements
 
 ;; Instruction
+(provide yaml->instruction)
 (: yaml->instruction ((HashTable String String) -> instruction))
 (define (yaml->instruction yaml)
   (cond [(not (= 1 (hash-count yaml))) (raise-user-error "Expected a single record `instruction`.")]
@@ -179,6 +196,7 @@
         [else (let ((text (hash-ref yaml "instruction")))
                 (instruction (assert text string?)))]))
 
+(provide instruction->yaml)
 (: instruction->yaml (instruction -> (HashTable String String)))
 (define (instruction->yaml instruction)
   (cond [(not (instruction? instruction)) (raise-argument-error 'instruction->yaml "instruction" instruction)]
@@ -224,10 +242,12 @@
           (assert (fourth args) string?)
           (assert (fifth args) exact-nonnegative-integer?)))
 
+(provide yaml->likert)
 (: yaml->likert ((HashTable String (HashTable String (U Number String))) -> likert))
 (define yaml->likert
   (yaml->rubric-element "likert" likert-list "id" "text" "min-label" "max-label" "granularity"))
 
+(provide likert->yaml)
 (: likert->yaml (likert -> (HashTable String (HashTable String (U Number String)))))
 (define (likert->yaml likert)
   (cond [(not (likert? likert)) (raise-argument-error 'likert->yaml "likert" likert)]
@@ -240,7 +260,7 @@
                     (granularity (cast (likert-granularity likert) Number)))
                 `#hash(("likert" . #hash(("id" . ,id) ("text" . ,text) ("min-label" . ,min) ("max-label" . ,max) ("granularity" . ,granularity)))))]))
 
-
+(provide likert->json)
 (: likert->json (likert -> (HashTable Symbol (U String Number))))
 (define (likert->json likert)
   (cond [(not (likert? likert)) (raise-argument-error 'likert->json "likert" likert)]
@@ -263,11 +283,12 @@
              (assert (second args) string?)))
 
 ;; Free Form
+(provide yaml->free-form)
 (: yaml->free-form ((HashTable String (HashTable String (U String Number))) -> free-form))
 (define yaml->free-form
   (yaml->rubric-element "free-form" free-form-list "id" "text"))
 
-
+(provide free-form->yaml)
 (: free-form->yaml (free-form -> (HashTable String (HashTable String (U String Number)))))
 (define (free-form->yaml form)
   (let*: ((id (free-form-id form))
@@ -275,6 +296,7 @@
           [inner  : (HashTable String (U String Number)) `#hash(("id" . ,id) ("text" . ,text))])
     `#hash(("free-form" . ,inner))))
 
+(provide free-form->json)
 (: free-form->json (free-form -> (HashTable Symbol (U String Number))))
 (define (free-form->json form)
   (let ((id (free-form-id form))
@@ -287,6 +309,7 @@
 (define-type RubricElement-YAML (U (HashTable String String)
                                    (HashTable String (HashTable String (U String Number)))))
 ;; Any Rubricoo Element
+(provide yaml->element)
 (: yaml->element (RubricElement-YAML -> RubricElement))
 (define (yaml->element yaml)
   (cond [(not (= 1 (hash-count yaml))) (raise-user-error "Expected a single record `likert`, `free-form`, or `instruction`." yaml)]
@@ -297,6 +320,7 @@
 
 
 (: rubric-element->yaml (RubricElement -> RubricElement-YAML))
+(provide rubric-element->yaml)
 (define (rubric-element->yaml el)
   (cond [(not (rubric-element? el)) (raise-argument-error 'rubric-element->yaml "rubric-element" el)]
         [else (cond
@@ -304,6 +328,7 @@
                 [(likert? el) (likert->yaml el)]
                 [(free-form? el) (free-form->yaml el)])]))
 
+(provide rubric-element->json)
 (: rubric-element->json (RubricElement -> (HashTable Symbol (U String Number))))
 (define (rubric-element->json el)
   (cond [(not (rubric-element? el)) (raise-argument-error 'rubric-element->json "rubric-element" el)]

@@ -1,6 +1,8 @@
 #lang racket
 
-(require "assignment.rkt"
+(require "assignment-parser.rkt"
+         "assignment-structs.rkt"
+         "next-action.rkt"
          (planet esilkensen/yaml:3:1)
          (planet cce/fasttest:4:2/random)
          (planet cce/fasttest:4:2/rackunit)
@@ -42,7 +44,7 @@
    [text (random-string)]
    [min (random-string)]
    [max (random-string)]
-   [granularity (random-integer)])
+   [granularity (+ 1 (random-natural))])
   (check-pred rubric-element? (likert id text min max granularity))))
 
 (random-seed 1)
@@ -52,7 +54,7 @@
    [text (random-string)]
    [min (random-string)]
    [max (random-string)]
-   [granularity (random-integer)])
+   [granularity (+ 1 (random-natural))])
   (let ((l (likert id text min max granularity)))
     (check-equal? l (yaml->likert (likert->yaml l))))))
 
@@ -69,7 +71,7 @@
   (assignment "Clocks"
               "clocks"
               "Students develop functions representing an alarm clock."
-              
+              default-assignment-handler
                (step "tests"
                      "Submit your test cases. Do not submit any clock implementation."
                      (instructor-solution "Poor Tests"

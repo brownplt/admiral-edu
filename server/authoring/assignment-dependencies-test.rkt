@@ -3,7 +3,6 @@
          "assignment.rkt"
          "assignment-structs.rkt"
          "assignment-parser.rkt"
-         "assignment-dependencies.rkt"
          "next-action.rkt"
          (planet esilkensen/yaml:3:1)
          rackunit)
@@ -48,7 +47,7 @@
                                                 (instructor-solution-dependency #f "implementation" "good-impl")
                                                 (student-submission-dependency #f "implementation" "student-review" 1))))
     (init-tests)
-    (check-equal? (get-dependencies test-assignment) expected-test-assignment-dependencies)))
+    (check-equal? ((AssignmentHandler-get-dependencies (Assignment-assignment-handler test-assignment)) test-assignment) expected-test-assignment-dependencies)))
 
 (define (deps a b c d e f)
   (list
@@ -61,7 +60,7 @@
 
 (define (check-test-assignment a b c d e f)
   (let ((expected (deps a b c d e f)))
-    (check-equal? (get-dependencies test-assignment) expected)))
+    (check-equal? ((AssignmentHandler-get-dependencies (Assignment-assignment-handler test-assignment)) test-assignment) expected)))
 
 (define (test-met-dependencies)
   (init-tests)  

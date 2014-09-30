@@ -1,5 +1,10 @@
 #lang typed/racket
 
+(require/typed xml
+               [xexpr->string (XExpr -> String)])
+
+(provide xexpr->string)
+
 (provide XExpr)
 (define-type XExpr (Rec X
                         (U String 

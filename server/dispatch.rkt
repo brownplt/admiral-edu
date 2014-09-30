@@ -102,9 +102,9 @@
 ;; otherwise returns a role-record
 (define (role session)
   (let* ((class (ct-session-class session))
-         (uid (ct-session-uid session))
-         (result (role:select class uid)))
-    result))
+         (uid (ct-session-uid session)))
+    (cond [(role:exists? class uid) (role:select class uid)]
+          [else #f])))
 
 ;; If the session has a valid role, renders the specified page. Otherwise,
 ;; this displays an error message

@@ -9,16 +9,6 @@
   "auth/google-openidc.rkt"
   "base.rkt")
 
-(define erase-directory
-    (lambda (assignment)
-      (lambda (stepName)
-        (lambda (reviewee)
-          (let ((path (string-append "reviews/" (cadr assignment) "/" (car assignment) "/" stepName "/" reviewee )))
-            (delete-file path))))))
-
-(define (applicative xs ls)
-  (map (lambda (f) (map f xs)) ls))
-
 (require "pages/index.rkt"
          (prefix-in review: "pages/review.rkt")
          (prefix-in error: "pages/errors.rkt")
@@ -30,7 +20,8 @@
          (prefix-in dep: "pages/dependencies.rkt")
          (prefix-in feedback: "pages/feedback.rkt")
          (prefix-in roster: "pages/roster.rkt")
-         (prefix-in browse: "pages/browse.rkt"))
+         (prefix-in browse: "pages/browse.rkt")
+         (prefix-in typed: "dispatch-typed.rkt"))
 
 (define (any? x)
   #t)
@@ -73,7 +64,6 @@
     [(cons "su" (cons uid rest)) (with-sudo post post-data uid session bindings raw-bindings rest)]
     [(cons "author" rest) (if post (author:post->validate session post-data rest) (render-html session author:load rest))]
     [(cons "next" rest) (render-html session next rest)]
-    [(cons "assignments" rest) (render-html session (assignments:load post) rest)]
     [(cons "dependencies" rest) (if post (dep:post session rest bindings raw-bindings) (render-html session dep:dependencies rest))]
     [(cons "submit" rest) (if post (submit:submit session role rest bindings raw-bindings) (error:response-error 
                                                                                             (error:error (string-append "<p>You've accessed this page in an invalid way.</p>"
@@ -84,13 +74,7 @@
     [(cons "roster" rest) (if post (render-html session (roster:post post-data bindings) rest) (render-html session roster:load rest))]
     [(cons "browse" rest) (render-html session browse:load rest)]
     ;[(cons "reset-db" rest) (require-auth session run-init)]
-    [else (error:four-oh-four)]))
-
-(define (run-init)
-  (force-initialize)
-  (response/xexpr
-   `(html
-     `(p "Database reset."))))
+    [else (typed:handlerPrime post post-data session bindings raw-bindings path)]))
 
 (define (require-auth session f)
   (let* ((user-role (role session))

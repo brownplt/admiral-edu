@@ -1,4 +1,4 @@
-#lang racket
+#lang typed/racket
 
 (require "database/mysql.rkt"
          "configuration.rkt"
@@ -22,12 +22,14 @@
 ;; ( -> Result void?)
 ;; Initializes the database, creating tables and migrating if necessary.
 (provide initialize)
+(: initialize (-> (Result Void)))
 (define (initialize)
   (if (init-db?) #t
       (force-initialize))
   (migrate:check-migrated))
 
 (provide force-initialize)
+(: force-initialize (-> Void))
 (define (force-initialize)
    (init-db)
   (class:create class-name)
@@ -47,5 +49,6 @@
   (role:associate class-name "joe.politz@gmail.com" instructor-role)
   (role:associate class-name "joseph_politz@brown.edu" student-role)
   (role:associate class-name "test@student.edu" student-role)
-  (role:associate class-name "test2@student.edu" student-role))
+  (role:associate class-name "test2@student.edu" student-role)
+  (void))
       

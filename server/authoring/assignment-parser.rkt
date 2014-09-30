@@ -41,7 +41,7 @@
   (cond [(hash-has-keys? yaml "assignment-handler") (assert (hash-ref assignment-handlers (hash-ref yaml "assignment-handler")) AssignmentHandler?)]
         [else default-assignment-handler]))
 
-
+(provide Assignment-YAML)
 (define-type Assignment-YAML (HashTable String (U String AssignmentHandler (Listof Step-YAML))))
 
 ;; TODO(3 study): Output next-action-function

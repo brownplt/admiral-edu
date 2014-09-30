@@ -3,7 +3,11 @@
 (require/typed xml
                [xexpr->string (XExpr -> String)])
 
-(provide xexpr->string)
+(provide (all-from-out xml))
+
+(provide XExpr->string)
+(define XExpr->string xexpr->string)
+
 
 (provide XExpr)
 (define-type XExpr (Rec X

@@ -82,8 +82,9 @@
                       [(not (null? valid-step-ids)) (string-join valid-step-ids "")]
                       [else #f]))]))
 
-#|
+
 (provide yaml-bytes->create-assignment)
+(: yaml-bytes->create-assignment (Bytes -> (U String #t)))
 (define (yaml-bytes->create-assignment bytes)
   (let ((yaml-string (bytes->string/utf-8 bytes)))
     (let ((yaml (with-handlers ([exn:fail? could-not-parse]) (string->yaml yaml-string))))
@@ -94,7 +95,9 @@
                                   (cond [(eq? #t result) (save-assignment-description class-name (Assignment-id assignment) yaml-string) "Success"]
                                         [else result]))]))]))))
 
+
 (provide yaml-bytes->save-assignment)
+(: yaml-bytes->save-assignment (Bytes -> (U String #t)))
 (define (yaml-bytes->save-assignment bytes)
   (let ((yaml-string (bytes->string/utf-8 bytes)))
     (let ((yaml (with-handlers ([exn:fail? could-not-parse]) (string->yaml yaml-string))))
@@ -104,28 +107,32 @@
                           [else (let ((result (save-assignment assignment)))                                  
                                   (cond [(eq? #t result) (save-assignment-description class-name (Assignment-id assignment) yaml-string) "Success"]
                                         [else result]))]))]))))
-|#
 
-#|
+
+
 (provide create-assignment)
+(: create-assignment (Assignment -> (U String #t)))
 (define (create-assignment assignment)
   (cond [(not (Assignment? assignment)) (raise-argument-error 'create-assignment "Assignment" assignment)]
         [else (let ((validation (validate-assignment assignment #f)))
                 (cond [validation validation]
                       [else (create-database-entries assignment)
                             (create-base-rubrics assignment)
-                            (check-no-reviews assignment) #t]))]))
+                            (check-no-reviews assignment)
+                            #t]))]))
 
 
 ;; TODO: check to see if assignment has the same name as before
+(: save-assignment (Assignment -> (U String #t)))
 (define (save-assignment assignment)
   (cond [(not (Assignment? assignment)) (raise-argument-error 'save-assignment "Assignment" assignment)]
         [else (let ((validation (validate-assignment assignment #t)))
                 (cond [validation validation]
                       [else ;; (create-database-entries assignment)
                             (create-base-rubrics assignment)
-                            (check-no-reviews assignment) #t]))]))
-|#
+                            (check-no-reviews assignment)
+                            #t]))]))
+
 
 (: check-no-reviews (Assignment -> Void))
 (define (check-no-reviews assignment)

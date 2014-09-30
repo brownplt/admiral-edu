@@ -7,7 +7,7 @@
          (prefix-in review: "review.rkt")
          (prefix-in submission: "submission.rkt"))
 
-;; -> (Result void?)
+;; -> (Result String)
 (provide migrate)
 (define (migrate)
   (match (check-migrated)
@@ -16,6 +16,7 @@
 
 ; Returns Success if the system has migrated to atleast version 1
 ; otherwise returns Failure
+; -> (Result String)
 (provide check-migrated)
 (define (check-migrated)
   (cond [(and (system-table-exists?) (>= (system:select-version) 1)) (Success (format "Database is on version ~a." (system:select-version)))]

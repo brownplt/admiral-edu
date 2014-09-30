@@ -4,8 +4,8 @@
          (prefix-in system: "system.rkt"))
 
 (require/typed (prefix-in v1: "migrate-0-1.rkt")
-               [v1:check-migrated (-> (Result Void))]
-               [v1:migrate (-> (Result Void))])
+               [v1:check-migrated (-> (Result String))]
+               [v1:migrate (-> (Result String))])
 
 
 ;; ( -> Result void?)

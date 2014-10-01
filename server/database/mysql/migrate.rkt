@@ -4,10 +4,12 @@
          (prefix-in system: "system.rkt"))
 
 (require/typed (prefix-in v1: "migrate-0-1.rkt")
-               (prefix-in v2: "migrate-1-2.rkt")
                [v1:check-migrated (-> (Result String))]
                [v1:migrate (-> (Result String))])
 
+(require/typed (prefix-in v2: "migrate-1-2.rkt")
+               [v2:check-migrated (-> (Result String))]
+               [v2:migrate (-> (Result Void))])
 
 ;; ( -> Result void?)
 ;; Success if at the current 

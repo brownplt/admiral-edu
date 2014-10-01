@@ -30,10 +30,12 @@
         [else (system:select-version)]))
 
 (define (do-migrate)
+  (printf "Migrating to version 2.\n")
   (let* ((conn (connect))
          (handler (lambda (exn) (Failure (format "An exception was raised: ~a." (raise exn)))))
          (result (with-handlers ([exn? handler]) (make-changes conn))))
     (disconnect conn)
+    (printf "Done.\n")
     result))
 
 (define (make-changes conn)

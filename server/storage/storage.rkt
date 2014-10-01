@@ -152,26 +152,28 @@
 
 ; Uploads a dependency solution. If necessary, deletes the previous dependency that was uploaded 
 (provide upload-dependency-solution)
-(: upload-dependency-solution (String String String String String (U String Bytes) -> Void))
+(: upload-dependency-solution (String String String String String (U String Bytes) -> (Result Void)))
 (define (upload-dependency-solution class-id user-id assignment-id step-id file-name data)
-  (let ((path (submission-path class-id assignment-id user-id step-id)))
-    ;; Delete previously uploaded files
-    (delete-path path)
-    
-    ;; Write to storage
-    (cond [(is-zip? file-name) (do-unarchive-solution class-id user-id assignment-id step-id file-name data)]
-          [else (do-single-file-solution class-id user-id assignment-id step-id file-name data)])
-    
-    ;; If necessary, create database entry
-    (when (not (submission:exists? assignment-id class-id step-id user-id)) (submission:create-instructor-solution assignment-id class-id step-id user-id))))
+  (cond [(not (check-file-name file-name)) (Failure (format "Invalid filename ~a" file-name))]
+        [else
+         (let ((path (submission-path class-id assignment-id user-id step-id)))
+           ;; Delete previously uploaded files
+           (delete-path path)
+           
+           ;; Write to storage
+           (let ((result (cond [(is-zip? file-name) (do-unarchive-solution class-id user-id assignment-id step-id file-name data)]
+                               [else (do-single-file-solution class-id user-id assignment-id step-id file-name data)])))
+             ;; If necessary, create database entry
+             (when (not (submission:exists? assignment-id class-id step-id user-id)) (submission:create-instructor-solution assignment-id class-id step-id user-id))
+             result))]))
 
 ; Uploads a student submission.
 (provide upload-submission)
 (: upload-submission (String String String String String (U String Bytes) -> (Result Void)))
 (define (upload-submission class-id user-id assignment-id step-id file-name data)
-  
-  ;; Ensure the students has not finalized their submission
-  (cond [(submission:exists? assignment-id class-id step-id user-id) (Failure "Submission already exists.")]
+  (cond [(not (check-file-name file-name)) (Failure (format "Invalid filename ~a" file-name))]
+        ;; Ensure the students has not finalized their submission
+        [(submission:exists? assignment-id class-id step-id user-id) (Failure "Submission already exists.")]
         [else (let ((path (submission-path class-id assignment-id user-id step-id)))
                 
                 ;; Delete previously uploaded files
@@ -194,7 +196,7 @@
     ;; Unzip it
     (unarchive temp-dir file-path)
     
-    ;; Remove the archive file
+           ;; Remove the archive file
     (system (string-append "rm \"" file-path "\""))
     
     ;; Copy files to storage

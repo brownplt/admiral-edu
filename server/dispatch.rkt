@@ -1,7 +1,5 @@
 #lang racket
 (require web-server/servlet
-         web-server/servlet-dispatch
-         web-server/web-server
          web-server/dispatch
          racket/date)
 

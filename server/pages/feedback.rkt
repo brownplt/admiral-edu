@@ -106,6 +106,7 @@
          [load-url (xexpr->string (string-append "\"" start-url updir-rubric step "/load\""))]
          (reviewer (ct-session-uid session))
          (class (ct-session-class session)))
+    (review:mark-feedback-viewed r-hash)
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
         (include-template "html/feedback.html"))))
 

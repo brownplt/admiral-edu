@@ -64,7 +64,7 @@
 (define flagged "flagged")
 (define flagged-type "BOOL")
 
-(define valid-columns `(,assignment-id ,class-id ,step-id ,reviewee-id ,reviewer-id ,time-stamp ,completed ,instructor-solution ,flagged))
+(define valid-columns `(,assignment-id ,class-id ,step-id ,reviewee-id ,reviewer-id ,time-stamp ,completed ,instructor-solution ,flagged ,feedback-viewed-time-stamp))
 
 ; ct-session -> (U 'class_id 'step_id 'user_id 'time_stamp 'times_reviewed)
 (provide get-sort-by)

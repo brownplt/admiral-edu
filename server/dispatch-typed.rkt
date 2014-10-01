@@ -36,8 +36,16 @@
          (result (role:exists? class uid)))
     result))
 
-(: render-xexpr (String ct-session (ct-session (Listof String) Boolean -> (Listof (U XExpr Void))) (Listof String) Boolean -> response))
-(define (render-xexpr title session page url post)
+(provide handlerPrime)
+(: handlerPrime (Boolean Any ct-session Any Any (Listof String) -> response))
+(define (handlerPrime post post-data session bindings raw-bindings path)
+  (match path
+    [(cons "assignments" url) (render-xexprs "Assignments" session assignments:load url post)]
+    [else (error:four-oh-four)]))
+
+
+(: render-xexprs (String ct-session (ct-session (Listof String) Boolean -> (Listof (U XExpr Void))) (Listof String) Boolean -> response))
+(define (render-xexprs title session page url post)
   (let ((valid-user (user-exists? session)))
     (if (not valid-user)
         (response/xexpr (error:error-not-registered session))
@@ -50,10 +58,3 @@
          (current-seconds) TEXT/HTML-MIME-TYPE
          empty
          response)))))
-
-(provide handlerPrime)
-(: handlerPrime (Boolean Any ct-session Any Any (Listof String) -> response))
-(define (handlerPrime post post-data session bindings raw-bindings path)
-  (match path
-    [(cons "assignments" url) (render-xexpr "Assignments" session assignments:load url post)]
-    [else (error:four-oh-four)]))

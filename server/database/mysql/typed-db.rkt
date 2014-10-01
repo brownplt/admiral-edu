@@ -16,15 +16,31 @@
                [native:sql-timestamp-hour (Any -> Nonnegative-Integer)]
                [native:sql-timestamp-minute (Any -> Nonnegative-Integer)]
                [native:sql-timestamp-second (Any -> Nonnegative-Integer)]
-               [native:run ((U 'query-rows 'query-row 'query-exec 'query-value) String (Listof QueryArgument) -> Any)])
+               [native:run ((U 'query-rows 'query-row 'query-exec 'query-value) String (Listof QueryArgument) -> (U Void
+                                                                                                                    QueryResult 
+                                                                                                                    (Vectorof QueryResult)
+                                                                                                                    (Listof (Vectorof QueryResult))))])
+
+(require/typed "untyped-db.rkt"
+               [->query-result (Any -> QueryResult)]
+               [#:struct Null ()]
+               [#:struct TimeStamp ([year : Nonnegative-Integer] 
+                                    [month : Nonnegative-Integer]
+                                    [day : Nonnegative-Integer]
+                                    [hour : Nonnegative-Integer]
+                                    [minute : Nonnegative-Integer]
+                                    [second : Nonnegative-Integer])])
+
+(provide (struct-out Null))
+;(struct: Null ())
 
 (provide (struct-out TimeStamp))
-(struct: TimeStamp ([year : Nonnegative-Integer] 
-                    [month : Nonnegative-Integer]
-                    [day : Nonnegative-Integer]
-                    [hour : Nonnegative-Integer]
-                    [minute : Nonnegative-Integer]
-                    [second : Nonnegative-Integer]) #:transparent)
+;(struct: TimeStamp ([year : Nonnegative-Integer] 
+;                    [month : Nonnegative-Integer]
+;                    [day : Nonnegative-Integer]
+;                    [hour : Nonnegative-Integer]
+;                    [minute : Nonnegative-Integer]
+;                    [second : Nonnegative-Integer]) #:transparent)
 
 (provide merge)
 (: merge (String * -> String))
@@ -35,7 +51,7 @@
 (define-type QueryArgument (U String Number))
 
 (provide QueryResult)
-(define-type QueryResult (U String Number TimeStamp))
+(define-type QueryResult (U String Number TimeStamp Null))
 
 (: query-exec (String QueryArgument * -> Void))
 (provide query-exec)
@@ -45,48 +61,31 @@
 (: query-row (String QueryArgument * -> (Vectorof QueryResult)))
 (provide query-row)
 (define (query-row query . args)
-  (safe-vector (cast (native:run 'query-row query args) (Vectorof Any))))
+  (cast (native:run 'query-row query args) (Vectorof QueryResult)))
 
 (: query-row-list (String (Listof QueryArgument) -> (Vectorof QueryResult)))
 (provide query-row-list)
 (define (query-row-list query args)
-  (safe-vector (cast (native:run 'query-row query args) (Vectorof Any))))
+  (cast (native:run 'query-row query args) (Vectorof QueryResult)))
 
 (provide query-rows)
 (: query-rows (String QueryArgument * -> (Listof (Vectorof QueryResult))))
 (define (query-rows query . args)
-  (map safe-vector (cast (native:run 'query-rows query args) (Listof (Vectorof Any)))))
+  (cast (native:run 'query-rows query args) (Listof (Vectorof QueryResult))))
 
 (provide query-rows-list)
 (: query-rows-list (String (Listof QueryArgument) -> (Listof (Vectorof QueryResult))))
 (define (query-rows-list query args)
-  (map safe-vector (cast (native:run 'query-rows query args) (Listof (Vectorof Any)))))
+  (cast (native:run 'query-rows query args) (Listof (Vectorof QueryResult))))
 
 (provide query-value)
 (: query-value (String QueryArgument * -> QueryResult))
 (define (query-value query . args)
-  (->query-result (native:run 'query-value query args)))
+  (cast (native:run 'query-value query args) QueryResult))
 
-;; Converts a Vectorof Any to a Vectorof QueryResults
-(: safe-vector ((Vectorof Any) -> (Vectorof QueryResult)))
-(define (safe-vector vec)
-  (let* ((ls (vector->list vec))
-         (safe (map ->query-result ls)))
-    (list->vector safe)))
 
-;; Casts Any to a QueryResult. An exception is raised if the value passed in cannot be cast
-(: ->query-result (Any -> QueryResult))
-(define (->query-result any)
-  (cond [(string? any) (cast any String)]
-        [(number? any) (cast any Number)]
-        [(native:sql-timestamp? any) (TimeStamp 
-                                      (native:sql-timestamp-year any)
-                                      (native:sql-timestamp-month any)
-                                      (native:sql-timestamp-day any)
-                                      (native:sql-timestamp-hour any)
-                                      (native:sql-timestamp-minute any)
-                                      (native:sql-timestamp-second any))]
-        [else (error "Invalid type.")]))
+
+
 
 (provide common:get-sort-by)
 (: common:get-sort-by ((Listof String) Symbol -> (ct-session -> Symbol)))

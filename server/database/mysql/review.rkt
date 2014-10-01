@@ -37,6 +37,11 @@
 (define time-stamp-type-0 "TIMESTAMP")
 (define time-stamp-type-1 "TIMESTAMP DEFAULT 0")
 
+(provide feedback-viewed-time-stamp
+         feedback-viewed-time-stamp-type)
+(define feedback-viewed-time-stamp "feedback_viewed_time_stamp")
+(define feedback-viewed-time-stamp-type "TIMESTAMP NULL")
+
 (provide review-id review-id-type)
 (define review-id "review_id")
 (define review-id-type "VARCHAR(255)")
@@ -85,6 +90,7 @@
                                                  review-id review-id-type "," ;8
                                                  instructor-solution instructor-solution-type "," ;9
                                                  flagged flagged-type "," ; 10
+                                                 feedback-viewed-time-stamp feedback-viewed-time-stamp-type ","; 11
                                                  "PRIMARY KEY (" hash "))")))
     (query-exec drop)
     (query-exec create)))
@@ -101,7 +107,7 @@
   ;; TODO(joe): should this be an error?
   (when (not (ok-reviewee assignment class step reviewee)) 'no-such-submission)
                                                  ;0 1 2 3 4     5     6 7 8     9   10
-  (let ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,false,false)")))
+  (let ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,false,false,NULL)")))
                 ; 0           1     2    3           4        7         8
     (query-exec query assignment class step reviewee reviewer (random-hash) id)
     ;; TODO: This is not concurrently safe.
@@ -124,6 +130,7 @@
         [else (assign-student-review assignment class step uid review-id)
               (assign-student-reviews assignment class step uid review-id (- amount 1))]))
 
+(provide assign-student-review)
 (: assign-student-review (String String String String String -> Void))
 (define (assign-student-review assignment class step uid review-id)
   ;; TODO(joe): Probably a performance hit to run this query in this way. Would be faster to just get all of them at once.
@@ -143,11 +150,12 @@
                  [completed : Boolean]
                  [hash : String] 
                  [flagged : Boolean] 
-                 [time-stamp : TimeStamp]) #:transparent)
+                 [time-stamp : TimeStamp]
+                 [feedback-viewed-time-stamp : (U Null TimeStamp)]) #:transparent)
 
 (define record-fields
-  (string-join (list class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged time-stamp) ", "))
-(define-type Vector-Record (Vector String String String String String String Integer String Integer TimeStamp))
+  (string-join (list class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged time-stamp feedback-viewed-time-stamp) ", "))
+(define-type Vector-Record (Vector String String String String String String Integer String Integer TimeStamp (U TimeStamp Null)))
 
 (: vector->record (Vector-Record -> Record))
 (define (vector->record result)
@@ -161,7 +169,8 @@
          (hash (vector-ref result 7))
          (flagged (= 1(vector-ref result 8)))
          (time-stamp (vector-ref result 9))
-         (rec (Record class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged time-stamp)))
+         (feedback-viewed-time-stamp (vector-ref result 10))
+         (rec (Record class-id assignment-id step-id review-id reviewee-id reviewer-id completed hash flagged time-stamp feedback-viewed-time-stamp)))
     rec))
 
 (provide select-by-hash)
@@ -194,7 +203,7 @@
 
 (: create-instructor-review (String String String String String String -> Void))
 (define (create-instructor-review assignment class step reviewee reviewer id)
-  (let ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,true,false)")))
+  (let ((query (merge "INSERT INTO" table "VALUES(?,?,?,?,?,NOW(),false,?,?,true,false,NULL)")))
     (query-exec query assignment class step reviewee reviewer (random-hash) id)))
 
 (provide count-assigned-reviews)
@@ -222,6 +231,16 @@
                        "ORDER BY" time-stamp "ASC"))
          (result (query-rows query class assignment uid)))
     (map vector->record (cast result (Listof Vector-Record)))))
+
+(provide mark-feedback-viewed)
+(: mark-feedback-viewed (String -> Void))
+(define (mark-feedback-viewed the-hash)
+  (let ((query (merge "UPDATE" table
+                      "SET" feedback-viewed-time-stamp "=NOW()"
+                      "WHERE" hash "=? AND"
+                              feedback-viewed-time-stamp "IS NULL")))
+    (query-exec query the-hash)))
+  
               
 (provide mark-complete)
 (: mark-complete (String -> Void))

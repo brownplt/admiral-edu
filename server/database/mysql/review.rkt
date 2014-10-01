@@ -38,9 +38,11 @@
 (define time-stamp-type-1 "TIMESTAMP DEFAULT 0")
 
 (provide feedback-viewed-time-stamp
-         feedback-viewed-time-stamp-type)
+         feedback-viewed-time-stamp-type
+         feedback-viewed-time-stamp-type-2)
 (define feedback-viewed-time-stamp "feedback_viewed_time_stamp")
 (define feedback-viewed-time-stamp-type "TIMESTAMP NULL")
+(define feedback-viewed-time-stamp-type-2 "TIMESTAMP NULL")
 
 (provide review-id review-id-type)
 (define review-id "review_id")
@@ -94,6 +96,8 @@
                                                  "PRIMARY KEY (" hash "))")))
     (query-exec drop)
     (query-exec create)))
+
+
 
 
 (: ok-reviewee (String String String String -> Boolean))

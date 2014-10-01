@@ -20,11 +20,12 @@
 (define id-type "BOOL")
 
 (: the-id 1)
+(provide the-id)
 (define the-id 1)
 
 (provide current-version)
 (: current-version Exact-Nonnegative-Integer)
-(define current-version 1)
+(define current-version 2)
 
 (provide init)
 (: init (-> Void))

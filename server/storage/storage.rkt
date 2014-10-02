@@ -243,6 +243,11 @@
     ;; Store all files locally
     (map store-temp-file files)
     
+    ;; Create submissions directory
+    (system (string-append "cd \"" temp-dir "/" class-id "/" assignment-id "\"; "
+                           "mkdir submissions; mv */ submissions; "
+                           "cd submissions; mv default-submission* reviews ../"))
+    
     ;; Archive assignment
     (system (string-append "cd \"" temp-dir "\"; zip -r \"" archive-name "\" \""  path "\""))
     

@@ -161,7 +161,8 @@
            (delete-path path)
            
            ;; Write to storage
-           (let ((result (cond [(is-zip? file-name) (do-unarchive-solution class-id user-id assignment-id step-id file-name data)]
+           (let ((result (cond [(or (is-zip? file-name)
+                                    (is-tar? file-name)) (do-unarchive-solution class-id user-id assignment-id step-id file-name data)]
                                [else (do-single-file-solution class-id user-id assignment-id step-id file-name data)])))
              ;; If necessary, create database entry
              (when (not (submission:exists? assignment-id class-id step-id user-id)) (submission:create-instructor-solution assignment-id class-id step-id user-id))
@@ -180,7 +181,8 @@
                 (delete-path path)
                 
                 ;; Write to storage
-                (cond [(is-zip? file-name) (do-unarchive-solution class-id user-id assignment-id step-id file-name data)]
+                (cond [(or (is-zip? file-name)
+                           (is-tar? file-name)) (do-unarchive-solution class-id user-id assignment-id step-id file-name data)]
                       [else (do-single-file-solution class-id user-id assignment-id step-id file-name data)]))]))
 
 
@@ -333,7 +335,9 @@
 (provide unarchive)
 (: unarchive (String String -> Boolean))
 (define (unarchive path file-name)
-  (system (string-append "unzip \"" file-name "\" -d \"" path "\"")))
+  (cond [(is-zip? file-name) (system (string-append "unzip \"" file-name "\" -d \"" path "\""))]
+        [(is-tar? file-name) (system (string-append "tar -xf \"" file-name "\" -C \"" path "\""))]
+        [else (error (format "Could not unarcharve ~a." file-name))]))
 
 (: is-zip? (String -> Boolean))
 (define (is-zip? file)
@@ -341,4 +345,17 @@
          (split (string-split clean "."))
          (ext (last split)))
     (equal? "zip" (string-downcase ext))))
+
+(: is-tar? (String -> Boolean))
+(define (is-tar? file)
+  (let* ((clean (string-trim file))
+         (split (drop (string-split clean ".") 1)))
+    (or (member? "tar" split string=?)
+        (member? "tgz" split string=?))))
+
+(: member? (All (A) (A (Listof A) (A A -> Any) -> Boolean)))
+(define (member? x xs equality?)
+  (let ((result (member x xs equality?)))
+    (cond [result #t]
+          [else #f])))
 

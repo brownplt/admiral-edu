@@ -179,7 +179,7 @@
          [load-url (string-append "'" start-url "load'")]
          [step (to-step-link stepName (- (length rest) 2))]
          (last-path (last rest))
-         [path (to-path-html (cdr rest) start-url)]
+         [path (to-path-html (cdr rest))]
          (file (to-path (cdr rest)))
          (test-prime (newline))
          (file-path (submission-file-path class assignment reviewee stepName file))
@@ -230,8 +230,8 @@
   (string-append "<textarea id=\"file\" class=\"file\">" (retrieve-file file-path) "</textarea>"))
 
 (define (to-step-link step depth)
-  (if (<= depth 0) (xexpr->string step)
-      (let ((updepth (string-append (apply string-append (repeat "../" depth)) (xexpr->string step))))
+  (if (< depth 0) (xexpr->string step)
+      (let ((updepth (string-append (apply string-append (repeat "../" depth)) "./")))
         (string-append "<a href=\"" updepth "\">" (xexpr->string step) "</a>"))))
 
 (define (to-path ls)
@@ -246,14 +246,14 @@
                                            (helper new-acc tail))]))))
     (helper '() ls)))
 
-(define (to-path-html input start-url)
+(define (to-path-html input)
   (letrec ((helper (lambda (acc ls)
                      (match ls
                        ['() (apply string-append (reverse acc))]
                        [(cons head '()) (let ((new-acc (cons head acc)))
                                           (helper new-acc '()))]
                        [(cons head tail) (let* ((url (string-append (apply string-append (repeat "../" (- (length input) (+ (length acc) 1)))) (xexpr->string head)))
-                                                (link (string-append " <a href=\"" start-url url "\">" (xexpr->string head) "</a> / "))
+                                                (link (string-append " <a href=\"" url "\">" (xexpr->string head) "</a> / "))
                                                 (new-acc (cons link acc)))
                                            (helper new-acc tail))]))))
     (helper '() input)))

@@ -29,7 +29,7 @@
          [assignment assignment-id]
          [default-mode (determine-mode-from-filename url)]
          [load-url (string-append "'" start-url "load" "'")]
-         [step (to-step-link stepName (+ (length url) 1))]
+         [step (to-step-link stepName (length url))]
          [path (to-path-html url)]
          (file (to-path url))
          (file-path (submission-file-path class assignment user-id stepName file))

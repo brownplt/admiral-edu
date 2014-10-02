@@ -156,8 +156,8 @@
     (helper '() input)))
 
 (define (to-step-link step depth)
-  (if (<= depth 0) (xexpr->string step)
-      (let ((updepth (string-append (apply string-append (repeat "../" depth)) (xexpr->string step))))
+  (if (< depth 0) (xexpr->string step)
+      (let ((updepth (string-append (apply string-append (repeat "../" depth)) "./")))
         (string-append "<a href=\"" updepth "\">" (xexpr->string step) "</a>"))))
 
 (define (prepare-url word rest)

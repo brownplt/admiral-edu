@@ -25,8 +25,7 @@
 }
 
 .examples {
-    min-width: 400px;
-    
+    width: calc(40% - 20px);
 }
 
 

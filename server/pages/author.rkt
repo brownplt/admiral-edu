@@ -22,13 +22,21 @@
 (define VALIDATE-ACTION "validate")
 (define VALIDATE-AND-SAVE-ACTION "validate-save")
 
+(define warning-message
+  (string-join 
+   '("<p><b>Warning:</b> You are editing an existing assignment."
+     "In general it is safe to change instructions and add steps."
+     "However, if students have started this assignment, changing ids"
+     "and rubric structures may cause inconsistencies in the exported"
+     "assignment data.</p>")))
+
 (provide load)
 (define (load session role rest [message '()])
   (if (not (roles:Record-can-edit role)) (error:not-authorized)
       (let* ((len (length rest))
              (action (if (= 0 len) NEW-ACTION (car rest))))
-        (cond [(equal? NEW-ACTION action) (authoring session role rest message)]
-              [(equal? EDIT-ACTION action) (edit session role (cdr rest) message)]))))
+        (cond [(equal? NEW-ACTION action) (authoring session role rest "")]
+              [(equal? EDIT-ACTION action) (edit session role (cdr rest) warning-message)]))))
 
 (define (authoring session role rest [message '()])
   (page session role rest message "" (string-append "'" VALIDATE-ACTION "'") "test"))

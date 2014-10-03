@@ -80,15 +80,20 @@
 
 
 
-(: format-time-stamp (TimeStamp -> String))
+(: format-time-stamp (TimeStamp -> XExpr))
 (define (format-time-stamp time-stamp)
   (let ((year (number->string (TimeStamp-year time-stamp)))
-        (month (month->string (TimeStamp-month time-stamp)))
+        (month (number->string (- (TimeStamp-month time-stamp) 1)))
         (day (number->string (TimeStamp-day time-stamp)))
         (hour (number->string (TimeStamp-hour time-stamp)))
         (minute (ensure-leading-zero (number->string (TimeStamp-minute time-stamp))))
         (second (ensure-leading-zero (number->string (TimeStamp-second time-stamp)))))
-    (string-append month " " day " " year " " hour ":" minute ":" second)))
+    `(script ()
+             ,(string-join
+               `(,(string-append "var d = new Date(Date.UTC("year "," month "," day "," hour "," minute "," second ", 0));")
+                 "document.write(d.toLocaleDateString() + \" \" + d.toLocaleTimeString());")
+               "\n"))))
+;    (string-append month " " day " " year " " hour ":" minute ":" second)))
 
 
 (: ensure-leading-zero (String -> String))

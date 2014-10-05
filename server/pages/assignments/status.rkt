@@ -243,18 +243,6 @@
                       reviews)))))
 
 
-(: append-xexpr ((Pairof Symbol
-                         (Pairof (Listof (List Symbol String))
-                                 (Listof XExpr)))
-                 (Listof XExpr) -> XExpr))
-(define (append-xexpr outter inner)
-  (let ([symbol : Symbol (first outter)]
-        [attributes : (Listof (List Symbol String)) (second outter)]
-        [current-inner : (Listof XExpr) (cddr outter)])
-    ; FIXME: not sure why the type checker cannot solve this
-    (cast (cons symbol (cons attributes (append current-inner inner))) XExpr)))
-
-
 (: review->statistic (String String -> (Review -> (Listof XExpr))))
 (define (review->statistic assignment-id step-id)
   (lambda (review)

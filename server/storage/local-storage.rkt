@@ -8,6 +8,11 @@
 (define (retrieve-file path)
   (file->string path))
 
+(provide retrieve-file-bytes)
+(: retrieve-file-bytes (String -> Bytes))
+(define (retrieve-file-bytes path)
+  (file->bytes path))
+
 
 ; (path -> contents -> ())
 ; Given a path and the contents to a file, writes that file (over writing any existing file).

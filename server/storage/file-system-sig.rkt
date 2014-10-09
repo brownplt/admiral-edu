@@ -5,6 +5,8 @@
 ; Otherwise retures Failure with a message.
 retrieve-file 
 
+retrieve-file-bytes
+
 ; (path -> contents -> ())
 ; TODO: Maybe have this return Success / Failure. Right now it might throw an exception but
 ; each file system may use a different exception.

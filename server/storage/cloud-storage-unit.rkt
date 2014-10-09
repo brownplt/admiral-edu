@@ -23,6 +23,13 @@
       (local:ensure-path-exists path)
       (when (eq? info 'does-not-exist) (get/file (string-append bucket path) (string->path path))))
     (local:retrieve-file path))
+  
+  (define (retrieve-file-bytes path)
+    (let* ((info (local:path-info path)))
+      (local:ensure-path-exists path)
+      (when (eq? info 'does-not-exist) (get/file (string-append bucket path) (string->path path))))
+    (local:retrieve-file-bytes path))
+    
 
   ; Writes the local file (over writing if necessary). Then, pushes the local file to the cloud.
   (define (write-file path contents)

@@ -8,6 +8,7 @@
 ;; These are our file-system-sig types
 (require/typed "storage-basic.rkt"
                [retrieve-file (String -> String)]
+               [retrieve-file-bytes (String -> Bytes)]
                ; TODO: Revise from Any to some safe data type
                [write-file (String Any -> Void)]
                [delete-path (String -> Void)]
@@ -18,6 +19,7 @@
 
 
 (provide retrieve-file 
+         retrieve-file-bytes
          write-file 
          delete-path
          path-info
@@ -207,7 +209,7 @@
            (submission-file-name (lambda: ([file-name : String]) (string-append path (substring file-name len))))
            (handle-file (lambda: ([file-name : String]) 
                           (let* ((s-name (submission-file-name file-name))
-                                 (data (file->string file-name)))
+                                 (data (file->bytes file-name)))
                             (write-file s-name data)))))
       ;; TODO: Potentially change write-file to return success / failure
       (map handle-file file-names))
@@ -239,7 +241,7 @@
          (archive-name (string-append assignment-id ".zip"))
          (files (list-sub-files path))
          (store-temp-file (lambda: ([file-name : String])
-                            (let ((data (retrieve-file file-name)))
+                            (let ((data (retrieve-file-bytes file-name)))
                               (local:write-file (string-append temp-dir file-name) data)))))
 
     ;; Store all files locally

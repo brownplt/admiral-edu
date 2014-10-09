@@ -14,6 +14,8 @@
   ; If the file exists locally, it returns it. Otherwise, it fetches it from the cloud and then returns it
   (define retrieve-file local:retrieve-file)
   
+  (define retrieve-file-bytes local:retrieve-file-bytes)
+  
   ; (path -> contents -> ())
   ; Given a path and the contents to a file, writes that file (over writing any existing file).
   ; Writes the local file (over writing if necessary). Then, pushes the local file to the cloud.

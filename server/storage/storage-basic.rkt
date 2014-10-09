@@ -13,6 +13,10 @@
 (define retrieve-file 'nil)
 (define (set-retrieve-file proc) (set! retrieve-file proc))
 
+(provide retrieve-file-bytes)
+(define retrieve-file-bytes 'nil)
+(define (set-retrieve-file-bytes proc) (set! retrieve-file-bytes proc))
+
 ; (path -> string -> ())
 ; Given a path and the contents to a file, writes that file (over writing any existing file).
 (provide write-file)
@@ -55,6 +59,7 @@
 (define (invoke-cloud-storage)
   (define-values/invoke-unit/infer cloud-storage@)
   (set-retrieve-file retrieve-file)
+  (set-retrieve-file-bytes retrieve-file-bytes)
   (set-write-file write-file)
   (set-delete-path delete-path)
   (set-path-info path-info)
@@ -66,6 +71,7 @@
 (define (invoke-local-storage)
   (define-values/invoke-unit/infer local-storage@)
   (set-retrieve-file retrieve-file)
+  (set-retrieve-file-bytes retrieve-file-bytes)
   (set-write-file write-file)
   (set-delete-path delete-path)
   (set-path-info path-info)

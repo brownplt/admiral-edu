@@ -73,6 +73,7 @@
   (test-submit-order2)
   (test-reviewers-submit-first)
   (test-reviewers-submit-first2)
+  (test-assign-max)
   (test-reflection-assigned))
 
 ; groups:
@@ -289,7 +290,7 @@
                              (cons ACE JIM)
                              (cons ALF JON)
                              (cons ART JON)
-                             (cons ACE JON)))
+                             (cons HOLD JON)))
 
    )
 

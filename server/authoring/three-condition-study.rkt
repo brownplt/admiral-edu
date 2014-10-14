@@ -145,6 +145,7 @@
                      "SET" review:reviewee-id "=?"
                      "WHERE" review:hash "=?"))
            (result (query-exec q uid hash)))
+      (submission:increment-reviewed assignment-id class-name step-id uid)
       (send-email reviewer "Captain Teach: A review is ready." 
                   (string-join 
                    (list "A review has been assigned to you."
@@ -247,7 +248,7 @@
                            submission:assignment-id "=? AND"
                            submission:class-id "=? AND"
                            submission:step-id "=? AND"
-                           submission:times-reviewed "<=?"
+                           submission:times-reviewed "< ?"
                    "ORDER BY" submission:times-reviewed "ASC," submission:time-stamp "ASC"
                    "LIMIT ?"))
          (query-list (append students (list assignment-id class-name step-id amount amount)))

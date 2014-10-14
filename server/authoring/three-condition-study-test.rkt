@@ -142,6 +142,24 @@
                                                                     (cons HOLD JON)))
    )
 (define HOLD "HOLD")
+
+(define (test-assign-max)
+  (init-tests)
+  (check-review-assignments (list AMY JOE JAN JIM JON)
+                            (list (cons AMY JOE)
+                                  (cons HOLD JOE)
+                                  (cons HOLD JOE)
+                                  (cons AMY JAN)
+                                  (cons HOLD JAN)
+                                  (cons HOLD JAN)
+                                  (cons AMY JIM)
+                                  (cons HOLD JIM)
+                                  (cons HOLD JIM)
+                                  (cons HOLD JON)
+                                  (cons HOLD JON)
+                                  (cons HOLD JON))))
+
+
 (define (test-reviewers-submit-first)
   (init-tests)
   ;; No reviews yet because only gets-review submissions

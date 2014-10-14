@@ -70,7 +70,9 @@
 (define (run-tests)
   (initialize)
   (test-submit-order)
+  (test-submit-order2)
   (test-reviewers-submit-first)
+  (test-reviewers-submit-first2)
   (test-reflection-assigned))
 
 ; groups:
@@ -255,7 +257,7 @@
                              (cons ART JAN)
                              (cons ALF JIM)
                              (cons AMY JIM)
-                             (cons ART JIM)))
+                             (cons ACE JIM)))
   (check-review-assignments (list JON)
                             (list
                              (cons AMY JOE)

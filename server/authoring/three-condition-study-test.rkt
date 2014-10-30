@@ -45,8 +45,6 @@
   (init-db)
   (class:create class-name)
   
-
-  
   (roles:create instructor-role "Instructor" 1)
   (roles:create ta-role "Teaching Assistant" 1)
   (roles:create student-role "Student" 0)
@@ -55,6 +53,19 @@
   (create-assignment three-test-assignment)
   (write-file (dependency-file-name "test-assignment") (file->string "sample-yaml/test-assignment.yaml"))
   (save-assignment-description class-name "test-assignment" (file->string "sample-yaml/test-assignment-description.yaml")))
+
+(define (init-tests2)
+  (init-db)
+  (class:create class-name)
+  
+  (roles:create instructor-role "Instructor" 1)
+  (roles:create ta-role "Teaching Assistant" 1)
+  (roles:create student-role "Student" 0)
+
+  (map make-student (list ACE AMY ART ALF JOE JAN JIM JON SAL SAM STU SUE SID))
+  (create-assignment three-test-assignment2)
+  (write-file (dependency-file-name "test-assignment2") (file->string "sample-yaml/test-assignment2.yaml"))
+  (save-assignment-description class-name "test-assignment2" (file->string "sample-yaml/test-assignment-description2.yaml")))
 
 (define three-test-assignment (yaml->assignment (string->yaml (file->string "sample-yaml/test-assignment-description.yaml"))))
 (define three-test-assignment-tests-step
@@ -67,6 +78,13 @@
          (step (filter (lambda (step) (string=? (Step-id step) "implementation")) steps)))
     (first step)))
 
+
+(define three-test-assignment2 (yaml->assignment (string->yaml (file->string "sample-yaml/test-assignment-description2.yaml"))))
+(define three-test-assignment2-tests-step
+  (let* ((steps (Assignment-steps three-test-assignment2))
+         (step (filter (lambda (step) (string=? (Step-id step) "tests")) steps)))
+    (first step)))
+
 (define (run-tests)
   (initialize)
   (test-submit-order)
@@ -75,6 +93,11 @@
   (test-reviewers-submit-first2)
   (test-assign-max)
   (test-reflection-assigned))
+
+(define (run-all-reviewing-tests)
+  (initialize)
+  (test-all-reviewing))
+
 
 ; groups:
 ; gets-review: ACE AMY ART ALF
@@ -89,10 +112,28 @@
   ;; ordering tests work well
   (sleep 1)
   (three-do-submit-step three-test-assignment three-test-assignment-tests-step user "useless.tar" useless-tar-file (Assignment-steps three-test-assignment)))
+(define (test-submit-order-submit2 user)
+  ;; NOTE(joe): this seems to be enough to get different timestamps so our
+  ;; ordering tests work well
+  (sleep 1)
+  (three-do-submit-step three-test-assignment2 three-test-assignment2-tests-step user "useless.tar" useless-tar-file (Assignment-steps three-test-assignment2)))
 
 (define (check-review-assignments submission-list expected-assignments)
   (map test-submit-order-submit submission-list)
   (define reviews (get-reviews-for-check "test-assignment" "tests"))
+  (check-equal? (length reviews) (length expected-assignments))
+  (define expect-set (list->set expected-assignments))
+  (define actual-set (list->set reviews))
+  ;; NOTE(joe): checking the difference both ways provides more useful output
+  (define assigned-not-expected (set-subtract actual-set expect-set))
+  (define expected-not-assigned (set-subtract expect-set actual-set))
+  (check-equal? assigned-not-expected (set))
+  (check-equal? expected-not-assigned (set))
+  )
+
+(define (check-review-assignments2 submission-list expected-assignments)
+  (map test-submit-order-submit2 submission-list)
+  (define reviews (get-reviews-for-check "test-assignment2" "tests"))
   (check-equal? (length reviews) (length expected-assignments))
   (define expect-set (list->set expected-assignments))
   (define actual-set (list->set reviews))
@@ -296,7 +337,7 @@
 
 (define (get-reviews-for-check assignment-id step-id)
   (define (vec->pair v) (cons (vector-ref v 0) (vector-ref v 1)))
-  (map vec->pair (get-reviews "test-assignment" "tests")))
+  (map vec->pair (get-reviews assignment-id "tests")))
 
 (define (get-reviews assignment-id step-id)
   (let* ((q (merge "SELECT" review:reviewee-id "," review:reviewer-id
@@ -314,6 +355,29 @@
          (result (run query-rows q)))
     result))
 
+(define (test-all-reviewing)
+  (init-tests2)
+  ;; No reviews yet because only gets-review submissions
+  (check-review-assignments2 (list JOE JAN)
+                             (list
+                              (cons JAN JOE)
+                              (cons HOLD JOE)
+                              (cons HOLD JOE)
+                              (cons JOE JAN)
+                              (cons HOLD JAN)
+                              (cons HOLD JAN)))
+  
+  (check-review-assignments2 (list JIM)
+                             (list
+                              (cons JAN JOE)
+                              (cons JIM JOE)
+                              (cons HOLD JOE)
+                              (cons JOE JAN)
+                              (cons JIM JAN)
+                              (cons HOLD JAN)
+                              (cons JOE JIM)
+                              (cons JAN JIM)
+                              (cons HOLD JIM))))
 
 (define (test-reflection-assigned)
   (init-tests)

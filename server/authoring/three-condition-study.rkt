@@ -27,6 +27,13 @@
           [(member uid no-reviews) 'no-reviews]
           [else (error (format "Could not find uid ~a in configuration file.\n\nYAML:~a\n\n" uid yaml-string))])))
 
+(: in-group (String String String -> Boolean))
+(define (in-group assignment-id uid group)
+  (let* ((yaml-string (retrieve-file (dependency-file-name assignment-id)))
+         (yaml (string->yaml yaml-string))
+         (group-members (cast (hash-ref yaml group) (Listof String))))
+    (not (false? (member uid group-members)))))
+
 
 (provide three-next-action)
 (: three-next-action (Assignment (Listof Step) String -> (U MustSubmitNext MustReviewNext #t)))
@@ -47,7 +54,9 @@
            (result (cond 
                      [(not has-submitted) (MustSubmitNext step (Step-instructions step))]
                      [(eq? group 'no-reviews) (default:next-action (three-check-reviewed group) three-ensure-assigned-review assignment tail uid)]
-                     [(eq? group 'does-reviews) (handle-does-reviews assignment steps uid group)]
+                     [(in-group assignment-id uid "does-reviews")
+                      (printf "~a does reviews\n" uid)
+                      (handle-does-reviews assignment steps uid group)]
                      [(eq? group 'gets-reviewed) (default:next-action (three-check-reviewed group) three-ensure-assigned-review assignment tail uid)]
                      [else (error (format "Unknown group type ~a" group))])))
       (cond
@@ -109,7 +118,11 @@
                                 [(eq? group 'does-reviews) "You have been assigned reviews for this assignment, and must complete them.  If enough reviews aren't available right now, you'll receive notifications as they are assigned to you."]
                                 [(eq? group 'no-reviews) "You don't need to do any reviewing, and you won't receive any reviews for this assignment.  Submit your implementation and final tests at any time."])))
       ;; look to see if there are any pending reviewers
-      (if (eq? group 'gets-reviewed) (maybe-assign-reviewers assignment-id step uid) (printf "Skipping maybe-assign review. uid: ~a, group: ~a\n" uid group))
+      (if (in-group assignment-id uid "gets-reviewed")
+          (begin
+            (printf "Found someone who gets reviewed: ~a\n" uid)
+            (maybe-assign-reviewers assignment-id step uid))
+          (printf "Skipping maybe-assign review. uid: ~a, group: ~a\n" uid group))
       (send-email uid "Your submission has been received." (string-append "Your submission to '" assignment-id "' has been received. Note: " extra-message))
     ;; Assign reviews to the student if applicable
       (let ((next (three-next-action assignment steps uid)))
@@ -245,13 +258,14 @@
          (q (merge "SELECT" submission:user-id
                    "FROM" submission:table
                    "WHERE" submission:user-id "IN (" student-commas ") AND"
+                           submission:user-id "!=? AND"
                            submission:assignment-id "=? AND"
                            submission:class-id "=? AND"
                            submission:step-id "=? AND"
                            submission:times-reviewed "< ?"
                    "ORDER BY" submission:times-reviewed "ASC," submission:time-stamp "ASC"
                    "LIMIT ?"))
-         (query-list (append students (list assignment-id class-name step-id amount amount)))
+         (query-list (append students (list uid assignment-id class-name step-id amount amount)))
          (result (cast (query-rows-list q query-list) (Listof (Vector String))))
          (total-found (length result))
          (hold-amount (- amount total-found)))

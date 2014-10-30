@@ -77,7 +77,7 @@
 (struct Record ([assignment : String] [class : String] [step : String] [user : String] [time-stamp : TimeStamp] [published : Boolean] [last-modified : TimeStamp]) #:transparent)
 
 (define record-select (merge assignment-id "," class-id "," step-id "," user-id "," time-stamp "," published "," last-modified))
-(define-type Vector-Record (Vector String String String String TimeStamp Boolean TimeStamp))
+(define-type Vector-Record (Vector String String String String TimeStamp Integer TimeStamp))
 
 (: vector->record (Vector-Record -> Record))
 (define (vector->record vec)
@@ -86,7 +86,7 @@
         (step (vector-ref vec 2))
         (user (vector-ref vec 3))
         (time-stamp (vector-ref vec 4))
-        (published (vector-ref vec 5))
+        (published (= 1 (vector-ref vec 5)))
         (last-modified (vector-ref vec 6)))
     (Record assignment class step user time-stamp published last-modified)))
 

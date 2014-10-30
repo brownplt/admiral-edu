@@ -11,6 +11,10 @@
                [v2:check-migrated (-> (Result String))]
                [v2:migrate (-> (Result Void))])
 
+(require/typed (prefix-in v3: "migrate-2-3.rkt")
+               [v3:check-migrated (-> (Result String))]
+               [v3:migrate (-> (Result Void))])
+
 ;; ( -> Result void?)
 ;; Success if at the current 
 (provide check-migrated)
@@ -18,6 +22,7 @@
 (define (check-migrated)
   (when (Failure? (v1:check-migrated)) (v1:migrate))
   (when (Failure? (v2:check-migrated)) (v2:migrate))
+  (when (Failure? (v3:check-migrated)) (v3:migrate))
   (let ((version (system:select-version)))
     (cond
       [(not (= version system:current-version)) (Failure (format "Expected system to be at version ~a but was at version ~a." version))]

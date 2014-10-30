@@ -37,7 +37,15 @@
 (define times-reviewed "times_reviewed")
 (define times-reviewed-type "INT")
 
-(define valid-columns `(,class-id ,step-id ,user-id ,time-stamp ,times-reviewed))
+(provide published published-type)
+(define published "published")
+(define published-type "BOOL")
+
+(provide last-modified last-modified-type)
+(define last-modified "last_modified")
+(define last-modified-type "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+
+(define valid-columns `(,class-id ,step-id ,user-id ,time-stamp ,times-reviewed ,published))
 
 ; ct-session -> (U 'class_id 'step_id 'user_id 'time_stamp 'times_reviewed)
 (provide get-sort-by)
@@ -59,6 +67,8 @@
                                          user-id user-id-type ","
                                          time-stamp time-stamp-type ","
                                          times-reviewed times-reviewed-type ","
+                                         published published-type ","
+                                         last-modified last-modified-type ","
                                          "PRIMARY KEY (" assignment-id "," class-id "," step-id "," user-id "))")))
     (query-exec drop)
     (query-exec create)))
@@ -82,7 +92,7 @@
 (provide create-instructor-solution)
 (: create-instructor-solution (String String String String -> Void))
 (define (create-instructor-solution assignment class step user)
-  (let ((query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),9001)")))
+  (let ((query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),9001,true,NOW())")))
     (query-exec query assignment class step user)))
 
 ;; Creates a record for the specified assignment, class, step, and user.
@@ -101,9 +111,22 @@
     [(not (user:exists? user)) 'no-such-user]
     [(not (role:exists? class user)) 'no-such-user-in-class]
     [else
-     (let ((query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),0)")))
+     (let ((query (merge "INSERT INTO" table " VALUES(?,?,?,?,NOW(),0,false,NOW())")))
        (query-exec query assignment class step user)
        #t)]))
+
+;; Updates the record for the assignment, class, step, and user such that it is
+;; marked as "published".
+(provide publish)
+(: publish (String String String String -> Void))
+(define (publish assignment class step user)
+  (let ((query (merge "UPDATE" table
+                      "SET" published "=true"
+                      "WHERE" assignment-id "=? AND"
+                              class-id "=? AND"
+                              step-id "=? AND"
+                              user-id "=?")))
+    (query-exec query assignment class step user)))
 
 ;; Given an assignment, class, step, and user, lists all entries ordered by
 ;; their version number

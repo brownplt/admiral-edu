@@ -25,7 +25,7 @@
 
 (provide current-version)
 (: current-version Exact-Nonnegative-Integer)
-(define current-version 2)
+(define current-version 3)
 
 (provide init)
 (: init (-> Void))

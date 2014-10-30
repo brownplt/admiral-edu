@@ -46,6 +46,7 @@
           [(eq? symbol 'order) #t]
           [(eq? symbol 'review-hash) #t]
           [(eq? symbol 'action) #t]
+          [(eq? symbol 'user-id) #t]
           [else #f])))
 
 (provide get-binding)

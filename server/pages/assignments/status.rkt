@@ -15,7 +15,7 @@
 (define (load session url message [post #f])
   (match url
     [(list assignment-id) (display-assignment assignment-id message)]
-    [(list assignment-id step-id) (display-step session assignment-id step-id message)]
+    [(list assignment-id step-id) (display-step session assignment-id step-id message post)]
     [(list assignment-id step-id review-id) (display-review session assignment-id step-id review-id message post)]
     [_ error:four-oh-four-xexpr]))
 
@@ -40,9 +40,10 @@
     (h3 () ,(action:status assignment-id "Status") " : " ,status)
     ,(when message message))))
 
-(: display-step (ct-session String String (U XExpr #f) -> (Listof (U XExpr Void))))
-(define (display-step session assignment-id step-id message)
-  (let* ((order (get-order session))
+(: display-step (ct-session String String (U XExpr #f) Boolean -> (Listof (U XExpr Void))))
+(define (display-step session assignment-id step-id message post)
+  (let* ((message (if post (check-for-action assignment-id step-id session) #f))
+         (order (get-order session))
          (sort-by (submission:get-sort-by session))
          (next-order (opposite-order order))
          (count (number->string (submission:count-step assignment-id class-name step-id)))
@@ -55,7 +56,9 @@
               `(table ()
                       (tr ()
                           (th () ,(sort-by-action "user_id" next-order "Student ID"))
-                          (th () ,(sort-by-action "time_stamp" next-order "Submission Date"))))
+                          (th () ,(sort-by-action "last_modified" next-order "Last Modified"))
+                          (th () ,(sort-by-action "published" next-order "Published"))
+                          (th () "Actions")))
               (map submission-record->xexpr submission-records))))))
 
 ; (String Order String -> Xexpr)
@@ -66,10 +69,31 @@
 (: submission-record->xexpr (submission:Record -> XExpr))
 (define (submission-record->xexpr record)
   (let ((user-id (submission:Record-user record))
-        (time-stamp (format-time-stamp (submission:Record-time-stamp record))))
+        (last_modified (format-time-stamp (submission:Record-last-modified record)))
+        (published (if (submission:Record-published record) "Yes" "No"))
+        (actions (if (submission:Record-published record) (unpublish-action record) (publish-action record))))
+                     
     `(tr () 
          (td () ,(view-submission-action record user-id))
-         (td () ,time-stamp))))
+         (td () ,last_modified)
+         (td () ,published)
+         (td () ,actions))))
+
+(: unpublish-action (submission:Record -> XExpr))
+(define (unpublish-action record)
+  (let ((user-id (submission:Record-user record)))
+    `(form ((method "post"))
+           (input ((type "hidden") (name "action") (value "unpublish")))
+           (input ((type "hidden") (name "user-id") (value ,user-id)))
+           (input ((type "submit") (value "Unpublish"))))))
+
+(: publish-action (submission:Record -> XExpr))
+(define (publish-action record)
+  (let ((user-id (submission:Record-user record)))
+    `(form ((method "post"))
+           (input ((type "hidden") (name "action") (value "publish")))
+           (input ((type "hidden") (name "user-id") (value ,user-id)))
+           (input ((type "submit") (value "Publish"))))))
 
 (: view-submission-action (submission:Record String -> XExpr))
 (define (view-submission-action record user-id)
@@ -124,7 +148,7 @@
 
 (: display-review (ct-session String String String (U XExpr #f) Boolean -> (Listof (U XExpr Void))))
 (define (display-review session assignment-id step-id review-id message post)
-  (let* ((message (if post (check-for-action session) #f))
+  (let* ((message (if post (check-for-action assignment-id step-id session) #f))
          (assigned (number->string (review:count-all-assigned-reviews assignment-id class-name step-id review-id)))
          (completed (number->string (review:count-completed-reviews assignment-id class-name step-id review-id)))
          (sort-by (review:get-sort-by session))
@@ -187,18 +211,39 @@
 
 
 
-(: check-for-action (ct-session -> XExpr))
-(define (check-for-action session)
+(: check-for-action (String String ct-session -> XExpr))
+(define (check-for-action assignment-id step-id session)
   (let ((action (get-binding 'action session)))
+    (printf "Checking for action: ~a\n" action)
     (cond [(Failure? action) `(p () (b () ,(Failure-message action)))]
-          [else (do-action (Success-result action) session)])))
+          [else (do-action assignment-id step-id (Success-result action) session)])))
 
 
-(: do-action (String ct-session -> XExpr))
-(define (do-action action session)
+(: do-action (String String String ct-session -> XExpr))
+(define (do-action assignment-id step-id action session)
+  (printf "performing action: ~a\n" action)
   (cond [(string=? action "mark-incomplete") (do-mark-incomplete session)]
         [(string=? action "mark-complete") (do-mark-complete session)]
+        [(string=? action "publish") (do-publish assignment-id step-id session)]
+        [(string=? action "unpublish") (do-unpublish assignment-id step-id session)]
         [else `(p () (b () "No such action: " ,action))]))
+
+(: do-publish (String String ct-session -> XExpr))
+(define (do-publish assignment-id step-id session)
+  (let ((user-id (get-binding 'user-id session)))
+    (cond [(Failure? user-id) `(p () (b () ,(Failure-message user-id)))]
+          [else (begin
+                  (submission:publish assignment-id class-name step-id (Success-result user-id))
+                  '(p (b "Submission published.")))])))
+
+(: do-unpublish (String String ct-session -> XExpr))
+(define (do-unpublish assignment-id step-id session)
+  (let ((user-id (get-binding 'user-id session)))
+    (cond [(Failure? user-id) `(p () (b () ,(Failure-message user-id)))]
+          [else (begin
+                  (submission:unpublish assignment-id class-name step-id (Success-result user-id))
+                  '(p (b "Submission unpublished.")))])))
+
 
 
 (: do-mark-incomplete (ct-session -> XExpr))

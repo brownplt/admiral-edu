@@ -130,6 +130,17 @@
                               user-id "=?")))
     (query-exec query assignment class step user)))
 
+(provide unpublish)
+(: unpublish (String String String String -> Void))
+(define (unpublish assignment class step user)
+  (let ((query (merge "UPDATE" table
+                      "SET" published "=false"
+                      "WHERE" assignment-id "=? AND"
+                              class-id "=? AND"
+                              step-id "=? AND"
+                              user-id "=?")))
+    (query-exec query assignment class step user)))
+
 ;; Given an assignment, class, step, and user, lists all entries ordered by
 ;; their version number
 ;; This function returns one of the following:

@@ -33,9 +33,22 @@
 
   ; Writes the local file (over writing if necessary). Then, pushes the local file to the cloud.
   (define (write-file path contents)
-    (local:write-file path contents)
-    (put/file (string-append bucket path) (string->path path))
-    (void))
+    (let ((clean-path (clean path)))
+      (local:write-file clean-path contents)
+      (let ((bucket+path (string-append bucket clean-path))
+            (pathname (string->path clean-path)))
+        (put/file bucket+path pathname))
+    (void)))
+
+  ;; Conversts all spaces to underscores. This is a hack but the (put/file API
+  ;; dies when you pass in a path with a space. This bug has been reported here:
+  ;; https://github.com/greghendershott/aws/issues/35
+  (define (clean to-clean)
+    (let* ((string-list (string->list to-clean))
+           (to-safe (lambda (c) (cond [(eq? #\  c) #\_]
+                                      [else c]))))
+      (apply string (map to-safe string-list))))
+  
   
   ; Deletes the local copy and the remote copy
   (define (delete-path path)

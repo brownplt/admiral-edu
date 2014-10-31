@@ -266,7 +266,8 @@
                            submission:assignment-id "=? AND"
                            submission:class-id "=? AND"
                            submission:step-id "=? AND"
-                           submission:times-reviewed "< ?"
+                           submission:times-reviewed "< ? AND"
+                           submission:published "=true"
                    "ORDER BY" submission:times-reviewed "ASC," submission:time-stamp "ASC"
                    "LIMIT ?"))
          (query-list (append students (list uid assignment-id class-name step-id amount amount)))

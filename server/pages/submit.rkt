@@ -42,6 +42,7 @@
       [(MustSubmitNext? do-next) (equal? (Step-id (MustSubmitNext-step do-next)) step)]
       [else #f])))
 
+
 (define (preview-upload session role rest uid assignment step filename data)
   (let ((result  (upload-submission class-name uid assignment step filename data))
         (start-url (hash-ref (ct-session-table session) 'start-url)))
@@ -50,26 +51,16 @@
            (render-html 
             (xexpr->string
              `(html
-               (title "Captain Teach - Submission Preview")
+               (title "Captain Teach - Submission Uploaded")
                (body
-                (p "Below is a preview of your submission. Please review it. 
-                   When you are sure it is correct. Click the submit button below.")
-                (iframe ((width "800px") 
-                         (height "600px")
-                         ;; TODO: Load CSS rather than using inline style
-                         (style "border: none;")
-                         (src ,(string-append start-url "../../../browse/" assignment "/" step "/")) 
-                         (scrolling "no")))
-                (form ((method "post") (action ""))
-                      (input ((type "hidden") (name "action") (value "submit")))
-                      (p (b "Warning:") "Once you publish, you will not be able to make any changes to this submission step. "
-                         (input ((type "submit") (value "Publish")))))
-                (form ((method "get") (action ,(string-append  start-url "../../../next/" assignment "/")))
-                      (input ((type "submit") (value "Cancel"))))))))]
+                (p "Submission uploaded successfully.")
+                (p (a ((href ,(string-append  start-url "../../../next/" assignment "/"))) "Continue"))))))]
           [(Failure? result)
            (let ((message (Failure-message result)))
              (render-html (string-append "<p>" message "</p>"
                                          "<p><a href='" start-url "../../../next/" assignment "/'>Back</a></p>" )))])))
+
+
 
 
 (define (handle-submit session role rest uid assignment step)

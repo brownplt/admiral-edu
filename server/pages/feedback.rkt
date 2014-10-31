@@ -60,24 +60,83 @@
          (assignment (car rest))
          (reviews (review:select-feedback class-name assignment uid))
          (submissions (submission:select-from-assignment assignment class-name uid))
-         (results (if (and (empty? reviews)
-                           (empty? submissions)) "<p>You have no reviews at this time.</p>" 
-                                                 (string-append (gen-submissions submissions start-url)
-                                                                "<h2>Review Feedback</h2>"
-                                                                (gen-reviews reviews start-url)))))
+         (results 
+          (string-append (gen-status assignment uid start-url)
+                         (gen-submissions submissions start-url)
+                         (gen-pending-reviews assignment uid start-url)
+                         (gen-completed-reviews assignment uid start-url)
+                         (gen-review-feedback reviews start-url))))
     (string-append "<h1>" assignment "</h1>"
                    results)))
 
+(define (gen-status assignment uid start-url)
+  (string-append "<h2>Next Required Action</h2>"
+                 (let ((do-next (next-step assignment uid)))
+                   (cond 
+                     [(MustSubmitNext? do-next) (gen-submit-next start-url assignment do-next)]
+                     [(MustReviewNext? do-next) "<p>You must complete pending reviews before you can proceed to the next step.</p>"]
+                     [(eq? #t do-next) "You have completed all of the steps for this assignment."]
+                     [else (error "Unknown next-action.")]))))
+
+(define (gen-submit-next start-url assignment msn)
+  (string-append "<p>You must <a href='" start-url "../../next/" assignment "/'>publish a submission</a> for the next step: '" (Step-id (MustSubmitNext-step msn)) "'.</p>"))
+  
+
+(define (gen-review-feedback reviews start-url)
+  (let* ((feedback (gen-reviews reviews start-url))
+         (message (if (empty? reviews) "You have not received any feedback for this assignment"
+                      "The links below are to reviews completed on your submissions.")))
+    (string-append "<h2>Review Feedback</h2><p>" message "</p>" feedback)))
+
+(define (gen-pending-reviews assignment uid start-url)
+  (let* ((reviews (review:select-pending assignment class-name uid))
+         (pending (map (gen-pending-review start-url) reviews))
+         (message (if (empty? pending) "No pending reviews."
+                      (string-append "The links below are to reviews that you have not yet completed. "
+                                     "As you work on them, they automatically save. If you want, you may "
+                                     "work on them and come back later. Once you are satisfied with your "
+                                     "review, press submit to send it to the author. Once you have submitted, "
+                                     "you may not make additional changes."))))
+    (string-join
+     (map xexpr->string
+          (append `((h2 "Pending Reviews") (p ,message)) pending)))))
+
+(define (gen-pending-review start-url)
+  (lambda (record)
+    (let ((step (review:Record-step-id record))
+          (hash (review:Record-hash record))
+          (reviewee (review:Record-reviewee-id record)))
+      (cond [(string=? reviewee "HOLD") '(li (p "There are currently no submissions available for you to review. You will be notified as soon as one has been assigned to you."))]
+            [else `(li (a ((href ,(string-append start-url "../../review/" hash "/"))) "Pending Review for '" ,step "'"))]))))
+
+(define (gen-completed-reviews assignment uid start-url)
+  (let* ((reviews (review:select-completed assignment class-name uid))
+         (completed (map (gen-completed-review start-url) reviews))
+         (message (if (empty? completed) "You have not completed any reviews." 
+                      "The links below are to reviews that you have already completed.")))
+    (string-join
+     (map xexpr->string
+          (append `((h2 "Completed Reviews") (p ,message)) completed)))))
+
+(define (gen-completed-review start-url)
+  (lambda (record)
+    (let ((step (review:Record-step-id record))
+          (hash (review:Record-hash record)))
+      `(li (a ((href ,(string-append start-url "../../review/" hash "/"))) "Completed Review for '" ,step "'")))))
+
 (define (gen-submissions submissions start-url)
+  (let* ((submissions (map (gen-submission start-url) submissions))
+         (message (if (empty? submissions) "You have not made any submissions for this assignment yet."
+                      "The links below are to the submissions you've made for this assignment.")))
   (string-join
    (map xexpr->string
-        (append '((h2 "Browse Submission")) (map (gen-submission start-url) submissions)))))
+        (append `((h2 "Browse Submissions") (p ,message)) submissions)))))
 
 (define (gen-submission start-url)
   (lambda (record)
     (let ((assignment-id (submission:Record-assignment record))
           (step-id (submission:Record-step record)))
-    `(p (a ((href ,(string-append start-url "../../browse/" assignment-id "/" step-id "/"))) ,step-id)))))
+    `(li (a ((href ,(string-append start-url "../../browse/" assignment-id "/" step-id "/"))) ,step-id)))))
 
 (define (gen-reviews reviews start-url) (gen-reviews-helper reviews 1 start-url))
 
@@ -87,7 +146,7 @@
              (hash (review:Record-hash review))
              (step (review:Record-step-id review))
              (rest (cdr reviews)))
-        (string-append "<p><a href='" start-url "../view/" hash "/'>Review #" (number->string cur) ": " step "</a></p>" (gen-reviews-helper rest (+ 1 cur) start-url)))))
+        (string-append "<li><a href='" start-url "../view/" hash "/'>Review #" (number->string cur) ": " step "</a></li>" (gen-reviews-helper rest (+ 1 cur) start-url)))))
          
 (define (do-view session rest message)
   (let* ((start-url (hash-ref (ct-session-table session) 'start-url))

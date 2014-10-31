@@ -69,7 +69,7 @@
              (review:mark-complete r-hash)
              (send-review-ready-email review)
              (string-append "<p>Review Submitted</p>"
-                            "<p><a href='" start-url root-url "next/" assignment "/'>Continue</a></p>"))])))
+                            "<p><a href='" start-url root-url "feedback/" assignment "/'>Continue</a></p>"))])))
 
 (define (send-review-ready-email review)
   (let* ((uid (review:Record-reviewee-id review))

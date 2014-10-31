@@ -69,7 +69,7 @@
     (cond [(Success? result) 
            (let ((message (Success-result result)))
              (render-html (string-append "<p>" message "</p>"
-                                         "<p><a href='" start-url "../../../next/" assignment "/'>Continue</a></p>" )))]
+                                         "<p><a href='" start-url "../../../feedback/" assignment "/'>Continue</a></p>" )))]
           [(Failure? result)
            (let ((message (Failure-message result)))
              (render-html (string-append "<p>" message "</p>"

@@ -354,6 +354,32 @@
          (result (query-value q assignment class step review)))
     (cast result Exact-Nonnegative-Integer)))
 
+(provide select-completed)
+(: select-completed (String String String -> (Listof Record)))
+(define (select-completed assignment class reviewer)
+  (let* ((q (merge "SELECT" record-fields
+                   "FROM" table
+                   "WHERE" assignment-id "=? AND"
+                           class-id "=? AND"
+                           reviewer-id "=? AND"
+                           completed "=true"
+                   "ORDER BY" time-stamp "ASC"))
+         (results (cast (query-rows q assignment class reviewer) (Listof Vector-Record))))
+    (map vector->record results)))
+
+(provide select-pending)
+(: select-pending (String String String -> (Listof Record)))
+(define (select-pending assignment class reviewer)
+  (let* ((q (merge "SELECT" record-fields
+                   "FROM" table
+                   "WHERE" assignment-id "=? AND"
+                           class-id "=? AND"
+                           reviewer-id "=? AND"
+                           completed "=false"
+                   "ORDER BY" time-stamp "ASC"))
+         (results (cast (query-rows q assignment class reviewer) (Listof Vector-Record))))
+    (map vector->record results)))
+
 (provide select-all)
 (: select-all (String String String String Symbol (U 'asc 'desc) -> (Listof Record)))
 (define (select-all assignment class step review sort-by order)

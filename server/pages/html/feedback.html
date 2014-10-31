@@ -38,7 +38,7 @@
   </div>
   <div id="rubric" class="rubric"> 
   </div>
-  <div id="feedback" class="rubric">
+  <div id="feedback" class="feedback">
     <form method="post">
     <div class="rubric-item instruction">
       <p>Flag this review: <input type="checkbox" name="flag" @review-flagged ></p>
@@ -47,9 +47,12 @@
       <p>Leave feedback about what was useful / not useful on this review.</p>
       <textarea style="height: 40px;" name="feedback">@review-feedback </textarea>
     </div>
+
+    <div class="submit-button"><input type="submit" value="Submit"></div>
+
+
     </div>
   </div>
-  <div class="submit-button"><input type="submit" value="Submit"></div>
   </form>
 </body>
 </html>

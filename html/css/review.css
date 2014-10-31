@@ -41,6 +41,12 @@ body {
     width: calc(40% - 15px);
 }
 
+.feedback {
+    float: right;
+    margin-right: 20px;
+    width: calc(40% - 15px);
+}
+
 .rubric h1 {
     margin: 0 0 0 0;
     font-size: 18px;

@@ -267,13 +267,15 @@
 (define (view-review-action record context)
   (let ((hash (review:Record-hash record))
         (reviewer (review:Record-reviewer-id record)))
-    `(a ((href ,(string-append "/" class-name "/su/" reviewer "/review/" hash "/"))) ,context)))
+    (cond [(role:exists? class-name reviewer) `(a ((href ,(string-append "/" class-name "/su/" reviewer "/review/" hash "/"))) ,context)]
+          [else `(p () ,context)])))
 
 (: view-feedback-action (review:Record XExpr -> XExpr))
 (define (view-feedback-action record context)
   (let ((hash (review:Record-hash record))
         (reviewee (review:Record-reviewee-id record)))
-    `(a ((href ,(string-append "/" class-name "/su/" reviewee "/feedback/view/" hash "/"))) ,context)))
+    (cond [(role:exists? class-name reviewee)  `(a ((href ,(string-append "/" class-name "/su/" reviewee "/feedback/view/" hash "/"))) ,context)]
+          [else `(p () ,context)])))
 
 
 (: step->statistic (String -> (Step -> (Listof XExpr))))

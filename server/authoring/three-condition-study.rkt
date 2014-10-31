@@ -50,9 +50,10 @@
         (step (first steps))
         (tail (rest steps)))
     (let* ((step-id (Step-id step))
-           (has-submitted (> (cast (submission:count assignment-id class-name step-id uid) Nonnegative-Integer) 0))
+           (has-published (and (submission:exists? assignment-id class-name step-id uid)
+                               (submission:published? assignment-id class-name step-id uid)))
            (result (cond 
-                     [(not has-submitted) (MustSubmitNext step (Step-instructions step))]
+                     [(not has-published) (MustSubmitNext step (Step-instructions step))]
                      [(eq? group 'no-reviews) (default:next-action (three-check-reviewed group) three-ensure-assigned-review assignment tail uid)]
                      [(in-group assignment-id uid "does-reviews")
                       (printf "~a does reviews\n" uid)

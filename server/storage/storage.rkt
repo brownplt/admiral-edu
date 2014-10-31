@@ -336,7 +336,7 @@
 (provide check-file-name)
 (: check-file-name (String -> Boolean))
 (define (check-file-name file-name)
-  (let* ((okay-chars #rx"[a-zA-Z0-9_.-\\ ()]*"))
+  (let* ((okay-chars #rx"[a-zA-Z0-9_.\\ ()-]*"))
     (regexp-match-exact? okay-chars file-name)))
 
 

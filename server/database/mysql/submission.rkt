@@ -204,7 +204,8 @@
                        "WHERE" assignment-id "=? AND"
                                class-id "=? AND"
                                step-id "=? AND"
-                               user-id " NOT IN (" user-commas ")"
+                               user-id " NOT IN (" user-commas ") AND"
+                               published "=true"
                        "ORDER BY" times-reviewed "ASC"
                        "LIMIT 1"))
          (arg-list (append `(,assignment ,class ,step) not-users))

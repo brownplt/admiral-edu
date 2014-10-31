@@ -45,7 +45,7 @@
 (define last-modified "last_modified")
 (define last-modified-type "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
 
-(define valid-columns `(,class-id ,step-id ,user-id ,time-stamp ,times-reviewed ,published))
+(define valid-columns `(,class-id ,step-id ,user-id ,time-stamp ,times-reviewed ,published ,last-modified))
 
 ; ct-session -> (U 'class_id 'step_id 'user_id 'time_stamp 'times_reviewed)
 (provide get-sort-by)
@@ -284,6 +284,7 @@
                                step-id "=? AND"
                                user-id "NOT LIKE \"default-submission%\""
                        "ORDER BY" sort-by (order->string order)))
+         (merp (printf query))
          (results (query-rows query assignment class step)))
     (map vector->record (cast results (Listof Vector-Record)))))
 

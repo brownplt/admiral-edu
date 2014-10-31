@@ -51,7 +51,8 @@
   (append (header assignment-id message)
           `((h4 (),step-id)
             (p () "Submissions : " ,count)
-            (p () "Select a User ID to view their submission."))
+            (p () "Select a User ID to view their submission.")
+            (h3 () "Student Submissions:"))
           `(,(append-xexpr
               `(table ()
                       (tr ()
@@ -59,7 +60,17 @@
                           (th () ,(sort-by-action "last_modified" next-order "Last Modified"))
                           (th () ,(sort-by-action "published" next-order "Published"))
                           (th () "Actions")))
-              (map submission-record->xexpr submission-records))))))
+              (map submission-record->xexpr submission-records)))
+          `((h3 () "Students Pending Submission"))
+          (list-no-submissions assignment-id step-id))))
+
+(: list-no-submissions (String String -> (Listof (U XExpr Void))))
+(define (list-no-submissions assignment-id step-id)
+  (let ((no-submission (submission:select-no-submissions assignment-id class-name step-id)))
+    (cond [(empty? no-submission) '((p "No pending submissions."))]
+          [else (let: ([f : (String -> XExpr) (lambda (uid) `(li () ,uid))])
+                  (map f no-submission))])))
+
 
 ; (String Order String -> Xexpr)
 (: sort-by-action (String Order String -> XExpr))

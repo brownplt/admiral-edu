@@ -338,3 +338,18 @@
                    "LIMIT 1"))
          (result (cast (query-row q assignment class step uid) Vector-Record)))
     (vector->record result)))
+
+; Given an assignment, class, and step, returns a list of students who are 
+; registered in the class that have no submissions for the specified assignment
+; and step
+(provide select-no-submissions)
+(: select-no-submissions (String String String -> (Listof String)))
+(define (select-no-submissions assignment class step)
+  (let* ((q (merge "SELECT" role:table "." role:user-id "FROM" role:table
+                   "LEFT JOIN (SELECT * FROM" table "WHERE" assignment-id "=? AND" class-id "=? AND" step-id "=?) as temp"
+                   "ON (" role:table "." role:user-id "= temp." user-id")"
+                   "WHERE temp." user-id "IS NULL AND"
+                                 role:table "." role:class-id "=?"))
+         (results (cast (query-rows q assignment class step class) (Listof (Vector String))))
+         [f : ((Vector String) -> String) (lambda (vec) (vector-ref vec 0))])
+    (map f results)))

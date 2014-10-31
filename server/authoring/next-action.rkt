@@ -20,20 +20,15 @@
     (let* ((assignment-record (assignment:select class-name assignment-id))
            (is-open (assignment:Record-open assignment-record)))
       (if (not is-open) (Failure "This assignment is currently closed.")
-          (let ((result (if (or (eq? file-name #f)
-                                (eq? data #f)) #t
-                                               (upload-submission class-name uid assignment-id step-id file-name data))))
-            (cond 
-              [(Failure? result) result]
-              [(not result) (Failure "The submission failed. This is most likely because the file uploaded was not a zip archive.")]
-              [else                 
-               (begin
-                  (submission:create assignment-id class-name step-id uid)
-                  ;; Assign reviews to the student if applicable
-                  (let ((next (default-next-action assignment steps uid)))
-                    (cond
-                      [(MustReviewNext? next) (assign-reviews assignment-id next uid)])
-                    (Success "Assignment submitted.")))]))))))
+          (begin
+            (when (not (submission:exists? assignment-id class-name step-id uid))
+              (submission:create assignment-id class-name step-id uid))
+            (submission:publish assignment-id class-name step-id uid)
+            ;; Assign reviews to the student if applicable
+            (let ((next (default-next-action assignment steps uid)))
+              (cond
+                [(MustReviewNext? next) (assign-reviews assignment-id next uid)])
+              (Success "Assignment submitted.")))))))
 
 (: assign-reviews (String MustReviewNext String -> (Listof Void)))
 (define (assign-reviews assignment-id next uid)
@@ -66,8 +61,8 @@
            [else check-result]))])))
 
 
-;; Returns #t if this step has been submitted to and all reviews have been compelted.
-;; If the uid has not submitted for this step, returns a MustSubmitNext for this step-id along with the instructions from the assignment description
+;; Returns #t if this step has been published to and all reviews have been compelted.
+;; If the uid has not published for this step, returns a MustSubmitNext for this step-id along with the instructions from the assignment description
 ;; Otherwise, returns a MustReviewNext for this step-id
 (: check-step ((String Step Review String -> Boolean)
                (String String Step -> (Review -> Void))
@@ -76,9 +71,10 @@
                String -> (U MustSubmitNext MustReviewNext #t)))
 (define (check-step check-reviewed ensure-assigned-review assignment-id step uid)
   (let* ((step-id (Step-id step))
-         (has-submitted (> (cast (submission:count assignment-id class-name step-id uid) Nonnegative-Integer) 0)))
+         (has-published (and (submission:exists? assignment-id class-name step-id uid)
+                             (submission:published? assignment-id class-name step-id uid))))
     (cond 
-      [(not has-submitted) (MustSubmitNext step (Step-instructions step))]
+      [(not has-published) (MustSubmitNext step (Step-instructions step))]
       [else (check-reviews check-reviewed ensure-assigned-review assignment-id step (Step-reviews step) uid)])))
 
 ;; Returns #t if all of the reviews for the specified step are completed.

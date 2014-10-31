@@ -62,8 +62,8 @@
                          (scrolling "no")))
                 (form ((method "post") (action ""))
                       (input ((type "hidden") (name "action") (value "submit")))
-                      (p (b "Warning:") "Once you submit, you will not be able to make any changes to your work."
-                         (input ((type "submit") (value "Submit")))))
+                      (p (b "Warning:") "Once you publish, you will not be able to make any changes to this submission step. "
+                         (input ((type "submit") (value "Publish")))))
                 (form ((method "get") (action ,(string-append  start-url "../../../next/" assignment "/")))
                       (input ((type "submit") (value "Cancel"))))))))]
           [(Failure? result)

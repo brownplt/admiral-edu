@@ -174,18 +174,26 @@
 (provide upload-submission)
 (: upload-submission (String String String String String (U String Bytes) -> (Result Void)))
 (define (upload-submission class-id user-id assignment-id step-id file-name data)
-  (cond [(not (check-file-name file-name)) (Failure (format "Invalid filename ~a" file-name))]
-        ;; Ensure the students has not finalized their submission
-        [(submission:exists? assignment-id class-id step-id user-id) (Failure "Submission already exists.")]
-        [else (let ((path (submission-path class-id assignment-id user-id step-id)))
-                
-                ;; Delete previously uploaded files
-                (delete-path path)
-                
-                ;; Write to storage
-                (cond [(or (is-zip? file-name)
-                           (is-tar? file-name)) (do-unarchive-solution class-id user-id assignment-id step-id file-name data)]
-                      [else (do-single-file-solution class-id user-id assignment-id step-id file-name data)]))]))
+  (let* ((exists (submission:exists? assignment-id class-id step-id user-id))
+         (record (if exists (submission:select assignment-id class-id step-id user-id) #f))
+         (published (if record (submission:Record-published record) #f)))
+    (cond [(not (check-file-name file-name)) (Failure (format "Invalid filename ~a" file-name))]
+          ;; Ensure the students has not finalized their submission
+          [published (Failure "Submission already exists.")]
+          [else (let ((path (submission-path class-id assignment-id user-id step-id)))
+                  
+                  ;; Delete previously uploaded files
+                  (delete-path path)
+                  
+                  ;; Write to storage
+                  (cond [(or (is-zip? file-name)
+                             (is-tar? file-name)) (do-unarchive-solution class-id user-id assignment-id step-id file-name data)]
+                        [else (do-single-file-solution class-id user-id assignment-id step-id file-name data)])
+                  
+                  ;; Create / update record
+                  (when (not exists) (submission:create assignment-id class-id step-id user-id))
+                  (submission:unpublish assignment-id class-id step-id user-id)
+                  (Success (void)))])))
 
 
 (: do-unarchive-solution (String String String String String (U String Bytes) -> (Result Void)))

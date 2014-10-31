@@ -176,7 +176,7 @@
     (next-action assignment (Assignment-steps assignment) uid)))
 
 
-;; Attempts to submit for the specified uid, assignment, and step-id. If this is not the next expected action,
+;; Attempts to publish for the specified uid, assignment, and step-id. If this is not the next expected action,
 ;; This returns a failure with a message describing what the user should do next.
 ;; If file-name and data are supplied and not #f, it is uploaded as a submission before creating a database record
 (provide submit-step)

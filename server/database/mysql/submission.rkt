@@ -286,6 +286,19 @@
          (results (query-rows query assignment class step)))
     (map vector->record (cast results (Listof Vector-Record)))))
 
+(provide published?)
+(: published? (String String String String -> Boolean))
+(define (published? assignment class step uid)
+  (let* ((q (merge "SELECT" published
+                   "FROM" table
+                   "WHERE" assignment-id "=? AND"
+                           class-id "=? AND"
+                           step-id "=? AND"
+                           user-id "=?"
+                   "LIMIT 1"))
+         (result (cast (query-value q assignment class step uid) Integer)))
+    (= 1 result)))
+
 (provide count-step)
 (: count-step (String String String -> Exact-Nonnegative-Integer))
 (define (count-step assignment class step)
@@ -310,3 +323,16 @@
                    "ORDER BY" time-stamp "DESC"))
          (result (cast (query-rows q assignment class uid) (Listof Vector-Record))))
     (map vector->record result)))
+
+(provide select)
+(: select (String String String String -> Record))
+(define (select assignment class step uid)
+  (let* ((q (merge "SELECT" record-select
+                   "FROM" table
+                   "WHERE" assignment-id "=? AND"
+                           class-id "=? AND"
+                           step-id "=? AND"
+                           user-id "=?"
+                   "LIMIT 1"))
+         (result (cast (query-row q assignment class step uid) Vector-Record)))
+    (vector->record result)))

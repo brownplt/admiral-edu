@@ -110,9 +110,13 @@
 (define (three-do-submit-step assignment step uid file-name data steps)
   (let ((assignment-id (Assignment-id assignment))
         (step-id (Step-id step)))
-    ;(upload-submission class user assignment step data)
-    (when (and file-name data) (upload-submission class-name uid assignment-id step-id file-name data))
-    (submission:create assignment-id class-name step-id uid)
+    
+    ; ensure a submission record exists
+    (when (not (submission:exists? assignment-id class-name step-id uid))
+      (submission:create assignment-id class-name step-id uid))
+    
+    (submission:publish assignment-id class-name step-id uid)
+    
     (let* ((group (lookup-group assignment-id uid))
            (extra-message (cond [(eq? group 'gets-reviewed) "You don't need to do any reviewing.  But, you will receive reviews, so you can wait for feedback if you want before you submit your final implementation and tests."]
                                 [(eq? group 'does-reviews) "You have been assigned reviews for this assignment, and must complete them.  If enough reviews aren't available right now, you'll receive notifications as they are assigned to you."]

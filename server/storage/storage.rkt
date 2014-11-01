@@ -193,6 +193,7 @@
                   ;; Create / update record
                   (when (not exists) (submission:create assignment-id class-id step-id user-id))
                   (submission:unpublish assignment-id class-id step-id user-id)
+                  (submission:update-timestamp assignment-id class-id step-id user-id)
                   (Success (void)))])))
 
 

@@ -123,7 +123,8 @@
 (: publish (String String String String -> Void))
 (define (publish assignment class step user)
   (let ((query (merge "UPDATE" table
-                      "SET" published "=true"
+                      "SET" published "=true,"
+                            last-modified "=" last-modified
                       "WHERE" assignment-id "=? AND"
                               class-id "=? AND"
                               step-id "=? AND"
@@ -134,7 +135,20 @@
 (: unpublish (String String String String -> Void))
 (define (unpublish assignment class step user)
   (let ((query (merge "UPDATE" table
-                      "SET" published "=false"
+                      "SET" published "=false,"
+                            last-modified "=" last-modified
+                      "WHERE" assignment-id "=? AND"
+                              class-id "=? AND"
+                              step-id "=? AND"
+                              user-id "=?")))
+    (query-exec query assignment class step user)))
+
+; Updates the timestamp for a specified submission to the current time
+(provide update-timestamp)
+(: update-timestamp (String String String String -> Void))
+(define (update-timestamp assignment class step user)
+  (let ((query (merge "UPDATE" table
+                      "SET" last-modified "=NOW()"
                       "WHERE" assignment-id "=? AND"
                               class-id "=? AND"
                               step-id "=? AND"

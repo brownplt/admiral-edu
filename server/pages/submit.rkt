@@ -53,8 +53,8 @@
              `(html
                (title "Captain Teach - Submission Uploaded")
                (body
-                (p "Submission uploaded successfully.")
-                (p (a ((href ,(string-append  start-url "../../../next/" assignment "/"))) "Continue"))))))]
+                (p "Submission uploaded successfully. " (b "Note:") " Your submission has not yet been published.")
+                (p (a ((href ,(string-append  start-url "../../../next/" assignment "/"))) "View Submission"))))))]
           [(Failure? result)
            (let ((message (Failure-message result)))
              (render-html (string-append "<p>" message "</p>"

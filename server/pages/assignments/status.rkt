@@ -244,7 +244,7 @@
   (let ((user-id (get-binding 'user-id session)))
     (cond [(Failure? user-id) `(p () (b () ,(Failure-message user-id)))]
           [else (begin
-                  (submission:publish assignment-id class-name step-id (Success-result user-id))
+                  (submit-step assignment-id step-id (Success-result user-id))
                   '(p (b "Submission published.")))])))
 
 (: do-unpublish (String String ct-session -> XExpr))

@@ -202,7 +202,8 @@
   (let* ((current (reviewed assignment class step user))
          (plusOne (+ current 1))
          (query (merge "UPDATE" table
-                       "SET" times-reviewed "=?"
+                       "SET" times-reviewed "=?,"
+                             last-modified "=" last-modified
                        "WHERE" assignment-id "=? AND"
                                class-id "=? AND"
                                step-id "=? AND"

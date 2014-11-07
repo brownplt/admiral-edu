@@ -52,7 +52,10 @@
           `((h4 (),step-id)
             (p () "Submissions : " ,count)
             (p () "Select a User ID to view their submission.")
-            (h3 () "Student Submissions:"))
+            (h3 () "Student Submissions:")
+            (h4 () "Global Actions")
+            ,(publish-all-action)
+            ,(unpublish-all-action))
           `(,(append-xexpr
               `(table ()
                       (tr ()
@@ -89,6 +92,18 @@
          (td () ,last_modified)
          (td () ,published)
          (td () ,actions))))
+
+(: unpublish-all-action ( -> XExpr))
+(define (unpublish-all-action)
+    `(form ((method "post"))
+           (input ((type "hidden") (name "action") (value "unpublish-all")))           
+           (p (input ((type "submit") (value "Unpublish All"))) " - All submissions for this step will be marked Unpublished. This will not modify timestamps. If a student chooses to update their submission, their timestamp will be updated.")))
+
+(: publish-all-action ( -> XExpr))
+(define (publish-all-action)
+    `(form ((method "post"))
+           (input ((type "hidden") (name "action") (value "publish-all")))
+           (p (input ((type "submit") (value "Publish All"))) " - All submissions for this step will be marked Published. This will not modify timestamps.")))
 
 (: unpublish-action (submission:Record -> XExpr))
 (define (unpublish-action record)
@@ -237,7 +252,22 @@
         [(string=? action "mark-complete") (do-mark-complete session)]
         [(string=? action "publish") (do-publish assignment-id step-id session)]
         [(string=? action "unpublish") (do-unpublish assignment-id step-id session)]
+        [(string=? action "unpublish-all") (do-unpublish-all assignment-id step-id)]
+        [(string=? action "publish-all") (do-publish-all assignment-id step-id)]
         [else `(p () (b () "No such action: " ,action))]))
+
+(: do-publish-all (String String -> XExpr))
+(define (do-publish-all assignment-id step-id)
+  (let* ((unpublished (submission:select-all-unpublished assignment-id class-name step-id))
+         (do-submit (lambda: ([user-id : String]) (submit-step assignment-id step-id user-id)))
+         (results (filter Failure? (map do-submit unpublished))))
+    (cond [(empty? results) '(p (b "All Submissions Published."))]
+          [else '(p (b ((style "color:red;")) "Some submissions could not be published."))])))
+
+(: do-unpublish-all (String String -> XExpr))
+(define (do-unpublish-all assignment-id step-id)
+  (submission:unpublish-all assignment-id class-name step-id)
+  '(p (b "All Submissions Unpublished.")))
 
 (: do-publish (String String ct-session -> XExpr))
 (define (do-publish assignment-id step-id session)

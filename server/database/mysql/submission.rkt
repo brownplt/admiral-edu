@@ -143,6 +143,32 @@
                               user-id "=?")))
     (query-exec query assignment class step user)))
 
+(provide select-all-unpublished)
+(: select-all-unpublished (String String String -> (Listof String)))
+(define (select-all-unpublished assignment class step)
+  (let* ((query (merge "SELECT" user-id
+                       "FROM" table
+                       "WHERE" published "=false AND"
+                               assignment-id "=? AND"
+                               class-id "=? AND"
+                               step-id "=?"))
+         (results (cast (query-rows query assignment class step) (Listof (Vector String)))))
+    (map (lambda: ([vec : (Vector String)]) (vector-ref vec 0)) results)))
+
+(provide unpublish-all)
+(: unpublish-all (String String String -> Void))
+(define (unpublish-all assignment class step)
+  (let ((query (merge "UPDATE" table
+                      "SET" published "=false,"
+                            last-modified "=" last-modified
+                      "WHERE" assignment-id "=? AND"
+                              class-id "=? AND"
+                              step-id "=? AND"
+                              user-id "NOT LIKE 'default-submission%'")))
+    (query-exec query assignment class step)))
+
+        
+
 ; Updates the timestamp for a specified submission to the current time
 (provide update-timestamp)
 (: update-timestamp (String String String String -> Void))

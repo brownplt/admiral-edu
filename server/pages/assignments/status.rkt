@@ -260,7 +260,12 @@
 (define (do-publish-all assignment-id step-id)
   (let* ((unpublished (submission:select-all-unpublished assignment-id class-name step-id))
          (do-submit (lambda: ([user-id : String]) (submit-step assignment-id step-id user-id)))
-         (results (filter Failure? (map do-submit unpublished))))
+         (assignment-record (assignment:select class-name assignment-id))
+         ;; Ensure the assignment is open so submissions can be processed
+         (dont-care (when (not (assignment:Record-open assignment-record)) (assignment:open assignment-id class-name)))
+         (results (filter Failure? (map do-submit unpublished)))
+         ;; Close the assignment if it was open
+         (dont-care (when (not (assignment:Record-open assignment-record)) (assignment:close assignment-id class-name))))
     (cond [(empty? results) '(p (b "All Submissions Published."))]
           [else '(p (b ((style "color:red;")) "Some submissions could not be published."))])))
 
@@ -271,10 +276,13 @@
 
 (: do-publish (String String ct-session -> XExpr))
 (define (do-publish assignment-id step-id session)
-  (let ((user-id (get-binding 'user-id session)))
+  (let ((user-id (get-binding 'user-id session))
+        (assignment-record (assignment:select class-name assignment-id)))
     (cond [(Failure? user-id) `(p () (b () ,(Failure-message user-id)))]
           [else (begin
+                  (when (not (assignment:Record-open assignment-record)) (assignment:open assignment-id class-name))
                   (submit-step assignment-id step-id (Success-result user-id))
+                  (when (not (assignment:Record-open assignment-record)) (assignment:close assignment-id class-name))
                   '(p (b "Submission published.")))])))
 
 (: do-unpublish (String String ct-session -> XExpr))

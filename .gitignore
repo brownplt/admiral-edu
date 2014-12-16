@@ -7,9 +7,10 @@ sample
 *.bak
 config
 environment
+apache-vars
+captain-teach.config
 
 .cloud-keys
 .smtp-credentials
 
 test-class/
-captain-teach.config

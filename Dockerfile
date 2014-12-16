@@ -9,21 +9,7 @@ RUN apt-get update
 RUN apt-get install -y wget
 
 
-#
-# Install MySQL
-#
-
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get install -y mysql-server
-
-#
-# Configure MySQL for AdmiralEdu
-#
-
-RUN service mysql start && \
-  mysql -e "CREATE USER 'captain_teach'@'localhost' IDENTIFIED BY 'captain_teach'" && \
-  mysql -e "CREATE DATABASE captain_teach;" && \
-  mysql -e 'GRANT ALL PRIVILEGES ON captain_teach.* to captain_teach@localhost;'
 
 #
 # Install Apache

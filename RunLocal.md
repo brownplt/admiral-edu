@@ -1,3 +1,6 @@
+# Running Captain Teach Locally
+
+## Configuration Files
 Create a directory containing the following files:
 apache-vars : Variables used by Apache
 captain-teach.config : Variables used by captain-teach
@@ -9,7 +12,8 @@ Sample files are available in the conf/ directory of this repository for configu
 
 Snake Oil Certificates are also available in the conf/ directory
 
-Running locally:
+## Launch Script
+```bash
 # You should configure BaseUrl in apache-vars to be https://localhost
 # Install the mysql docker images
 docker pull mysql
@@ -25,7 +29,7 @@ docker run -e MYSQL_USER=captain_teach -e MYSQL_ROOT_PASSWORD=some_password -e M
 
 # Start Captain Teach
 docker run --net=host -v /path/to/local/conf:/conf -p 443:443 -d jcollard/captain-teach
-
+```
 # You should now be able to access https://localhost/ and see the Captain Teach landing page.
 # You can visit the class landing page by accessing https://localhost/class-name/
 # Note: You may initially get a 503 Service Unavailable error if CT is still loading.

@@ -42,7 +42,6 @@
            (session (get-session req (make-table start-rel-url bindings)))
            (result (with-handlers ([any? error:exception-occurred]) (handlerPrime post post-data session bindings raw-bindings clean-path))))
       result)))
-      ;(with-handlers ([any? error:exception-occurred]) (handlerPrime post post-data session bindings clean-path)))))
 
 
 (define (ensure-trailing-slash candidate)
@@ -71,7 +70,6 @@
     [(cons "exception" rest) (error "Test an exception occurring.")]
     [(cons "roster" rest) (if post (render-html session (roster:post post-data bindings) rest) (render-html session roster:load rest))]
     [(cons "browse" rest) (render-html session browse:load rest)]
-    ;[(cons "reset-db" rest) (require-auth session run-init)]
     [else (typed:handlerPrime post post-data session bindings raw-bindings path)]))
 
 (define (require-auth session f)

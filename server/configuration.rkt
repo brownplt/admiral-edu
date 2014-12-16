@@ -63,8 +63,11 @@
 (: ct-port (U 'nil Integer))
 (define ct-port 'nil)
 
+(: master-user String)
+(define master-user "")
+
 (: configuration-file Path-String)
-(define configuration-file "/home/admiral-edu/config")
+(define configuration-file "/conf/config")
 
 
 (let*: ([conf : (HashTable String String) (read-conf configuration-file)]
@@ -85,5 +88,6 @@
   (set! storage-mode (ref "storage-mode"))
   (set! db-name (ref "db-name"))
   (set! db-user-name (ref "db-user-name"))
-  (set! db-password (ref "db-password")))
+  (set! db-password (ref "db-password"))
+  (set! master-user (ref "master-user")))
 

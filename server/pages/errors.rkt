@@ -10,8 +10,12 @@
 
 (provide not-authorized)
 (define (not-authorized)
-  (let ([display-message "You are not authorized to access this page."])
-    (include-template "html/error.html")))
+  (let ([display-message 
+         (string-append 
+          "You are not authorized to access this page. "
+          "You may need to <a href='/authentication/redirect?logout=/logout.html'>logout</a> "
+          "and log back in with a different account name.")])
+(include-template "html/error.html")))
 
 (provide assignment-closed)
 (define (assignment-closed)
@@ -61,7 +65,12 @@
   `(html 
     (body 
      (h1 "Error") 
-     (p "You don't appear to be registered for this class.")
+     (p "You are not registered for this class.")
+     (p " You may need to "
+        (a ((href "/authentication/redirect?logout=/logout.html")) " logout")
+        " and reauthenticate with the correct account. You are currently"
+        " logged in with the information below. If this information is correct"
+        " you should contact your instructor.")
      (p , (string-append "User ID: " (ct-session-uid session)))
      (p , (string-append "Class ID: " (ct-session-class session))))))
 

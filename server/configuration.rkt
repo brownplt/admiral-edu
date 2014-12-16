@@ -67,7 +67,7 @@
 (define master-user "")
 
 (: configuration-file Path-String)
-(define configuration-file "/conf/config")
+(define configuration-file "/conf/captain-teach.config")
 
 
 (let*: ([conf : (HashTable String String) (read-conf configuration-file)]

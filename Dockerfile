@@ -80,29 +80,6 @@ ADD docker/captain-teach.conf /etc/apache2/conf-available/captain-teach.conf
 
 RUN a2enconf captain-teach
 
-##########################################################################
-# Add captain-teach-http apache site. This site describes how your server
-# should work when it is accessed on port 80
-# The default setting is configured to:
-#   * Redirect traffic to https://localhost/
-##########################################################################
-ADD docker/captain-teach-http.conf /etc/apache2/sites-available/captain-teach-http.conf
-RUN a2ensite captain-teach-http
-
-##########################################################################
-# Add captain-teach-ssl apache site. This site describes how your server
-# should work when it is accessed on port 443
-# The default setting is configured to:
-#     * Use the default "snakeoil" certificate
-##########################################################################
-ADD docker/captain-teach-ssl.conf /etc/apache2/sites-available/captain-teach-ssl.conf
-## You need to push in your certificates here
-## ADD docker/cs220/ /etc/ssl/cs220/
-RUN a2ensite captain-teach-ssl
-
-# Add S3 Captain-Teach credentials
-ADD docker/aws-credentials /home/admiraledu/aws-credentials
-
 RUN mkdir -p /home/admiraledu/files
 RUN chown admiraledu /home/admiraledu/files
 RUN chgrp admiraledu /home/admiraledu/files
@@ -139,11 +116,6 @@ RUN chmod +x /root/debug.sh
 #
 ADD rubrics/implementation-rubric.json /home/admiraledu/reviews/cmpsci220/clock/implementation/rubric.json
 ADD rubrics/tests-rubric.json /home/admiraledu/reviews/cmpsci220/clock/tests/rubric.json
-
-#
-# Copy Configuration file
-#
-ADD docker/config /home/admiral-edu/config
 
 #
 # Copy AdmiralEdu to container

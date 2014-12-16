@@ -1,0 +1,13 @@
+# Get these from the Google Developers Console
+Define ClientID long-value.apps.googleusercontent.com
+Define ClientSecret short-value
+
+# This the URL where the site is hosted (no trailing slash)
+Define BaseUrl https://localhost
+
+# The class name. This will cause your class to be at BaseUrl/ClassName
+Define ClassName test-class
+
+Define CryptoPassphrase aBetterPassword
+
+Define AdminEmail jcollard@cs.umass.edu

@@ -129,6 +129,7 @@ ADD html/css /var/www/html/css
 ADD html/imgs /var/www/html/imgs
 ADD code-mirror/mode /var/www/html/mode
 ADD code-mirror/lib /var/www/html/lib
+ADD html/logout.html /var/www/html/logout.html
 
 #
 # Configure Supervisor

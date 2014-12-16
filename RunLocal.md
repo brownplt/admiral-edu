@@ -29,11 +29,19 @@ docker pull jcollard/captain-teach
 # Start MySQL Container 
 # Replace MYSQL_ROOT_PASSWORD
 # Replace MYSQL_PASSWORD with the same value that is in captain-teach.config
-docker run -e MYSQL_USER=captain_teach -e MYSQL_ROOT_PASSWORD=some_password -e MYSQL_PASSWORD=your_ct_password -e MYSQL_DATABASE=captain_teach --net=host --rm -d mysql
-
+docker run -e MYSQL_USER=captain_teach \
+	   -e MYSQL_DATABASE=captain_teach \
+       	   -e MYSQL_ROOT_PASSWORD=some_password \
+	   -e MYSQL_PASSWORD=your_ct_password \
+	   --net=host \
+	   -d mysql
 
 # Start Captain Teach
-docker run --net=host -v /path/to/local/conf:/conf -p 443:443 -d jcollard/captain-teach
+# Replace /path/to/local/conf with the full path to your /conf directory
+docker run -v /path/to/local/conf:/conf \
+       	   -p 443:443 \
+	   --net=host \
+	   -d jcollard/captain-teach
 ```
 
 After running the commands above, you should now be able to access https://localhost/ and see the Captain Teach landing page.

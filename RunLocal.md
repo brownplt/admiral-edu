@@ -1,7 +1,7 @@
 # Running Captain Teach Locally
 
 ## Google Authentication Setup
-You will need to create OAuth 2.0 credentials allow for redirect to https://localhost/authentication/redirect.
+You will need to create OAuth 2.0 credentials allow for redirect to https://www.yoursite.com/authentication/redirect.
 
 ## Configuration Files
 Create a directory containing the following files:
@@ -14,7 +14,11 @@ Create a directory containing the following files:
 Sample files are available in the conf/ directory of this repository for configuring apache-vars and captain-teach.config
 Snake Oil Certificates are also available in the conf/ directory
 
-The BaseURL value in conf/apache-vars should be set to https://localhost
+The BaseURL value in conf/apache-vars should match the url your console. 
+
+For example: https://www.yoursite.com
+
+**Note**: There is no trailing slash
 
 The ClientID and ClientSecret should be the values associated with the credentials created in the Google Authentication Setup
 
@@ -30,18 +34,17 @@ docker pull jcollard/captain-teach
 # Replace MYSQL_ROOT_PASSWORD
 # Replace MYSQL_PASSWORD with the same value that is in captain-teach.config
 docker run -e MYSQL_USER=captain_teach \
-	   -e MYSQL_DATABASE=captain_teach \
-       	   -e MYSQL_ROOT_PASSWORD=some_password \
-	   -e MYSQL_PASSWORD=your_ct_password \
-	   --net=host \
-	   -d mysql
+           -e MYSQL_DATABASE=captain_teach \
+           -e MYSQL_ROOT_PASSWORD=some_password \
+           -e MYSQL_PASSWORD=some_password \
+           --net=host \
+           -d mysql
 
 # Start Captain Teach
 # Replace /path/to/local/conf with the full path to your /conf directory
 docker run -v /path/to/local/conf:/conf \
-       	   -p 443:443 \
-	   --net=host \
-	   -d jcollard/captain-teach
+           --net=host \
+           -d jcollard/captain-teach
 ```
 
 After running the commands above, you should now be able to access https://localhost/ and see the Captain Teach landing page.

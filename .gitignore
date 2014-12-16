@@ -6,6 +6,7 @@ cs220-server
 sample
 *.bak
 config
+environment
 
 .cloud-keys
 .smtp-credentials

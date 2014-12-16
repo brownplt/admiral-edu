@@ -1,4 +1,4 @@
-# Running Captain Teach Locally
+# Running Captain Teach
 
 ## Google Authentication Setup
 You will need to create OAuth 2.0 credentials allow for redirect to https://www.yoursite.com/authentication/redirect.
@@ -22,13 +22,20 @@ For example: https://www.yoursite.com
 
 The ClientID and ClientSecret should be the values associated with the credentials created in the Google Authentication Setup
 
-## Launch Script
-```bash
 # Install the mysql docker images
 docker pull mysql
 
-# Install the Captain Teach images
-docker pull jcollard/captain-teach
+
+## Launching Captain Teach with MySQL
+
+The following script will install a mysql docker image and the captain-teach docker image and launch both.
+
+If you are using an external MySQL database, there is no need to run the MySQL portion here.
+
+```bash
+
+# Install the MySQL Image
+docker pull mysql
 
 # Start MySQL Container 
 # Replace MYSQL_ROOT_PASSWORD
@@ -40,6 +47,9 @@ docker run -e MYSQL_USER=captain_teach \
            --net=host \
            -d mysql
 
+# Install the Captain Teach images
+docker pull jcollard/captain-teach
+
 # Start Captain Teach
 # Replace /path/to/local/conf with the full path to your /conf directory
 docker run -v /path/to/local/conf:/conf \
@@ -47,8 +57,7 @@ docker run -v /path/to/local/conf:/conf \
            -d jcollard/captain-teach
 ```
 
-After running the commands above, you should now be able to access https://localhost/ and see the Captain Teach landing page.
-To access your class visit https://localhost/class-name/.
+After running the commands above, you should now be able to access your site and see the Captain Teach landing page.
+To access your class visit https://www.yoursite.com/class-name/.
 
-*Note:* You may initially get a 503 Service Unavailable error if CT is still loading.
-
+**Note**: You may initially get a 503 Service Unavailable error if CT is still loading.

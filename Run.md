@@ -22,10 +22,6 @@ For example: https://www.yoursite.com
 
 The ClientID and ClientSecret should be the values associated with the credentials created in the Google Authentication Setup
 
-# Install the mysql docker images
-docker pull mysql
-
-
 ## Launching Captain Teach with MySQL
 
 The following script will install a mysql docker image and the captain-teach docker image and launch both.

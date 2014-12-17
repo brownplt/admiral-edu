@@ -111,12 +111,13 @@ If you are using an external MySQL database, there is no need to run the MySQL p
 docker pull mysql
 
 # Start MySQL Container 
-# Replace MYSQL_ROOT_PASSWORD
-# Replace MYSQL_PASSWORD with the same value that is in captain-teach.config
+# Replace MYSQL_PASSWORD, MYSQL_USER, and MYSQL_DATABASE
+# with the same values that you chose in captain-teach.config
+# Replace MYSQL_ROOT_PASSWORD to anything
 docker run -e MYSQL_USER=captain_teach \
            -e MYSQL_DATABASE=captain_teach \
+           -e MYSQL_PASSWORD=captain_teach \
            -e MYSQL_ROOT_PASSWORD=some_password \
-           -e MYSQL_PASSWORD=some_password \
            --net=host \
            -d mysql
 

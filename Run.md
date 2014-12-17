@@ -131,6 +131,6 @@ docker run -v /path/to/local/conf:/conf \
 ```
 
 After running the commands above, you should now be able to access your site and see the Captain Teach landing page.
-To access your class visit https://www.yoursite.com/class-name/.
+To access your class visit https://www.yoursite.com/test-class/.
 
 **Note**: You may initially get a 503 Service Unavailable error if CT is still loading.

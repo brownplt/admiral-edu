@@ -1,23 +1,18 @@
-include config
 
-TAG = admiraledu
+ConfPath = $(shell pwd)/conf
 
-ENV = -e ClientID=$(ClientID) \
-	-e ClientSecret=$(ClientSecret) \
-	-e RedirectUri=$(RedirectUri) \
-	-e BaseUrl=$(BaseUrl) \
-	-e CryptoPassphrase=$(CryptoPassphrase) \
-	-e AdminEmail=$(AdminEmail) \
-	-e ClassName=$(ClassName)
+TAG = captain-teach:latest
+
+RUN = docker run --name captain_teach -i -t -v $(ConfPath):/conf --net=host --rm $(TAG)
 
 all:
 	docker build -t $(TAG) .
 
 run: all
-	docker run -i -t --rm -p 443:443 $(ENV) $(TAG)
+	$(RUN)
 
 bash: all
-	docker run -i -t --rm -p 443:443 $(ENV) $(TAG) /bin/bash
+	$(RUN) /bin/bash
 
 debug: all
-	docker run -i -t --rm -p 443:443 $(ENV) $(TAG) ./debug.sh
+	$(RUN) ./debug.sh

@@ -9,6 +9,7 @@ config
 environment
 apache-vars
 captain-teach.config
+publish.sh
 
 .cloud-keys
 .smtp-credentials

@@ -19,3 +19,7 @@
     (cond [(= (string-length trimmed) 0) #f]
           [(eq? (string-ref trimmed 0) #\#) #t]
           [else #f])))
+
+(: valid-config? (String -> Boolean))
+(define (valid-config? path)
+  #f)

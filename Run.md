@@ -1,7 +1,24 @@
 # Running Captain Teach
 
+## Assumptions
+
+Throughout these instructions, it will be assumed that you are setting up an instance of Captain Teach to run at `https://www.yoursite.com` and that your class is called `test-class`.
+
 ## Google Authentication Setup
-You will need to create OAuth 2.0 credentials allow for redirect to https://www.yoursite.com/authentication/redirect.
+Captain Teach utilizes OAuth 2.0 via Google for authenticating users. This section describes how to set up a new project and generate the necessary credentials.
+
+  1. Access Google's Developers Console: https://console.developers.google.com
+  2. Click the `Create Project` button
+    * Enter a `PROJECT NAME`, `PROJECT ID`, and click `Create`
+  3. On the side bar select `API & auth` and then `Credentials`
+  4. Under the `OAuth` section, click the `Create new Client ID`
+    * Select `Web Application` and click `Configure consent screen`
+    * Enter an `EMAIL ADDRESS`, `PRODUCT NAME`, and click `Save`
+   * Remove anything in the `AUTHORIZED JAVASCRIPT ORIGINS` box
+   * In the `AUTHORIZED REDIRECT URIS` box enter `https://www.yoursite.com/authentication/redirect`
+   * Click `Create Client ID`
+
+After completing the steps above, the `Credentials` page from step 3 should now contain a `Client ID for web application` area with the fields `CLIENT ID` and `CLIENT SECRET`. You will need these for your Captain Teach configuration.
 
 ## Configuration Files
 Create a directory containing the following files:

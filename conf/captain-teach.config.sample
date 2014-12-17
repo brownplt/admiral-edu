@@ -1,23 +1,43 @@
+# The address to the MySQL database you are using
 db-address=localhost
 db-name=captain_teach
 db-password=captain_teach
 db-user-name=captain_teach
 
+# The first time Captain Teach loads, it will add this user as an instructor
 master-user=youremail@domain.com
 
-server-name=captain-teach.org
+# These are used to generate complete links when sending email to users
+server-name=yoursite.com
 sub-domain=www.
 
+# Mail Server information for sending email
 mail-server=smtp.sendgrid.net
 mail-port=2525
 mail-username=username
 mail-password=password
 
+# The class-name, this should match ClassName in apache-vars
 class-name=test-class
+
+# Select the port that apache will redirect incomming traffic
+# This allows multiple instances of CT to run on the same machine
+# You probably don't need to change this
 ct-port=8080
 
+# Select the Storage Mode for Captain Teach
+# Either `cloud-storage` or `local`
 storage-mode=cloud-storage
-bucket=test-class/
+
+# If using cloud-storage:
+# The name of the bucket to use for file storage
+bucket=some-bucket-name/
+
+# If using cloud-storage:
+# The Cloud Storage REST API host
 cloud-host=storage.googleapis.com
+
+# If using cloud-storage:
+# Authentication information for cloud storage
 cloud-access-key-id=YOUR-ACCESS-ID
 cloud-secret-key=YOUR-SECRET-KEY

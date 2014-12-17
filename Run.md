@@ -28,16 +28,76 @@ Create a directory containing the following files:
   * cert.key : SSL Key
   * cert.pem : SSL Chain File
 
+#### Sample apache-vars file
+```
+# Get these from the Google Developers Console
+Define ClientID long-value.apps.googleusercontent.com
+Define ClientSecret short-value
+
+# This the URL where the site is hosted (no trailing slash)
+Define BaseUrl https://www.yoursite.com
+
+# The class name. This will cause your class to be at https://www.yoursite.com/test-class/
+# This should match class-name in captain-teach.config
+Define ClassName test-class
+
+# Used internally by authentication module
+Define CryptoPassphrase aBetterPassword
+
+# The email you would like to appear on error screens
+Define AdminEmail yourname@domain.com
+```
+
+#### Sample captain-teach.config file
+```
+# The address to the MySQL database you are using
+db-address=localhost
+db-name=captain_teach
+db-password=captain_teach
+db-user-name=captain_teach
+
+# The first time Captain Teach loads, it will add this user as an instructor
+master-user=youremail@domain.com
+
+# These are used to generate complete links when sending email to users
+server-name=yoursite.com
+sub-domain=www.
+
+# Mail Server information for sending email
+mail-server=smtp.sendgrid.net
+mail-port=2525
+mail-username=username
+mail-password=password
+
+# The class-name, this should match ClassName in apache-vars
+class-name=test-class
+
+# Select the port that apache will redirect incomming traffic
+# This allows multiple instances of CT to run on the same machine
+# You probably don't need to change this
+ct-port=8080
+
+# Select the Storage Mode for Captain Teach
+# Either `cloud-storage` or `local`
+storage-mode=cloud-storage
+
+# If using cloud-storage:
+# The name of the bucket to use for file storage
+bucket=some-bucket-name/
+
+# If using cloud-storage:
+# The Cloud Storage REST API host
+cloud-host=storage.googleapis.com
+
+# If using cloud-storage:
+# Authentication information for cloud storage
+cloud-access-key-id=YOUR-ACCESS-ID
+cloud-secret-key=YOUR-SECRET-KEY
+```
+
 Sample files are available in the conf/ directory of this repository for configuring apache-vars and captain-teach.config
+
 Snake Oil Certificates are also available in the conf/ directory
-
-The BaseURL value in conf/apache-vars should match the url your console. 
-
-For example: https://www.yoursite.com
-
-**Note**: There is no trailing slash
-
-The ClientID and ClientSecret should be the values associated with the credentials created in the Google Authentication Setup
 
 ## Launching Captain Teach with MySQL
 

@@ -2,7 +2,7 @@
 
 ## Assumptions
 
-Throughout these instructions, it will be assumed that you are setting up an instance of Captain Teach to run at `https://www.yoursite.com` and that your class is called `test-class`.
+Throughout these instructions, it will be assumed that you are setting up an instance of Captain Teach to run at `https://www.yoursite.com` and that your class is called `test-class`. You should replace each of these through out with your domain and class name. For example, if you want to run locally, you could use `https://localhost` and `local-class`.
 
 ## Google Authentication Setup
 Captain Teach utilizes OAuth 2.0 via Google for authenticating users. This section describes how to set up a new project and generate the necessary credentials.

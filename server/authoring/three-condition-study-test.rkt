@@ -7,7 +7,7 @@
          "assignment-structs.rkt"
          "assignment-parser.rkt"
          "three-condition-study.rkt"
-         (planet esilkensen/yaml:3:1)
+         yaml
          db
          rackunit)
 

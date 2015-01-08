@@ -6,7 +6,7 @@
          web-server/http/response-structs
          xml
          json
-         (planet esilkensen/yaml:3:1))
+         yaml)
 
 (require "../base.rkt"
          "errors.rkt"

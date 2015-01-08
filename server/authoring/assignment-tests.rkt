@@ -3,7 +3,7 @@
 (require "assignment-parser.rkt"
          "assignment-structs.rkt"
          "next-action.rkt"
-         (planet esilkensen/yaml:3:1)
+         yaml
          (planet cce/fasttest:4:2/random)
          (planet cce/fasttest:4:2/rackunit)
          rackunit

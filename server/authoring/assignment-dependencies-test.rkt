@@ -4,7 +4,7 @@
          "assignment-structs.rkt"
          "assignment-parser.rkt"
          "next-action.rkt"
-         (planet esilkensen/yaml:3:1)
+         yaml
          rackunit)
 
 (define (make-student id)

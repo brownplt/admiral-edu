@@ -1,6 +1,6 @@
 #lang typed/racket
 
-(require/typed (planet esilkensen/yaml:3:1)
+(require/typed yaml
                [yaml->string (Any -> String)])
 
 (require "assignment-structs.rkt"

@@ -5,7 +5,7 @@
          xml
          json
          web-server/http/bindings
-         (planet esilkensen/yaml:3:1))
+         yaml)
 
 (require "../storage/storage.rkt"
          "../base.rkt"

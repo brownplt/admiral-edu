@@ -58,8 +58,8 @@ RUN ln -s /usr/racket/bin/raco /usr/local/bin/raco
 RUN adduser --disabled-password --gecos "" admiraledu
 
 # Install Captain Teach Dependencies
-RUN raco planet install gh aws.plt 1 5
-RUN raco planet install esilkensen yaml.plt 3 1
+RUN raco pkg install --auto aws
+RUN raco pkg install --auto yaml
 
 #
 # Install supervisord

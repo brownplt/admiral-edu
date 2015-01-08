@@ -1,6 +1,6 @@
 #lang typed/racket
 
-(require/typed (planet esilkensen/yaml:3:1)
+(require/typed yaml
                [string->yaml (String -> (HashTable String Any))])
 
 (define-type YAML-ATOM (U 'null

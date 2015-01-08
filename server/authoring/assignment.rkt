@@ -1,6 +1,6 @@
 #lang typed/racket
 
-(require/typed (planet esilkensen/yaml:3:1)
+(require/typed yaml
                [string->yaml (String -> Assignment-YAML)])
 
 (require/typed json

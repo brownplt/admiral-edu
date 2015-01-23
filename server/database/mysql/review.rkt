@@ -127,6 +127,15 @@
     (string-append s
                    (number->string (truncate (random 15)) 16))))
 
+(provide assign-student-review-or-hold)
+(: assign-student-review-or-hold (String String String String String Exact-Nonnegative-Integer -> Void))
+(define (assign-student-review-or-hold assignment class step uid review-id max-reviews)
+  (let* ((not-users (map Record-reviewee-id (map select-by-hash (select-assigned-reviews assignment class step uid))))
+         (reviewee (submission:select-least-reviewed-with-max-reviews assignment class step (cons uid not-users) max-reviews)))
+    (match reviewee
+      [(Failure _) (create assignment class step "HOLD" uid review-id)]
+      [(Success reviewee-id) (create assignment class step reviewee-id uid review-id)])))
+
 (provide assign-student-reviews)
 (: assign-student-reviews (String String String String String Exact-Nonnegative-Integer -> Void))
 (define (assign-student-reviews assignment class step uid review-id amount)

@@ -5,6 +5,7 @@
 
 (require "assignment-structs.rkt"
          "three-condition-study.rkt"
+         (prefix-in hold: "hold-for-review-handler.rkt")
          "util.rkt"
          "next-action.rkt"
          "../base.rkt")
@@ -15,7 +16,8 @@
 
 (define assignment-handlers 
   (make-hash (list (cons (AssignmentHandler-key default-assignment-handler) default-assignment-handler)
-                   (cons (AssignmentHandler-key three-condition-study-handler) three-condition-study-handler))))
+                   (cons (AssignmentHandler-key three-condition-study-handler) three-condition-study-handler)
+                   (cons (AssignmentHandler-key hold:hold-for-review-handler) hold:hold-for-review-handler))))
 
 ;; Assignment
 ;; TODO(3 study): Parse next-action-function

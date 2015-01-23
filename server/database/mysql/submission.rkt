@@ -253,6 +253,29 @@
          (result (query-row-list query arg-list))
          (id (vector-ref result 0)))
     (cast id String)))
+
+;; Find the submission with the least number of assigned reviews with at most max-reviews having been assigned
+;; Returns the user-id of the user with that submission. If no such review exists a Failure is returned.
+(provide select-least-reviewed-with-max-reviews)
+(: select-least-reviewed-with-max-reviews (String String String (Listof String) Exact-Nonnegative-Integer -> (Result String)))
+(define (select-least-reviewed-with-max-reviews assignment class step not-users max-reviews)
+  (let* ((user-commas (string-join (build-list (length not-users) (lambda (n) "?")) ","))
+         (query (merge "SELECT" user-id
+                       "FROM" table
+                       "WHERE" assignment-id "=? AND"
+                               class-id "=? AND"
+                               step-id "=? AND"
+                               user-id " NOT IN (" user-commas ") AND"
+                               published "=true AND"
+                               times-reviewed "< " (number->string max-reviews)
+                       "ORDER BY" times-reviewed "ASC"
+                       "LIMIT 1"))
+         (arg-list (append `(,assignment ,class ,step) not-users))
+         (result (query-rows-list query arg-list)))
+    (cond [(empty? result) (Failure "No reviews available.")]
+          [else (let ((id (vector-ref (first result) 0)))
+                  (Success (cast id String)))])))
+
          
 ;; Given an assignment, class, step, and user, returns the number of entries that have been created
 ;; This function returns one of the following:

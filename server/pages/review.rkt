@@ -28,8 +28,10 @@
   (let* ((r-hash (car rest))
          (review (review:select-by-hash r-hash)))
     (if (not (validate review session)) (error:error "You are not authorized to see this page.")
-        (let ((path (string-join (take (cddr rest) (- (length rest) 2))  "/")))
-          (push->download session path review)))))
+        (let* ((path (cdr rest))
+               (len (length path))
+               (file-path (string-join (append (take path (- len 2)) (list (last path))) "/")))
+          (push->download session file-path review))))) 
 
 (define (do-load session role rest message)
   (let* ((start-url (hash-ref (ct-session-table session) 'start-url))

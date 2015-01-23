@@ -60,7 +60,7 @@
                                 [else (render-html session review:load rest)])]
     [(cons "file-container" rest) (cond [post (review:push->file-container session post-data rest)]
                                         [(and (> (length rest) 1)
-                                              (string=? "download" (second rest))) (render-any session review:check-download rest)]
+                                              (string=? "download" (list-ref rest (- (length rest) 2)))) (render-any session review:check-download rest)]
                                         [(render-html session review:file-container rest)])]
     [(cons "su" (cons uid rest)) (with-sudo post post-data uid session bindings raw-bindings rest)]
     [(cons "author" rest) (if post (author:post->validate session post-data rest) (render-html session author:load rest))]
@@ -73,7 +73,7 @@
     [(cons "export" rest) (export:load session (role session) rest)]
     [(cons "exception" rest) (error "Test an exception occurring.")]
     [(cons "roster" rest) (if post (render-html session (roster:post post-data bindings) rest) (render-html session roster:load rest))]
-    [(cons "browse" rest) (cond [(and (> (length rest) 0)
+    [(cons "browse" rest) (cond [(and (> (length rest) 1)
                                       (string=? "download" (list-ref rest (- (length rest) 2)))) (render-any session browse:download rest)]
                                 [else (render-html session browse:load rest)])]
     [else (typed:handlerPrime post post-data session bindings raw-bindings path)]))

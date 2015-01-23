@@ -138,8 +138,16 @@
     (cond [(is-file? path) (retrieve-file path)]
           [else "{\"comments\" : {}}"])))
 
+;; Returns the bytes of the file associated with the class, assignment, 
+;; step, user, and path
+(provide get-file-bytes)
+(: get-file-bytes (String String String String String -> Bytes))
+(define (get-file-bytes class assignment step uid path)
+  (let ((file-path (string-append (submission-path class assignment uid step) path)))
+    (printf "Attempting to retrieve: ~a\n" file-path)
+    (retrieve-file-bytes file-path)))
 
-;; class-id -> 
+;; class-id -> assignment-id user-id step-id
 (: submission-path (String String String String -> String))
 (define (submission-path class-id assignment-id user-id step-id)
   (string-append class-id "/" assignment-id "/" user-id "/" step-id "/"))

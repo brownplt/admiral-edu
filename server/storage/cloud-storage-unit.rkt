@@ -27,7 +27,10 @@
   (define (retrieve-file-bytes path)
     (let* ((info (local:path-info path)))
       (local:ensure-path-exists path)
-      (when (eq? info 'does-not-exist) (get/file (string-append bucket path) (string->path path))))
+      (when (eq? info 'does-not-exist) 
+        (begin (printf "Syncing: ~a\n" (string-append bucket path))
+               (get/file (string-append bucket path) (string->path path))
+               (printf "Done.\n"))))
     (local:retrieve-file-bytes path))
     
 

@@ -23,6 +23,14 @@
         (do-submit-review session role rest message)
         (do-load session role rest message))))
 
+(provide check-download)
+(define (check-download session role rest)
+  (let* ((r-hash (car rest))
+         (review (review:select-by-hash r-hash)))
+    (if (not (validate review session)) (error:error "You are not authorized to see this page.")
+        (let ((path (string-join (take (cddr rest) (- (length rest) 2))  "/")))
+          (push->download session path review)))))
+
 (define (do-load session role rest message)
   (let* ((start-url (hash-ref (ct-session-table session) 'start-url))
          (r-hash (car rest))
@@ -164,6 +172,19 @@
          (current-seconds) #"application/json; charset=utf-8"
          empty
          (list (string->bytes/utf-8 data))))))
+
+(define (push->download session path review)
+  (let* ((class (ct-session-class session))
+         (assignment (review:Record-assignment-id review))
+         (stepName (review:Record-step-id review))
+         (reviewee (review:Record-reviewee-id review))
+         (data (get-file-bytes class assignment stepName reviewee path)))
+    (if (not (validate review session)) (error:error "You are not authorized to see this page.")
+        (response/full
+         200 #"Okay"
+         (current-seconds) #"application/octet-stream; charset=utf-8"
+         empty
+         (list data)))))
   
 (provide file-container)
 (define (file-container session role rest [message '()])
@@ -224,7 +245,12 @@
 
 (define (html-file start-url)
   (lambda (file)
-    (string-append "<li class=\"file\"><a href=\"" start-url file "\">" file "</a></li>")))
+    (string-append "<li class=\"file\">"
+                   "<a href=\"" start-url file "\">" file "</a>"
+                   "<span style='float: right'>"
+                   "<a href=\"" start-url "download/" file "\">Download File</a>"
+                   "</span>"
+                   "</li>")))
 
 (define (render-file file-path)
   (string-append "<textarea id=\"file\" class=\"file\">" (retrieve-file file-path) "</textarea>"))

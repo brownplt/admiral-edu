@@ -19,6 +19,8 @@
     [(<= n 0) '()]
     [else (cons val (repeat val (- n 1)))]))
 
+
+
 (provide load)
 (define (load session role url [message '()])
   (do-file-container session (ct-session-uid session) (first url) (second url) (drop url 2) message))
@@ -37,6 +39,22 @@
         (string-append (include-template "html/browse-file-container-header.html")
                        contents
                        (include-template "html/file-container-footer.html"))))
+
+(provide download)
+(define (download session role url)
+  (let* ((class (ct-session-class session))
+         (user (ct-session-uid session))
+         (assignment (first url))
+         (step (second url))
+         (path (drop url 2))
+         (file-path (string-join (append (take path (- (length path) 2)) (list (last path))) "/"))
+         (temp (printf "file-path: ~a\n" file-path))
+         (data (get-file-bytes class assignment step user file-path)))
+    (response/full
+     200 #"Okay"
+     (current-seconds) #"application/octet-stream; charset=utf-8"
+     empty
+     (list data))))
 
 (define (determine-mode-from-filename url)
   (cond [(empty? url) "directory"]
@@ -105,7 +123,12 @@
 
 (define (html-file start-url)
   (lambda (file)
-    (string-append "<li class=\"file\"><a href=\"" start-url file "\">" file "</a></li>")))
+    (string-append "<li class=\"file\">"
+                   "<a href=\"" start-url file "\">" file "</a>"
+                   "<span style='float: right'>"
+                   "<a href=\"" start-url "download/" file "\">Download File</a>"
+                   "</span>"
+                   "</li>")))
 
 (define (render-file file-path)
   (string-append "<textarea id=\"file\" class=\"file\">" (retrieve-file file-path) "</textarea>"))

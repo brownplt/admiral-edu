@@ -56,8 +56,12 @@
   (match path
     ['() (render session index)]
     [(list "") (render session index)]
-    [(cons "review" rest) (if post (review:post->review session post-data rest) (render-html session review:load rest))]
-    [(cons "file-container" rest) (if post (review:push->file-container session post-data rest) (render-html session review:file-container rest))]
+    [(cons "review" rest) (cond [post (review:post->review session post-data rest)]                                
+                                [else (render-html session review:load rest)])]
+    [(cons "file-container" rest) (cond [post (review:push->file-container session post-data rest)]
+                                        [(and (> (length rest) 1)
+                                              (string=? "download" (second rest))) (render-any session review:check-download rest)]
+                                        [(render-html session review:file-container rest)])]
     [(cons "su" (cons uid rest)) (with-sudo post post-data uid session bindings raw-bindings rest)]
     [(cons "author" rest) (if post (author:post->validate session post-data rest) (render-html session author:load rest))]
     [(cons "next" rest) (render-html session next rest)]
@@ -69,7 +73,9 @@
     [(cons "export" rest) (export:load session (role session) rest)]
     [(cons "exception" rest) (error "Test an exception occurring.")]
     [(cons "roster" rest) (if post (render-html session (roster:post post-data bindings) rest) (render-html session roster:load rest))]
-    [(cons "browse" rest) (render-html session browse:load rest)]
+    [(cons "browse" rest) (cond [(and (> (length rest) 0)
+                                      (string=? "download" (list-ref rest (- (length rest) 2)))) (render-any session browse:download rest)]
+                                [else (render-html session browse:load rest)])]
     [else (typed:handlerPrime post post-data session bindings raw-bindings path)]))
 
 (define (require-auth session f)
@@ -120,6 +126,12 @@
          (current-seconds) TEXT/HTML-MIME-TYPE
          empty
          (list (string->bytes/utf-8 (page session valid-role rest)))))))
+
+(define (render-any session page rest)
+    (let ((valid-role (role session)))
+    (if (not valid-role)
+        (response/xexpr (error:error-not-registered session))
+        (page session valid-role rest))))
 
 
 

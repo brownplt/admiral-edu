@@ -20,9 +20,11 @@
 (provide check-migrated)
 (: check-migrated (-> (Result Void)))
 (define (check-migrated)
+  (printf "Checking if migrated.\n")
   (when (Failure? (v1:check-migrated)) (v1:migrate))
   (when (Failure? (v2:check-migrated)) (v2:migrate))
   (when (Failure? (v3:check-migrated)) (v3:migrate))
+  (printf "Done.\n")
   (let ((version (system:select-version)))
     (cond
       [(not (= version system:current-version)) (Failure (format "Expected system to be at version ~a but was at version ~a." version))]

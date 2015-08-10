@@ -1,5 +1,7 @@
 module Rubric.Item.Likert (..) where
 
+import Rubric.Item.Utils exposing (..)
+import Editable exposing (..)
 import Html
 import Html exposing (Html, Attribute)
 import Html.Attributes as Attributes
@@ -8,11 +10,6 @@ import Html.Events as Events
 import Signal exposing  (Address)
 import List
 import String
-
-type alias Editable a = { value : a
-                        , editing : Bool }
-
-editable n = Editable n False
 
 type alias Type = { id : Editable String
                   , text : Editable String
@@ -61,51 +58,12 @@ decreaseButton activate wrap granularity =
 increaseButton activate wrap granularity = 
      Html.button [ activate (flip Events.onClick (wrap { granularity | value <- granularity.value + 1 })) ] [Html.text "+"]
 
-
-textbox : ((Address a -> Attribute) -> Attribute) -> (Editable String -> a) -> Editable String -> String -> Html
-textbox activate wrap text default = 
-  if | text.editing -> Html.input [ Attributes.type' "text"
-                                  , Attributes.value text.value
-                                  , Attributes.size (max (String.length text.value) 10)
-                                  , activate (flip Events.onBlur (wrap { text | editing <- False }))
-                                  , activate (onInput (\str -> wrap { text | value <- str }))
-                                  , activate (flip Events.onKeyPress (\n -> if | n == 13 -> wrap { text | editing <- False }
-                                                                               | otherwise -> wrap text ))
-                                  , Attributes.class "focus"
-                                  ] []
-                                                    
-
-     | otherwise -> Html.span [ activate (flip Events.onClick (wrap { text | editing <- True } )) ]
-                              [ Html.text (if | text.value == "" -> default
-                                              | otherwise -> text.value
-                                          )
-                              ]
-
-
-textarea activate wrap text default =
-  if | text.editing -> Html.textarea [ activate <| flip Events.onBlur (wrap { text | editing <- False })
-                                     , activate <| onInput (\str -> wrap { text | value <- str })
-                                     , Attributes.class "focus"
-                                     ] [ Html.text text.value ]
-                                                    
-
-     | otherwise -> Html.span [ activate (flip Events.onClick (wrap { text | editing <- True } )) ]
-                              [ Html.text (if | text.value == "" -> default
-                                              | otherwise -> text.value
-                                          )
-                              ]
-
-
 model = { id = editable "new-likert-id"
         , text = editable ""
         , minLabel = editable ""
         , maxLabel = editable ""
         , granularity = editable 5
         }
-
---onInput : Signal.Address a -> (String -> a) -> Attribute
-onInput contentToValue address =
-    Events.on "input" Events.targetValue (\str -> Signal.message address (contentToValue str))
 
 update n m = n m
 

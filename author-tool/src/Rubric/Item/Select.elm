@@ -1,6 +1,7 @@
 module Rubric.Item.Select (..) where
 
-import Rubric.Item.Utils exposing (..)
+import Rubric.Item.Utils exposing (textbox, textarea)
+import Rubric.Item.Utils as Utils
 import Editable exposing (..)
 import Html
 import Html exposing (Html, Attribute)
@@ -19,56 +20,68 @@ type alias Type = { id : Editable String
                   , new : Editable String
                   }
 
+render : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
 render activate wrap select =
   let activate' = (\event -> activate event)
   in
   Html.div [ Attributes.class "select" ] 
            [ 
-             id activate' wrap select.id 
+             id activate' wrap select
            , Html.div [ Attributes.class "select-body" ] 
-                      [ text activate' wrap select.text
+                      [ text activate' wrap select
                       , Html.div [ Attributes.class "select-options" ] 
-                                 (options activate' wrap select)
+                                 [options activate' wrap select]
                       ]
            ]
 
+options : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
 options activate wrap select = 
-  [Html.div [] 
-            ((Array.toList (Array.indexedMap (option select.id.value activate wrap select.options) select.options)) ++  [newoption activate wrap select])
-  ]
+  Html.div [] 
+            ((Array.toList 
+                     (Array.indexedMap 
+                             (option select.id.value activate wrap select) select.options)) 
+             ++ [newoption activate wrap select])
+  
 
-id activate wrap id = 
+
+id : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+id activate wrap select = 
+  let wrap' = (\id m -> wrap { select | id <- id } m ) in
   Html.div [ Attributes.class "select-id" ] 
-           [ textbox activate (\id m -> wrap { m | id <- id }) id "click to set id"]
+           [ textbox activate wrap' select.id "click to set id"]
 
-text activate wrap text =
+
+text : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+text activate wrap select =
+  let wrap' = (\text m -> wrap { select | text <- text } m ) in
   Html.div [ Attributes.class "select-text" ] 
-           [ textarea activate (\text m -> wrap { m | text <- text }) text "Set prompt" ]
+           [ textarea activate wrap' select.text "Set prompt" ]
 
-option id activate wrap options ix label = 
+
+option : String -> ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Int -> Editable String -> Html
+option id activate wrap select ix label = 
+  let wrap' = (\label m -> wrap (if | not label.editing && label.value == "" -> { select | options <- removeIndex ix select.options }
+                                    | otherwise -> { select | options <- Array.set ix label select.options }) m)
+  in
   Html.div [] 
            [ Html.input [ Attributes.type' "radio", Attributes.name id ] []
-           , textbox activate 
-                     (\label m -> wrap (if | not label.editing && label.value == "" -> { m | options <- removeIndex ix options }
-                                           | otherwise -> { m | options <- Array.set ix label options })
-                     ) 
+           , textbox activate wrap'
                      label
                      ""
            ]
 
+
+newoption : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
 newoption activate wrap select = 
+  let wrap' = (\option m -> wrap (if | option.editing -> { select | new <- option }
+                                     | option.value == "" -> select
+                                     | otherwise -> { select | options <- Array.push (editable option.value) select.options
+                                                             , new <- editable ""
+                                                    }) m)
+  in
   Html.div [ Attributes.class "select-new" ] 
            [ Html.input [ Attributes.type' "radio", Attributes.disabled True ] []
-           , textbox activate 
-                     (\option m -> wrap (if | option.editing -> { m | new <- option }
-                                            | option.value == "" -> m
-                                            | otherwise -> { m | options <- Array.push (editable option.value) select.options
-                                                           , new <- editable ""
-                                                           }
-                                        )
-                     )
-                     select.new 
-                     "Add Label"
+           , textbox activate wrap' select.new "Add Label"
            ]
 
 removeIndex ix array = 
@@ -76,23 +89,6 @@ removeIndex ix array =
       back = Array.slice (ix+1) (Array.length array) array
   in Array.append front back
 
-update n m = n m
-
-view address model = 
-  Html.div [] 
-           [ Html.node "script" [] [ Html.text script ]
-           , Html.node "style" [] [ Html.text (style ++ style') ]
-           , render (\event -> event address) (\id -> id) model 
-           ]
-
-model : Type
-model = { id = editable "new-select-id"
-        , text = editable ""
-        , options = Array.empty
-        , new = editable ""
-        }
-
-main = StartApp.start { model = model, update = update, view = view }
 
 style = """
 
@@ -153,33 +149,3 @@ style = """
 
 """
 
-
-style' = """
-
-.focus {
-  animation-name: set-focus;
-  animation-duration: 0.001s;
-  -webkit-animation-name: set-focus;
-  -webkit-animation-duration: 0.001s;
-}
-
-@-webkit-keyframes set-focus {
-    0%   {color: #fff}
-}
-
-keyframes set-focus {
-    0%   {color: #fff}
-}
-
-"""
-
-script = """
-var insertListener = function(event){
- if (event.animationName == "set-focus") {
-   event.target.focus();
- }               
-}
-document.addEventListener("animationstart", insertListener, false); // standard + firefox
-document.addEventListener("MSAnimationStart", insertListener, false); // IE
-document.addEventListener("webkitAnimationStart", insertListener, false); // Chrome + Safari
-"""

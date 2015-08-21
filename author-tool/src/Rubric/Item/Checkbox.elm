@@ -1,6 +1,7 @@
 module Rubric.Item.Checkbox (..) where
 
-import Rubric.Item.Utils exposing (..)
+import Rubric.Item.Utils exposing (textbox, textarea)
+import Rubric.Item.Utils as Utils
 import Editable exposing (..)
 import Html
 import Html exposing (Html, Attribute)
@@ -11,30 +12,22 @@ import Signal exposing  (Address)
 import List
 import String
 
-type alias Type = { label : Editable String
-                  }
+type alias Type = { label : Editable String }
 
+render : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
 render activate wrap checkbox =
-  let activate' = (\event -> activate event)
-  in
   Html.div [ Attributes.class "checkbox" ] 
            [ 
-             Html.div [ Attributes.class "checkbox-body" ] [ text activate' wrap checkbox.label ]
+             Html.div [ Attributes.class "checkbox-body" ] [ text activate wrap checkbox ]
            ]
-text activate wrap label =
-  Html.div [ Attributes.class "checkbox-text" ] [ Html.input [ Attributes.type' "checkbox" ] []
-                                                , textbox activate (\label m -> wrap { m | label <- label }) label "Set Label" ]
 
+text : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+text activate wrap checkbox =
+  Html.div [ Attributes.class "checkbox-text" ]
+           [ Html.input [ Attributes.type' "checkbox" ] []
+           , textbox activate (\label m -> wrap { checkbox | label <- label } m) checkbox.label "Set Label"
+           ]
 
-model = { id = editable "new-checkbox-id"
-        , label = editable ""
-        }
-
-update n m = n m
-
-view address model = Html.div [] [ Html.node "script" [] [ Html.text script ], Html.node "style" [] [ Html.text (style ++ style') ], render (\event -> event address) (\id -> id) model ]
-
-main = StartApp.start { model = model, update = update, view = view }
 
 style = """
 
@@ -76,32 +69,3 @@ style = """
 """
 
 
-style' = """
-
-.focus {
-  animation-name: set-focus;
-  animation-duration: 0.001s;
-  -webkit-animation-name: set-focus;
-  -webkit-animation-duration: 0.001s;
-}
-
-@-webkit-keyframes set-focus {
-    0%   {color: #fff}
-}
-
-keyframes set-focus {
-    0%   {color: #fff}
-}
-
-"""
-
-script = """
-var insertListener = function(event){
- if (event.animationName == "set-focus") {
-   event.target.focus();
- }               
-}
-document.addEventListener("animationstart", insertListener, false); // standard + firefox
-document.addEventListener("MSAnimationStart", insertListener, false); // IE
-document.addEventListener("webkitAnimationStart", insertListener, false); // Chrome + Safari
-"""

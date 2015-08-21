@@ -1,4 +1,4 @@
-module Rubric.Item.Utils (textbox, textarea) where
+module Rubric.Item.Utils (textbox, textarea, style, script) where
 
 import String
 import Signal exposing (Address)
@@ -42,3 +42,33 @@ textarea activate wrap text default =
                               ]
 onInput contentToValue address =
     Events.on "input" Events.targetValue (\str -> Signal.message address (contentToValue str))
+
+style = """
+
+.focus {
+  animation-name: set-focus;
+  animation-duration: 0.001s;
+  -webkit-animation-name: set-focus;
+  -webkit-animation-duration: 0.001s;
+}
+
+@-webkit-keyframes set-focus {
+    0%   {color: #fff}
+}
+
+keyframes set-focus {
+    0%   {color: #fff}
+}
+
+"""
+
+script = """
+var insertListener = function(event){
+ if (event.animationName == "set-focus") {
+   event.target.focus();
+ }               
+}
+document.addEventListener("animationstart", insertListener, false); // standard + firefox
+document.addEventListener("MSAnimationStart", insertListener, false); // IE
+document.addEventListener("webkitAnimationStart", insertListener, false); // Chrome + Safari
+"""

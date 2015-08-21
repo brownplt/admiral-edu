@@ -32,7 +32,6 @@ text activate wrap checkbox =
 style = """
 
 .checkbox {
-  width: 500px;
   padding: 5px;
 }
 

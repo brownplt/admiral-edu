@@ -93,7 +93,6 @@ removeIndex ix array =
 style = """
 
 .select {
-  width: 500px;
   padding: 5px;
 }
 

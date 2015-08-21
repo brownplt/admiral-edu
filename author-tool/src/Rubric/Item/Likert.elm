@@ -35,6 +35,7 @@ render activate wrap likert =
                                                                     ]
                                                          ]
            ]
+
 id : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
 id activate wrap likert = 
   let wrap' = (\id m -> wrap { likert | id <- id } m ) in 
@@ -77,7 +78,6 @@ increaseButton activate wrap likert =
 style = """
 
 .likert {
-  width: 500px;
   padding: 5px;
 }
 

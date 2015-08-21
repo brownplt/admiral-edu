@@ -41,7 +41,6 @@ text activate wrap likert =
 style = """
 
 .freeform {
-  width: 500px;
   padding: 5px;
 }
 

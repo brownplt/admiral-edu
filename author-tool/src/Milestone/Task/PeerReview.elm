@@ -1,4 +1,4 @@
-module Task.PeerReview where
+module Milestone.Task.PeerReview where
 import Common exposing (..)
 
 import Editable exposing (..)
@@ -24,8 +24,8 @@ new = { amount = 3
                  }
       }
 
-render : Activator m -> Wrapper Type m -> Type -> Html
-render activate wrap review =
+render : Activator m -> Wrapper Type m -> List Html -> Type -> Html
+render activate wrap controls review =
   let content = if | review.rubric.editing -> Html.div [ Attributes.class "peer-review-body" ] 
                                                        [ amount activate wrap review
                                                        , rubric activate wrap review]
@@ -35,17 +35,17 @@ render activate wrap review =
   in
   Html.div [ Attributes.class "peer-review" ] 
            [ Html.div [ Attributes.class class ]
-                      [ title activate wrap review  ] 
+                      [ title activate wrap controls review  ] 
            , content
            ]
 
-title : Activator m -> Wrapper Type m -> Type -> Html
-title activate wrap review =
-  Html.p [ ] 
-          [ Html.span [ Attributes.class "peer-review-title" ] [ Html.text "Peer Review" ]
-          , if | review.rubric.editing -> hiderubric activate wrap review
-               | otherwise -> showrubric activate wrap review
-          ]
+title : Activator m -> Wrapper Type m -> List Html -> Type -> Html
+title activate wrap controls review =
+  [ Html.span [ Attributes.class "peer-review-title" ] [ Html.text "Peer Review" ]
+  , if | review.rubric.editing -> hiderubric activate wrap review
+       | otherwise -> showrubric activate wrap review          
+  ] ++ controls |>
+  Html.p [ ]  
 
 rubric : Activator m -> Wrapper Type m -> Type -> Html
 rubric activate wrap review =
@@ -164,7 +164,7 @@ view address model =
   Html.div [] 
            [ Html.node "script" [] [ Html.text script ]
            , Html.node "style" [] [ Html.text style]
-           , render (\event -> event address) (\t _ -> t) model
+           , render (\event -> event address) (\t _ -> t) [] model
            ]
            
 

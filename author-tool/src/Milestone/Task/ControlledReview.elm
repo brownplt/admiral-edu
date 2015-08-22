@@ -1,4 +1,4 @@
-module Task.ControlledReview where
+module Milestone.Task.ControlledReview where
 import Common exposing (..)
 
 import Editable exposing (..)
@@ -24,25 +24,25 @@ new = { rubric = { editing = True
                  }
       }
 
-render : Activator m -> Wrapper Type m -> Type -> Html
-render activate wrap review =
+render : Activator m -> Wrapper Type m -> List Html -> Type -> Html
+render activate wrap controls review =
   let content = if | review.rubric.editing -> Html.div [ Attributes.class "controlled-review-body" ] [rubric activate wrap review]
                    | otherwise -> Html.div [] []
   in
   Html.div [ Attributes.class "controlled-review" ] 
            [ Html.div [ Attributes.class <| String.append "controlled-review-header"  <| if | review.rubric.editing -> ""
                                                                                             | otherwise -> " controlled-review-border-bottom" ]
-                      [ title activate wrap review  ]
+                      [ title activate wrap controls review  ]
            , content
            ]
 
-title : Activator m -> Wrapper Type m -> Type -> Html
-title activate wrap review =
+title : Activator m -> Wrapper Type m -> List Html -> Type -> Html
+title activate wrap controls review =
+  [ Html.span [ Attributes.class "controlled-review-title" ] [ Html.text "Controlled Review" ]
+  , if | review.rubric.editing -> hiderubric activate wrap review
+       | otherwise -> showrubric activate wrap review          
+  ] ++ controls |>
   Html.p [ ]  
-          [ Html.span [ Attributes.class "controlled-review-title" ] [ Html.text "Controlled Review" ]
-          , if | review.rubric.editing -> hiderubric activate wrap review
-               | otherwise -> showrubric activate wrap review
-          ]
 
 rubric : Activator m -> Wrapper Type m -> Type -> Html
 rubric activate wrap review =
@@ -135,7 +135,7 @@ view address model =
   Html.div [] 
            [ Html.node "script" [] [ Html.text script ]
            , Html.node "style" [] [ Html.text style' ]
-           , render (\event -> event address) (\t _ -> t) model
+           , render (\event -> event address) (\t _ -> t) [] model
            ]
            
 

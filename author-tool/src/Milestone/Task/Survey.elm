@@ -1,4 +1,4 @@
-module Task.Survey where
+module Milestone.Task.Survey where
 import Common exposing (..)
 
 import Editable exposing (..)
@@ -24,25 +24,26 @@ new = { rubric = { editing = True
                  }
       }
 
-render : Activator m -> Wrapper Type m -> Type -> Html
-render activate wrap review =
-  let content = if | review.rubric.editing -> Html.div [ Attributes.class "controlled-review-body" ] [rubric activate wrap review]
+render : Activator m -> Wrapper Type m -> List Html -> Type -> Html
+render activate wrap controls review =
+  let content = if | review.rubric.editing -> Html.div [ Attributes.class "survey-body" ] [rubric activate wrap review]
                    | otherwise -> Html.div [] []
   in
-  Html.div [ Attributes.class "controlled-review" ] 
-           [ Html.div [ Attributes.class <| String.append "controlled-review-header"  <| if | review.rubric.editing -> ""
-                                                                                            | otherwise -> " controlled-review-border-bottom" ]
-                      [ title activate wrap review  ]
+  Html.div [ Attributes.class "survey" ] 
+           [ Html.div [ Attributes.class <| String.append "survey-header"  <| if | review.rubric.editing -> ""
+                                                                                            | otherwise -> " survey-border-bottom" ]
+                      [ title activate wrap controls review  ]
            , content
            ]
 
-title : Activator m -> Wrapper Type m -> Type -> Html
-title activate wrap review =
+title : Activator m -> Wrapper Type m -> List Html -> Type -> Html
+title activate wrap controls review =
+  [ Html.span [ Attributes.class "survey-title" ] [ Html.text "Survey" ]
+  , if | review.rubric.editing -> hiderubric activate wrap review
+       | otherwise -> showrubric activate wrap review          
+  ] ++ controls |>
   Html.p [ ]  
-          [ Html.span [ Attributes.class "controlled-review-title" ] [ Html.text "Survey" ]
-          , if | review.rubric.editing -> hiderubric activate wrap review
-               | otherwise -> showrubric activate wrap review
-          ]
+
 
 rubric : Activator m -> Wrapper Type m -> Type -> Html
 rubric activate wrap review =
@@ -58,7 +59,7 @@ updaterubric label val activate wrap review =
       r' = { r | editing <- val }
       review' = { review | rubric <- r' }
   in
-  Html.input [ Attributes.class "controlled-review-show"
+  Html.input [ Attributes.class "survey-show"
              , Attributes.type' "button"
              , Attributes.value label
              , activate (flip Events.onClick (\m -> wrap review' m))
@@ -69,16 +70,16 @@ style' = Rubric.style ++ style
 
 style = """
 
-.controlled-review {
+.survey {
   width: 600px;
   margin: auto;
 }
 
-.controlled-review-button {
+.survey-button {
   margin: 0px 5px 0px 5px;
 }
 
-input.controlled-review-show {
+input.survey-show {
   text-decoration: underline;
   background: none;
   border: none;
@@ -86,16 +87,16 @@ input.controlled-review-show {
   color: black;
 }
 
-input.controlled-review-show:hover {
+input.survey-show:hover {
   font-weight: bold;
 }
 
-span.controlled-review-title {
+span.survey-title {
   font-weight: bold;
   margin: 5px;
 }
 
-.controlled-review-header {
+.survey-header {
   border-top: solid black 1px;
   border-left: solid black 1px;
   border-right: solid black 1px;
@@ -104,20 +105,20 @@ span.controlled-review-title {
   padding: 5px;
 }
 
-.controlled-review-border-bottom {
+.survey-border-bottom {
   border: solid black 1px;
   border-radius: 5px;
 }
 
-.controlled-review-header p {
+.survey-header p {
   margin: 0px;
 }
 
-.controlled-review-body p {
+.survey-body p {
   margin:0px;
 }
 
-.controlled-review-body {
+.survey-body {
   border: solid black 1px;
   border-radius: 0px 5px 5px 5px;
   padding: 5px;
@@ -135,7 +136,7 @@ view address model =
   Html.div [] 
            [ Html.node "script" [] [ Html.text script ]
            , Html.node "style" [] [ Html.text style' ]
-           , render (\event -> event address) (\t _ -> t) model
+           , render (\event -> event address) (\t _ -> t) [] model
            ]
            
 

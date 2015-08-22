@@ -20,6 +20,13 @@ type alias Type = { id : Editable String
                   , new : Editable String
                   }
 
+new : Type
+new = { id = editable ""
+      , text = editable ""
+      , options = Array.empty
+      , new = editable ""
+      }
+
 render : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
 render activate wrap select =
   let activate' = (\event -> activate event)

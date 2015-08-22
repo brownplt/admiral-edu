@@ -14,6 +14,9 @@ import String
 
 type alias Type = { label : Editable String }
 
+new : Type
+new = { label = editable "" }
+
 render : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
 render activate wrap checkbox =
   Html.div [ Attributes.class "checkbox" ] 

@@ -16,6 +16,10 @@ type alias Type = { id : Editable String
                   , text : Editable String
                   }
 
+new : Type
+new = { id = editable "", text = editable "" }
+
+
 render : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
 render activate wrap likert =
   let activate' = (\event -> activate event)

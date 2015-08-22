@@ -20,6 +20,15 @@ type alias Type = { id : Editable String
                   , granularity : Editable Int
                   }
 
+new : Type
+new = { id = editable ""
+      , text = editable ""
+      , minLabel = editable ""
+      , maxLabel = editable ""
+      , granularity = editable 6
+      }
+
+
 render : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
 render activate wrap likert =
   let activate' = (\event -> activate event)

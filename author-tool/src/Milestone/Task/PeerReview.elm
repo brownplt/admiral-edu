@@ -100,7 +100,6 @@ style' = """
 
 .peer-review {
   width: 600px;
-  margin: auto;
 }
 
 .peer-review-button {

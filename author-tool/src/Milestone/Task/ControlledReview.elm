@@ -71,7 +71,6 @@ style = """
 
 .controlled-review {
   width: 600px;
-  margin: auto;
 }
 
 .controlled-review-button {

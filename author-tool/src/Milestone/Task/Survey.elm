@@ -72,7 +72,6 @@ style = """
 
 .survey {
   width: 600px;
-  margin: auto;
 }
 
 .survey-button {

@@ -58,9 +58,6 @@ deleteButton activator wrap rubric ix =
                , activator (flip Events.onClick (\m -> wrap rubric' m))
                ] []
 
-insertAt ix x xs =
-  let (left, right) = Array.Extra.splitAt ix xs
-  in Array.push x left  |> flip Array.append right
 
 new : Type
 new = { items = Array.fromList [ Item.new ] }

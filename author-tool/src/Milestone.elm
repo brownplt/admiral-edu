@@ -34,7 +34,7 @@ new = { title = Editable.new ""
 render : Activator m -> Wrapper Type m -> List Html -> Type -> Html
 render activate wrap controls milestone =
   Html.div [ Attributes.class "milestone" ] 
-           [ title activate wrap controls milestone 
+           [ Html.div [ Attributes.class "milestone-title" ] [title activate wrap controls milestone]
            , Html.div [ Attributes.class "milestone-body" ]
                       [ text activate wrap milestone
                       , tasks activate wrap milestone 
@@ -46,7 +46,7 @@ title activate wrap controls milestone =
   let wrap' = (\title m -> wrap { milestone | title <- title} m)
       title = Utils.textbox activate wrap' milestone.title "Set Title"
   in
-  [ Html.h1 [ Attributes.class "milestone-title"] [ title ] ] ++ controls |>
+  controls ++ [ Html.h1 [ ] [ title ] ] |>
   Html.div []
 
 text : Activator m -> Wrapper Type m -> Type -> Html
@@ -107,6 +107,7 @@ style = """
 
 .milestone {
   width: 650px;
+  margin: 5px;
 }
 
 .milestone-title {
@@ -116,12 +117,15 @@ style = """
   border-radius: 5px 5px 0px 0px;
   padding: 5px;
   width: 300px;
+  display:inline-block;
 }
 
-h1.milestone-title {
+
+.milestone-title h1 {
   font-weight: bold;
   font-size: 18px;
-  margin: 0px;
+  margin: 0;
+  padding: 0;
 }
 
 .milestone-title input {

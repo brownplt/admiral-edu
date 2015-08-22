@@ -2,67 +2,72 @@ module Rubric where
 
 import Array
 import Array exposing (Array)
+import Array.Extra
 import Editable exposing (..)
 import Html exposing (Html, Attribute)
 import Html.Attributes as Attributes
+import Html.Events as Events
+import List
 
 import Signal exposing (Address)
 import StartApp
 
-import Rubric.Item.Checkbox as Checkbox
-import Rubric.Item.FreeForm as FreeForm
-import Rubric.Item.Likert as Likert
-import Rubric.Item.Select as Select
-import Rubric.Item.Utils as Utils
 import Rubric.Item as Item
-import Rubric.Item exposing (Item(..))
 
 type alias Action m = m -> m
 type alias Activator m = (Address (Action m) -> Attribute) -> Attribute
 type alias Wrapper m = Type -> Action m
-type alias Type = { items : Array Item }
+type alias Type = { items : Array Item.Type }
 
 render : Activator m -> Wrapper m -> Type -> Html
 render activate wrap rubric =
+  let len = Array.length rubric.items in
   Array.indexedMap (renderIx activate wrap rubric) rubric.items |>
   Array.toList |>
-  (\items -> items ++ [newItem activate wrap rubric]) |>
   Html.div [ Attributes.class "rubric" ]
 
-renderIx : Activator m -> Wrapper m -> Type -> Int -> Item -> Html
-renderIx activate wrap rubric ix item =
-  let wrap' constructor = (\item m -> wrap { rubric | items <- Array.set ix (constructor item) rubric.items } m )
-  in case item of
-    Checkbox checkbox -> Checkbox.render activate (wrap' Checkbox) checkbox
-    FreeForm freeform -> FreeForm.render activate (wrap' FreeForm) freeform
-    Select select -> Select.render activate (wrap' Select) select
-    Likert likert -> Likert.render activate (wrap' Likert) likert
+renderIx : Activator m -> Wrapper m -> Type -> Int -> Item.Type -> Html
+renderIx activate wrap rubric ix item = 
+  let wrap' = (\item m -> wrap { rubric | items <- Array.set ix item rubric.items } m )
+      delete = if | (Array.length rubric.items) > 1 -> deleteButton activate wrap rubric ix
+                  | otherwise -> Html.div [] []
+      above = if | ix == 0 -> insertButton activate wrap rubric ix
+                 | otherwise -> Html.div [] []
+      below = insertButton activate wrap rubric (ix + 1)
+  in Html.div [ Attributes.class "rubric-container" ] [ above
+                 , Item.render activate wrap' [delete] item
+                 , below
+                 ]
 
-newItem : Activator m -> Wrapper m -> Type -> Html
-newItem activate wrap rubric =
-  Html.div [ Attributes.class "rubric-insert-item" ] 
-           [] 
+insertButton : Activator m -> Wrapper m -> Type -> Int -> Html
+insertButton activator wrap rubric ix =
+  let rubric' = { rubric | items <- insertAt ix Item.new rubric.items }
+  in Html.div [ Attributes.class "rubric-insert item-hidden" ] [
+    Html.input [ Attributes.type' "button"
+               , Attributes.title "Insert new item"
+               , activator (flip Events.onClick (\m -> wrap rubric' m))
+               ] []
+       ]
+
+deleteButton : Activator m -> Wrapper m -> Type -> Int -> Html
+deleteButton activator wrap rubric ix = 
+  let rubric' = { rubric | items <- Array.Extra.removeAt ix rubric.items }
+  in
+    Html.input [ Attributes.type' "button"
+               , Attributes.title "Delete this item."
+               , Attributes.class "rubric-delete item-button"
+               , activator (flip Events.onClick (\m -> wrap rubric' m))
+               ] []
+
+insertAt ix x xs =
+  let (left, right) = Array.Extra.splitAt ix xs
+  in Array.push x left  |> flip Array.append right
+
+new : Type
+new = { items = Array.fromList [ Item.new ] }
 
 model : Type
-model = { items = Array.fromList [ Checkbox { label = editable "Foo" }
-                                 , Checkbox { label = editable "Bar" }
-                                 , FreeForm { id = editable "explain"
-                                            , text = editable "Explain"
-                                            }
-                                 , Select { id = editable "new-select-id"
-                                          , text = editable ""
-                                          , options = Array.empty
-                                          , new = editable ""
-                                          }
-                                 , Checkbox { label = editable "Gak" }
-                                 , Likert { id = editable "new-likert-id"
-                                          , text = editable ""
-                                          , minLabel = editable ""
-                                          , maxLabel = editable ""
-                                          , granularity = editable 5
-                                          }
-                                 ]
-        }
+model = new
 
 update : (Type -> Type) -> Type -> Type
 update f m = f m
@@ -70,55 +75,81 @@ update f m = f m
 view : Address (Type -> Type) -> Type -> Html
 view address model = 
   Html.div [] 
-           [ Html.node "script" [] [ Html.text Utils.script ]
-           , Html.node "style" [] [ Html.text (style ++ Utils.style)]
+           [ Html.node "script" [] [ Html.text Item.script ]
+           , Html.node "style" [] [ Html.text (style ++ Item.style)]
            , render (\event -> event address) (\t _ -> t) model
            ]
            
 
+main = StartApp.start { model = model, update = update, view = view }
+
+
 
 style = style' ++
-        Checkbox.style ++ 
-        FreeForm.style ++ 
-        Likert.style ++
-        Select.style
+        Item.style
 
 style' = """
 .rubric {
-  width: 500px;
+  width: 600px;
   margin: auto;
-  background: #eee;
+}
+
+.rubric-container {
+
+}
+
+.rubric-insert {
+  width: calc(100% - 50px);
+  text-align: center;
+}
+
+.rubric-insert input {
+  width: 25px;
+  height: 25px;
 }
 
 div.rubric-insert-item {
   width: calc(100% - 10px);
-  margin: 0 5px 0 5px;
+  margin: 0 5px 0px 5px;
   height: 5px;
-  border: 0px;
+  border-top: dashed #999 1px;
+  overflow: hidden;
 }
 
 div.rubric-insert-item:hover {
-  border: solid black 1px;  
-  height: 15px;
+  border: dashed #999 1px;  
+  height: 100px;
   animation-name: insert-hover;
-  animation-duration: 0.5;
+  animation-duration: 0.5s;
+  animation-delay: 0.5s;
+  animation-fill-mode: both;
   -webkit-animation-name: insert-hover;
   -webkit-animation-duration: 0.5s;  
+  -webkit-animation-delay: 0.5s;
+  -webkit-animation-fill-mode: both;
+}
+
+.rubric-insert-item select {
+  margin: 5px;
 }
 
 @-webkit-keyframes insert-hover {
-    0%   {height: 5px}
-  100%   {height: 15px}
+    0%   {height: 5px; 
+          border-top: dashed #999 1px; 
+          border-left: dashed #fff 1px; 
+          border-right: dashed #fff 1px; 
+          border-bottom: dashed #fff 1px; 
+         }
+  100%   {height: 100px; border: dashed #999 1px;  }
 }
 
 keyframes insert-hover {
-    0%   {height: 5px}
-  100%   {height: 15px}
+    0%   {height: 5px; 
+          border-top: dashed #999 1px; 
+          border: dashed #eee 1px; }
+  100%   {height: 100px; border: dashed #999 1px;  }
 }
-
-
 
 """
 
-main = StartApp.start { model = model, update = update, view = view }
 

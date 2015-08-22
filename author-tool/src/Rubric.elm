@@ -10,7 +10,6 @@ import Html.Events as Events
 import List
 
 import Signal exposing (Address)
-import StartApp
 
 import Rubric.Item as Item
 
@@ -65,23 +64,6 @@ insertAt ix x xs =
 
 new : Type
 new = { items = Array.fromList [ Item.new ] }
-
-model : Type
-model = new
-
-update : (Type -> Type) -> Type -> Type
-update f m = f m
-
-view : Address (Type -> Type) -> Type -> Html
-view address model = 
-  Html.div [] 
-           [ Html.node "script" [] [ Html.text Item.script ]
-           , Html.node "style" [] [ Html.text (style ++ Item.style)]
-           , render (\event -> event address) (\t _ -> t) model
-           ]
-           
-
-main = StartApp.start { model = model, update = update, view = view }
 
 
 
@@ -153,3 +135,4 @@ keyframes insert-hover {
 """
 
 
+script = Item.script

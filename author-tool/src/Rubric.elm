@@ -14,6 +14,8 @@ import Signal exposing (Address)
 
 import Rubric.Item as Item
 
+import StartApp
+
 type alias Type = { items : Array Item.Type }
 
 render : Activator m -> Wrapper Type m -> Type -> Html
@@ -134,3 +136,15 @@ keyframes insert-hover {
 
 
 script = Item.script
+
+update f m = f m
+
+view address model = 
+  Html.div [] 
+           [ Html.node "script" [] [ Html.text script ]
+           , Html.node "style" [] [ Html.text style]
+           , render (\event -> event address) (\t _ -> t) model
+           ]
+           
+
+main = StartApp.start { model = new, update = update, view = view }

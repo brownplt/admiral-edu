@@ -154,3 +154,9 @@ style = """
 
 """
 
+
+update n m = n m
+
+view address model = Html.div [] [ Html.node "script" [] [ Html.text Utils.script ], Html.node "style" [] [ Html.text (style ++ Utils.style) ], render (\event -> event address) (\t m -> t) model ]
+
+main = StartApp.start { model = new, update = update, view = view }

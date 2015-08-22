@@ -75,9 +75,8 @@ granularity activate wrap likert =
 
 decreaseButton : Activator m -> Wrapper Type m -> Type -> Html
 decreaseButton activate wrap likert = 
-  let wrap' = (\gran m -> wrap { likert | granularity <- editable (gran - 1) } m) in
-  if | likert.granularity.value <= 2 -> Html.span [] []
-     | otherwise -> Html.button [ activate (flip Events.onClick (wrap' likert.granularity.value)) ] [Html.text "-"]
+  let wrap' = (\gran m -> wrap { likert | granularity <- editable (max 2 (gran - 1)) } m) in
+  Html.button [ activate (flip Events.onClick (wrap' likert.granularity.value)) ] [Html.text "-"]
  
 increaseButton : Activator m -> Wrapper Type m -> Type -> Html
 increaseButton activate wrap likert = 

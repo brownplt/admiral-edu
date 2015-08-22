@@ -33,9 +33,13 @@ new = { title = Editable.new ""
 
 render : Activator m -> Wrapper Type m -> List Html -> Type -> Html
 render activate wrap controls milestone =
-  Html.div [ Attributes.class "milestone" ] [ title activate wrap controls milestone 
-                                            , text activate wrap milestone
-                                            , tasks activate wrap milestone ]
+  Html.div [ Attributes.class "milestone" ] 
+           [ title activate wrap controls milestone 
+           , Html.div [ Attributes.class "milestone-body" ]
+                      [ text activate wrap milestone
+                      , tasks activate wrap milestone 
+                      ]
+           ]
 
 title : Activator m -> Wrapper Type m -> List Html -> Type -> Html
 title activate wrap controls milestone = 
@@ -46,8 +50,14 @@ title activate wrap controls milestone =
   Html.div []
 
 text : Activator m -> Wrapper Type m -> Type -> Html
-text activator wrap milestone =
-  Html.div [] []
+text activate wrap milestone =
+  let wrap' = (\text m -> wrap { milestone | text <- text } m ) 
+  in
+  Html.div [ ] 
+           [ Html.span [ Attributes.class "milestone-label" ] [ Html.text "Instructions" ]
+           , Html.div [ Attributes.class "milestone-instructions" ] 
+                      [ Utils.markdown activate wrap' milestone.text "Add markdown" ]
+           ]
 
 tasks : Activator m -> Wrapper Type m -> Type -> Html
 tasks activate wrap milestone =
@@ -99,14 +109,31 @@ style = """
   width: 650px;
 }
 
+.milestone-title {
+  border-top: solid black 1px;
+  border-right: solid black 1px;
+  border-left: solid black 1px;
+  border-radius: 5px 5px 0px 0px;
+  padding: 5px;
+  width: 300px;
+}
+
 h1.milestone-title {
   font-weight: bold;
   font-size: 18px;
+  margin: 0px;
 }
 
 .milestone-title input {
   font-weight: bold;
   font-size: 18px;
+}
+
+.milestone-body {
+  margin: 0px;
+  border-radius: 0px 5px 5px 5px;
+  border: solid black 1px;
+  padding: 5px;
 }
 
 .milestone-insert {
@@ -123,8 +150,30 @@ h1.milestone-title {
   float: right;
 }
 
+.milestone-task {
+  margin-bottom: 5px;
+}
+
 .milestone-tasks {
-  padding: 5px;              
+  padding: 5px;
+}
+
+.milestone-label {
+  text-decoration: underline;
+}
+
+.milestone-instructions {
+  padding: 5px;
+}
+
+.milestone-instructions textarea {
+  width: 100%;
+  height: 100px;
+}
+
+
+.milestone-instructions p {
+  margin: 2px;
 }
 """
 

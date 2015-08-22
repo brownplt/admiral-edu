@@ -19,9 +19,7 @@ type alias Type = { rubric : Editable Rubric.Type
                   }
 
 new : Type
-new = { rubric = { editing = True
-                 , value = Rubric.new
-                 }
+new = { rubric = editable Rubric.new
       }
 
 render : Activator m -> Wrapper Type m -> List Html -> Type -> Html

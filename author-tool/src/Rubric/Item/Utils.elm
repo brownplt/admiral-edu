@@ -1,4 +1,4 @@
-module Rubric.Item.Utils (textbox, textarea, style, script) where
+module Rubric.Item.Utils (textbox, textarea, style, script, markdown) where
 
 import String
 import Signal exposing (Address)
@@ -7,6 +7,8 @@ import Html
 import Html.Events as Events
 import Html.Attributes as Attributes
 import Editable exposing (..)
+
+import Markdown
 
 textbox : ((Address a -> Attribute) -> Attribute) -> (Editable String -> a) -> Editable String -> String -> Html
 textbox activate wrap text default = 
@@ -25,6 +27,20 @@ textbox activate wrap text default =
                               [ Html.text (if | text.value == "" -> default
                                               | otherwise -> text.value
                                           )
+                              ]
+
+markdown : ((Address a -> Attribute) -> Attribute) -> (Editable String -> a) -> Editable String -> String -> Html
+markdown activate wrap text default =
+  if | text.editing -> Html.textarea [ activate <| flip Events.onBlur (wrap { text | editing <- False })
+                                     , activate <| onInput (\str -> wrap { text | value <- str })
+                                     , Attributes.class "focus"
+                                     ] [ Html.text text.value ]
+                                                    
+
+     | otherwise -> Html.span [ activate (flip Events.onClick (wrap { text | editing <- True } )) ]
+                              [ Markdown.toHtml (if | text.value == "" -> default
+                                                    | otherwise -> text.value
+                                                )
                               ]
 
 textarea : ((Address a -> Attribute) -> Attribute) -> (Editable String -> a) -> Editable String -> String -> Html

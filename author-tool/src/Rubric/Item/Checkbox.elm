@@ -1,4 +1,5 @@
 module Rubric.Item.Checkbox (..) where
+import Common exposing (..)
 
 import Rubric.Item.Utils exposing (textbox, textarea)
 import Rubric.Item.Utils as Utils
@@ -17,14 +18,14 @@ type alias Type = { label : Editable String }
 new : Type
 new = { label = editable "" }
 
-render : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+render : Activator m -> Wrapper Type m -> Type -> Html
 render activate wrap checkbox =
   Html.div [ Attributes.class "checkbox" ] 
            [ 
              Html.div [ Attributes.class "checkbox-body" ] [ text activate wrap checkbox ]
            ]
 
-text : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+text : Activator m -> Wrapper Type m -> Type -> Html
 text activate wrap checkbox =
   Html.div [ Attributes.class "checkbox-text" ]
            [ Html.input [ Attributes.type' "checkbox" ] []

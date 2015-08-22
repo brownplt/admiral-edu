@@ -1,4 +1,5 @@
 module Rubric.Item.FreeForm (..) where
+import Common exposing (..)
 
 import Rubric.Item.Utils exposing (textbox, textarea)
 import Rubric.Item.Utils as Utils
@@ -20,7 +21,7 @@ new : Type
 new = { id = editable "", text = editable "" }
 
 
-render : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+render : Activator m -> Wrapper Type m -> Type -> Html
 render activate wrap likert =
   let activate' = (\event -> activate event)
   in
@@ -31,12 +32,12 @@ render activate wrap likert =
                                                          ]
            ]
 
-id : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+id : Activator m -> Wrapper Type m -> Type -> Html
 id activate wrap likert = 
   let wrap' = (\id m -> wrap { likert | id <- id } m) in
   Html.div [ Attributes.class "freeform-id" ] [ textbox activate wrap' likert.id "click to set id"]
 
-text : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+text : Activator m -> Wrapper Type m -> Type -> Html
 text activate wrap likert =
   let wrap' = (\text m -> wrap { likert | text <- text } m) in
   Html.div [ Attributes.class "freeform-text" ] [ textbox activate wrap' likert.text "Set prompt" ]

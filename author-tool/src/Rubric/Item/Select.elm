@@ -1,4 +1,5 @@
 module Rubric.Item.Select (..) where
+import Common exposing (..)
 
 import Rubric.Item.Utils exposing (textbox, textarea)
 import Rubric.Item.Utils as Utils
@@ -27,7 +28,7 @@ new = { id = editable ""
       , new = editable ""
       }
 
-render : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+render : Activator m -> Wrapper Type m -> Type -> Html
 render activate wrap select =
   let activate' = (\event -> activate event)
   in
@@ -39,7 +40,7 @@ render activate wrap select =
                    ]
            ]
 
-options : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+options : Activator m -> Wrapper Type m -> Type -> Html
 options activate wrap select = 
   Html.div [] 
             ((Array.toList 
@@ -49,21 +50,21 @@ options activate wrap select =
   
 
 
-id : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+id : Activator m -> Wrapper Type m -> Type -> Html
 id activate wrap select = 
   let wrap' = (\id m -> wrap { select | id <- id } m ) in
   Html.div [ Attributes.class "select-id" ] 
            [ textbox activate wrap' select.id "click to set id"]
 
 
-text : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+text : Activator m -> Wrapper Type m -> Type -> Html
 text activate wrap select =
   let wrap' = (\text m -> wrap { select | text <- text } m ) in
   Html.div [ Attributes.class "select-text" ] 
            [ textarea activate wrap' select.text "Set prompt" ]
 
 
-option : String -> ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Int -> Editable String -> Html
+option : String -> Activator m -> Wrapper Type m -> Type -> Int -> Editable String -> Html
 option id activate wrap select ix label = 
   let wrap' = (\label m -> wrap (if | not label.editing && label.value == "" -> { select | options <- removeIndex ix select.options }
                                     | otherwise -> { select | options <- Array.set ix label select.options }) m)
@@ -76,7 +77,7 @@ option id activate wrap select ix label =
            ]
 
 
-newoption : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+newoption : Activator m -> Wrapper Type m -> Type -> Html
 newoption activate wrap select = 
   let wrap' = (\option m -> wrap (if | option.editing -> { select | new <- option }
                                      | option.value == "" -> select

@@ -1,4 +1,5 @@
 module Rubric.Item.Likert (..) where
+import Common exposing (..)
 
 import Rubric.Item.Utils exposing (textbox, textarea)
 import Rubric.Item.Utils as Utils
@@ -29,7 +30,7 @@ new = { id = editable ""
       }
 
 
-render : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+render : Activator m -> Wrapper Type m -> Type -> Html
 render activate wrap likert =
   let activate' = (\event -> activate event)
   in
@@ -44,27 +45,27 @@ render activate wrap likert =
                                                        ]
            ]
 
-id : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+id : Activator m -> Wrapper Type m -> Type -> Html
 id activate wrap likert = 
   let wrap' = (\id m -> wrap { likert | id <- id } m ) in 
   Html.div [ Attributes.class "likert-id" ] [ textbox activate wrap' likert.id "click to set id"]
 
-text : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+text : Activator m -> Wrapper Type m -> Type -> Html
 text activate wrap likert =
   let wrap' = (\text m -> wrap { likert | text <- text } m ) in
   Html.div [ Attributes.class "likert-text" ] [ textbox activate wrap' likert.text "Set prompt" ]
 
-minLabel : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+minLabel : Activator m -> Wrapper Type m -> Type -> Html
 minLabel activate wrap likert =
   let wrap' = (\minLabel m -> wrap { likert | minLabel <- minLabel } m) in
   Html.div [ Attributes.class "likert-minlabel" ] [ textbox activate wrap' likert.minLabel "Set Label" ]
 
-maxLabel : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+maxLabel : Activator m -> Wrapper Type m -> Type -> Html
 maxLabel activate wrap likert =
   let wrap' = (\maxLabel m -> wrap { likert | maxLabel <- maxLabel } m) in
   Html.div [ Attributes.class "likert-maxlabel" ] [ textbox activate wrap' likert.maxLabel "Set Label" ]
 
-granularity : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+granularity : Activator m -> Wrapper Type m -> Type -> Html
 granularity activate wrap likert =
   Html.div [ Attributes.class "likert-granularity" ]
         [ decreaseButton activate wrap likert
@@ -72,13 +73,13 @@ granularity activate wrap likert =
         , increaseButton activate wrap likert
         ]
 
-decreaseButton : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+decreaseButton : Activator m -> Wrapper Type m -> Type -> Html
 decreaseButton activate wrap likert = 
   let wrap' = (\gran m -> wrap { likert | granularity <- editable (gran - 1) } m) in
   if | likert.granularity.value <= 2 -> Html.span [] []
      | otherwise -> Html.button [ activate (flip Events.onClick (wrap' likert.granularity.value)) ] [Html.text "-"]
  
-increaseButton : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+increaseButton : Activator m -> Wrapper Type m -> Type -> Html
 increaseButton activate wrap likert = 
   let wrap' = (\gran m -> wrap { likert | granularity <- editable (gran + 1) } m) in
      Html.button [ activate (flip Events.onClick (wrap' likert.granularity.value)) ] [Html.text "+"]

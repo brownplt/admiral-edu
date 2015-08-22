@@ -1,4 +1,5 @@
-module Rubric where
+module Rubric(Type, new, render, script, style) where
+import Common exposing (..)
 
 import Array
 import Array exposing (Array)
@@ -13,19 +14,16 @@ import Signal exposing (Address)
 
 import Rubric.Item as Item
 
-type alias Action m = m -> m
-type alias Activator m = (Address (Action m) -> Attribute) -> Attribute
-type alias Wrapper m = Type -> Action m
 type alias Type = { items : Array Item.Type }
 
-render : Activator m -> Wrapper m -> Type -> Html
+render : Activator m -> Wrapper Type m -> Type -> Html
 render activate wrap rubric =
   let len = Array.length rubric.items in
   Array.indexedMap (renderIx activate wrap rubric) rubric.items |>
   Array.toList |>
   Html.div [ Attributes.class "rubric" ]
 
-renderIx : Activator m -> Wrapper m -> Type -> Int -> Item.Type -> Html
+renderIx : Activator m -> Wrapper Type m -> Type -> Int -> Item.Type -> Html
 renderIx activate wrap rubric ix item = 
   let wrap' = (\item m -> wrap { rubric | items <- Array.set ix item rubric.items } m )
       delete = if | (Array.length rubric.items) > 1 -> deleteButton activate wrap rubric ix
@@ -38,7 +36,7 @@ renderIx activate wrap rubric ix item =
                  , below
                  ]
 
-insertButton : Activator m -> Wrapper m -> Type -> Int -> Html
+insertButton : Activator m -> Wrapper Type m -> Type -> Int -> Html
 insertButton activator wrap rubric ix =
   let rubric' = { rubric | items <- insertAt ix Item.new rubric.items }
   in Html.div [ Attributes.class "rubric-insert item-hidden" ] [
@@ -48,7 +46,7 @@ insertButton activator wrap rubric ix =
                ] []
        ]
 
-deleteButton : Activator m -> Wrapper m -> Type -> Int -> Html
+deleteButton : Activator m -> Wrapper Type m -> Type -> Int -> Html
 deleteButton activator wrap rubric ix = 
   let rubric' = { rubric | items <- Array.Extra.removeAt ix rubric.items }
   in

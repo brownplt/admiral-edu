@@ -1,4 +1,5 @@
 module Rubric.Item (Type, new, render, style, script) where
+import Common exposing (..)
 
 import Array
 import Array exposing (Array)
@@ -34,14 +35,14 @@ type Item = Checkbox Checkbox.Type
           | Likert Likert.Type
           | Select Select.Type
 
-render : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> List Html -> Type -> Html
+render : Activator m -> Wrapper Type m -> List Html -> Type -> Html
 render activate wrap controls item =
   Html.div [ Attributes.class "item" ]
       [ Html.div [ Attributes.class "item-body" ] [ renderSelected activate wrap item ]
       , Html.div [ Attributes.class "item-controls item-hidden" ] ([ rotate (-1) activate wrap item ] ++ controls)
       ]
 
-rotate : Int -> ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+rotate : Int -> Activator m -> Wrapper Type m -> Type -> Html
 rotate direction activate wrap item =
   let len = Array.length item.types
       next = (item.selected + direction) % len
@@ -50,7 +51,7 @@ rotate direction activate wrap item =
                 , Attributes.class "item-button"
                 , activate (flip Events.onClick (\m -> wrap item' m)) ] []
 
-renderSelected : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
+renderSelected : Activator m -> Wrapper Type m -> Type -> Html
 renderSelected activate wrap item = 
   let wrap' constructor = (\i m -> wrap { item | types <- Array.set item.selected (constructor i) item.types } m)
   in

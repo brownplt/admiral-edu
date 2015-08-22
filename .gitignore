@@ -1,4 +1,5 @@
 [#]*
+.[#]*
 *~
 compiled/
 cs220-server
@@ -15,3 +16,5 @@ publish.sh
 .smtp-credentials
 
 test-class/
+
+elm-stuff/

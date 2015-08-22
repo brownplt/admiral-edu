@@ -66,16 +66,13 @@ style = style' ++
         Checkbox.style ++ 
         FreeForm.style ++ 
         Likert.style ++
-        Select.style
+        Select.style ++
+        Utils.style
 
 style' = """
 .item {
   display: flex;
   width: 600px;
-  animation-name: item-draw-body;
-  animation-duration: 1s;
-  -webkit-animation-name: item-draw-body;
-  -webkit-animation-duration: 1s;
 }
 
 .item-hidden {
@@ -109,16 +106,6 @@ style' = """
   margin-left: 5px;
   width: calc(100% - 60px); 
   order: 1;
-}
-
-@-webkit-keyframes item-draw-body {
-    0%   {opacity: 0; }
-  100%   {opacity: 1; }
-}
-
-keyframes item-draw-body {
-    0%   {opacity: 0; }
-  100%   {opacity: 1; }
 }
 
 @-webkit-keyframes item-hidden {

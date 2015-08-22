@@ -26,10 +26,9 @@ render activate wrap likert =
   in
   Html.div [ Attributes.class "freeform" ] 
            [ 
-             id activate' wrap likert
-           , Html.div [ Attributes.class "freeform-body" ] [ text activate' wrap likert
-                                                           , Html.textarea [ Attributes.disabled True ] []
-                                                           ]
+           Html.div [ Attributes.class "freeform-body" ] [ text activate' wrap likert
+                                                         , Html.textarea [ Attributes.disabled True ] []
+                                                         ]
            ]
 
 id : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
@@ -40,7 +39,7 @@ id activate wrap likert =
 text : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
 text activate wrap likert =
   let wrap' = (\text m -> wrap { likert | text <- text } m) in
-  Html.div [ Attributes.class "freeform-text" ] [ textarea activate wrap' likert.text "Set prompt" ]
+  Html.div [ Attributes.class "freeform-text" ] [ textbox activate wrap' likert.text "Set prompt" ]
 
 style = """
 
@@ -61,7 +60,7 @@ style = """
 .freeform-body {
   border-style: solid;
   border-width: 1px;
-  border-radius: 0px 5px 5px 5px;
+  border-radius: 5px 5px 5px 5px;
   overflow: hidden;
 }
 

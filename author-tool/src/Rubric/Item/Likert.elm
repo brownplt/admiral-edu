@@ -35,14 +35,13 @@ render activate wrap likert =
   in
   Html.div [ Attributes.class "likert" ] 
            [ 
-             id activate' wrap likert
-           , Html.div [ Attributes.class "likert-body" ] [ text activate' wrap likert
-                                                         , Html.div [ Attributes.class "likert-scale" ] 
-                                                                    [ minLabel activate' wrap likert
-                                                                    , granularity activate' wrap likert
-                                                                    , maxLabel activate' wrap likert
-                                                                    ]
-                                                         ]
+           Html.div [ Attributes.class "likert-body" ] [ text activate' wrap likert
+                                                       , Html.div [ Attributes.class "likert-scale" ] 
+                                                               [ minLabel activate' wrap likert
+                                                               , granularity activate' wrap likert
+                                                               , maxLabel activate' wrap likert
+                                                               ]
+                                                       ]
            ]
 
 id : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
@@ -53,7 +52,7 @@ id activate wrap likert =
 text : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
 text activate wrap likert =
   let wrap' = (\text m -> wrap { likert | text <- text } m ) in
-  Html.div [ Attributes.class "likert-text" ] [ textarea activate wrap' likert.text "Set prompt" ]
+  Html.div [ Attributes.class "likert-text" ] [ textbox activate wrap' likert.text "Set prompt" ]
 
 minLabel : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
 minLabel activate wrap likert =
@@ -97,7 +96,7 @@ style = """
 .likert-body {
   border-style: solid;
   border-width: 1px;
-  border-radius: 0px 5px 5px 5px;
+  border-radius: 5px 5px 5px 5px;
   overflow: hidden;
 }
 

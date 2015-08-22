@@ -32,13 +32,11 @@ render activate wrap select =
   let activate' = (\event -> activate event)
   in
   Html.div [ Attributes.class "select" ] 
-           [ 
-             id activate' wrap select
-           , Html.div [ Attributes.class "select-body" ] 
-                      [ text activate' wrap select
-                      , Html.div [ Attributes.class "select-options" ] 
-                                 [options activate' wrap select]
-                      ]
+           [ Html.div [ Attributes.class "select-body" ] 
+                   [ text activate' wrap select
+                   , Html.div [ Attributes.class "select-options" ] 
+                           [options activate' wrap select]
+                   ]
            ]
 
 options : ((Address (m -> m) -> Attribute) -> Attribute) -> (Type -> m -> m) -> Type -> Html
@@ -110,7 +108,7 @@ style = """
 .select-body {
   border-style: solid;
   border-width: 1px;
-  border-radius: 0px 5px 5px 5px;
+  border-radius: 5px 5px 5px 5px;
   overflow: hidden;
 }
 

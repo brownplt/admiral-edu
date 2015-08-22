@@ -1,4 +1,4 @@
-module Task.ControlledReview where
+module Task.Survey where
 import Common exposing (..)
 
 import Editable exposing (..)
@@ -39,7 +39,7 @@ render activate wrap review =
 title : Activator m -> Wrapper Type m -> Type -> Html
 title activate wrap review =
   Html.p [ ]  
-          [ Html.span [ Attributes.class "controlled-review-title" ] [ Html.text "Controlled Review" ]
+          [ Html.span [ Attributes.class "controlled-review-title" ] [ Html.text "Survey" ]
           , if | review.rubric.editing -> hiderubric activate wrap review
                | otherwise -> showrubric activate wrap review
           ]

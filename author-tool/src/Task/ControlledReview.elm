@@ -13,36 +13,33 @@ import Rubric
 
 import StartApp
 
-type alias Type = { amount : Int
-                  , rubric : Editable Rubric.Type
+import String
+
+type alias Type = { rubric : Editable Rubric.Type
                   }
 
 new : Type
-new = { amount = 3
-      , rubric = { editing = True
+new = { rubric = { editing = True
                  , value = Rubric.new
                  }
       }
 
 render : Activator m -> Wrapper Type m -> Type -> Html
 render activate wrap review =
-  let content = if | review.rubric.editing -> Html.div [ Attributes.class "peer-review-body" ] 
-                                                       [ amount activate wrap review
-                                                       , rubric activate wrap review]
+  let content = if | review.rubric.editing -> Html.div [ Attributes.class "controlled-review-body" ] [rubric activate wrap review]
                    | otherwise -> Html.div [] []
-      class = if | review.rubric.editing -> "peer-review-header"
-                 | otherwise -> "peer-review-header peer-review-border-bottom"
   in
-  Html.div [ Attributes.class "peer-review" ] 
-           [ Html.div [ Attributes.class class ]
-                      [ title activate wrap review  ] 
+  Html.div [ Attributes.class "controlled-review" ] 
+           [ Html.div [ Attributes.class <| String.append "controlled-review-header"  <| if | review.rubric.editing -> ""
+                                                                                            | otherwise -> " controlled-review-border-bottom" ]
+                      [ title activate wrap review  ]
            , content
            ]
 
 title : Activator m -> Wrapper Type m -> Type -> Html
 title activate wrap review =
-  Html.p [ ] 
-          [ Html.span [ Attributes.class "peer-review-title" ] [ Html.text "Peer Review" ]
+  Html.p [ ]  
+          [ Html.span [ Attributes.class "controlled-review-title" ] [ Html.text "Controlled Review" ]
           , if | review.rubric.editing -> hiderubric activate wrap review
                | otherwise -> showrubric activate wrap review
           ]
@@ -61,53 +58,27 @@ updaterubric label val activate wrap review =
       r' = { r | editing <- val }
       review' = { review | rubric <- r' }
   in
-  Html.input [ Attributes.class "peer-review-show"
+  Html.input [ Attributes.class "controlled-review-show"
              , Attributes.type' "button"
              , Attributes.value label
              , activate (flip Events.onClick (\m -> wrap review' m))
              ] []
                                                         
 
-amount : Activator m -> Wrapper Type m -> Type -> Html
-amount activate wrap review =
-  Html.div [] [ Html.p [] [ Html.span [ Attributes.class "peer-review-label" ] 
-                                      [ Html.text "Reviews" ]
-                          , Html.text ": "
-                          , decreaseButton activate wrap review
-                          , toString review.amount  |> Html.text
-                          , increaseButton activate wrap review
-                          ]
-              ]
+style' = Rubric.style ++ style
 
-decreaseButton = changeAmountButton "-" (-1)
-increaseButton = changeAmountButton "+" 1
+style = """
 
-changeAmountButton : String -> Int -> Activator m -> Wrapper Type m -> Type -> Html
-changeAmountButton label diff activate wrap review =
-  let amount = max (review.amount + diff) 1
-      review' = { review | amount <- amount }
-  in Html.input [ Attributes.class "peer-review-button"
-                , Attributes.type' "button"
-                , Attributes.value label
-                , activate (flip Events.onClick (\m -> wrap review' m))
-                ]
-                []
-
-
-style = Rubric.style ++ style'
-
-style' = """
-
-.peer-review {
+.controlled-review {
   width: 600px;
   margin: auto;
 }
 
-.peer-review-button {
+.controlled-review-button {
   margin: 0px 5px 0px 5px;
 }
 
-input.peer-review-show {
+input.controlled-review-show {
   text-decoration: underline;
   background: none;
   border: none;
@@ -115,16 +86,16 @@ input.peer-review-show {
   color: black;
 }
 
-input.peer-review-show:hover {
+input.controlled-review-show:hover {
   font-weight: bold;
 }
 
-span.peer-review-title {
+span.controlled-review-title {
   font-weight: bold;
   margin: 5px;
 }
 
-.peer-review-header {
+.controlled-review-header {
   border-top: solid black 1px;
   border-left: solid black 1px;
   border-right: solid black 1px;
@@ -133,20 +104,20 @@ span.peer-review-title {
   padding: 5px;
 }
 
-.peer-review-border-bottom {
+.controlled-review-border-bottom {
   border: solid black 1px;
   border-radius: 5px;
 }
 
-.peer-review-header p {
+.controlled-review-header p {
   margin: 0px;
 }
 
-.peer-review-body p {
+.controlled-review-body p {
   margin:0px;
 }
 
-.peer-review-body {
+.controlled-review-body {
   border: solid black 1px;
   border-radius: 0px 5px 5px 5px;
   padding: 5px;
@@ -163,7 +134,7 @@ update f m = f m
 view address model = 
   Html.div [] 
            [ Html.node "script" [] [ Html.text script ]
-           , Html.node "style" [] [ Html.text style]
+           , Html.node "style" [] [ Html.text style' ]
            , render (\event -> event address) (\t _ -> t) model
            ]
            

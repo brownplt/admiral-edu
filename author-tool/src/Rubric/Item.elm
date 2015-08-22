@@ -49,6 +49,7 @@ rotate direction activate wrap item =
       item' = {item | selected <- next}
   in Html.input [ Attributes.type' "button"
                 , Attributes.class "item-button"
+                , Attributes.title "Change item type"
                 , activate (flip Events.onClick (\m -> wrap item' m)) ] []
 
 renderSelected : Activator m -> Wrapper Type m -> Type -> Html

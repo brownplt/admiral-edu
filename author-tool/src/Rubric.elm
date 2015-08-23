@@ -108,6 +108,10 @@ div.rubric-insert-item:hover {
   -webkit-animation-duration: 0.5s;  
   -webkit-animation-delay: 0.5s;
   -webkit-animation-fill-mode: both;
+  -moz-animation-name: insert-hover;
+  -moz-animation-duration: 0.5s;  
+  -moz-animation-delay: 0.5s;
+  -moz-animation-fill-mode: both;
 }
 
 .rubric-insert-item select {
@@ -115,6 +119,16 @@ div.rubric-insert-item:hover {
 }
 
 @-webkit-keyframes insert-hover {
+    0%   {height: 5px; 
+          border-top: dashed #999 1px; 
+          border-left: dashed #fff 1px; 
+          border-right: dashed #fff 1px; 
+          border-bottom: dashed #fff 1px; 
+         }
+  100%   {height: 100px; border: dashed #999 1px;  }
+}
+
+@-moz-keyframes insert-hover {
     0%   {height: 5px; 
           border-top: dashed #999 1px; 
           border-left: dashed #fff 1px; 

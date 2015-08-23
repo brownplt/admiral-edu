@@ -66,6 +66,12 @@ style = """
   animation-duration: 0.001s;
   -webkit-animation-name: set-focus;
   -webkit-animation-duration: 0.001s;
+  -moz-animation-name: set-focus;
+  -moz-animation-duration: 0.001s;  
+}
+
+@-moz-keyframes set-focus {
+    0%   {color: #fff}
 }
 
 @-webkit-keyframes set-focus {
@@ -87,4 +93,5 @@ var insertListener = function(event){
 document.addEventListener("animationstart", insertListener, false); // standard + firefox
 document.addEventListener("MSAnimationStart", insertListener, false); // IE
 document.addEventListener("webkitAnimationStart", insertListener, false); // Chrome + Safari
+document.addEventListener("mozAnimationStart", insertListener, false); // Chrome + Safari
 """

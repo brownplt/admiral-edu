@@ -85,6 +85,8 @@ style' = """
   animation-duration: 2s;
   -webkit-animation-name: item-hidden;
   -webkit-animation-duration: 2s;
+  -moz-animation-name: item-hidden;
+  -moz-animation-duration: 2s;
 }
 
 .item-hidden:hover {
@@ -93,6 +95,8 @@ style' = """
   animation-duration: 0.5s;
   -webkit-animation-name: item-reveal;
   -webkit-animation-duration: 0.5s;
+  -moz-animation-name: item-reveal;
+  -moz-animation-duration: 0.5s;
 }
 
 .item-controls {
@@ -111,6 +115,11 @@ style' = """
   order: 1;
 }
 
+@-moz-keyframes item-hidden {
+    0%   {opacity: 1.0; }
+  100%   {opacity: 0.0; }
+}
+
 @-webkit-keyframes item-hidden {
     0%   {opacity: 1.0; }
   100%   {opacity: 0.0; }
@@ -127,6 +136,11 @@ keyframes item-reveal {
 }
 
 @-webkit-keyframes item-reveal {
+    0%   {opacity: 0.0 }
+  100%   {opacity: 1.0 }
+}
+
+@-moz-keyframes item-reveal {
     0%   {opacity: 0.0 }
   100%   {opacity: 1.0 }
 }

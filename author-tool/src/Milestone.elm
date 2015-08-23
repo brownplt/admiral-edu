@@ -63,7 +63,7 @@ tasks : Activator m -> Wrapper Type m -> Type -> Html
 tasks activate wrap milestone =
   let len = Array.length milestone.tasks 
       class = if | len > 0 -> "milestone-insert item-hidden"
-                 | otherwise -> "milestone-insert"
+                 | otherwise -> "milestone-insert small-button"
       label = Html.span [ Attributes.class "milestone-label" ] [ Html.text "Tasks" ]
   in
   Array.indexedMap (renderIx activate wrap milestone) milestone.tasks |>
@@ -78,7 +78,7 @@ tasks activate wrap milestone =
 
 renderIx : Activator m -> Wrapper Type m -> Type -> Int -> Task.Type -> Html
 renderIx activate wrap milestone ix task = 
-  let controls = [ deleteTask activate wrap ix milestone, insertButton "milestone-button" activate wrap ix milestone ]
+  let controls = [ deleteTask activate wrap ix milestone, insertButton "small-button add-button" activate wrap ix milestone ]
       wrap' = (\task m -> wrap { milestone | tasks <- Array.set ix task milestone.tasks } m)
   in
   [ Task.render activate wrap' controls task ] |>
@@ -88,7 +88,7 @@ deleteTask : Activator m -> Wrapper Type m -> Int -> Type -> Html
 deleteTask activate wrap ix milestone =
   let milestone' = { milestone | tasks <- Array.Extra.removeAt ix milestone.tasks }
   in Html.input [ Attributes.type' "button"
-                , Attributes.class "milestone-button"
+                , Attributes.class "small-button delete-button"
                 , Attributes.title "Remove this task"
                 , activate (flip Events.onClick (\m -> wrap milestone' m))
                 ] []
@@ -97,10 +97,10 @@ insertButton : String -> Activator m -> Wrapper Type m -> Int -> Type -> Html
 insertButton class activator wrap ix milestone =
   let milestone' = { milestone | tasks <- insertAt ix Task.new milestone.tasks }
   in Html.input [ Attributes.type' "button"
-               , Attributes.title "Insert new task"
-               , Attributes.class class
-               , activator (flip Events.onClick (\m -> wrap milestone' m))
-               ] []
+                , Attributes.title "Insert new task"
+                , Attributes.class class
+                , activator (flip Events.onClick (\m -> wrap milestone' m))
+                ] []
 
 
 style = """
@@ -145,13 +145,27 @@ style = """
 }
 
 .milestone-insert input {
-  width: 300px;
+  border: 0px;
+  width: 20px;
+  height: 20px;
+  background:url(/images/add-button.png) no-repeat;
+  opacity:0.8;
+  overflow:visible;
+}
+
+.milestone-insert input:hover {
+  opacity:1.0;
 }
 
 .milestone-button {
   width: 20px;
   height: 20px;
   float: right;
+  opacity: 0.8;
+}
+
+.milestone-button:hover {
+  opacity: 1.0;
 }
 
 .milestone-task {
@@ -181,7 +195,7 @@ style = """
 }
 """
 
-style' = Task.style' ++
+style' = Task.style ++
          Rubric.style ++
          style
 

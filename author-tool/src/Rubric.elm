@@ -54,7 +54,7 @@ deleteButton activator wrap rubric ix =
   in
     Html.input [ Attributes.type' "button"
                , Attributes.title "Delete this item."
-               , Attributes.class "rubric-delete item-button"
+               , Attributes.class "delete-button item-button"
                , activator (flip Events.onClick (\m -> wrap rubric' m))
                ] []
 
@@ -83,8 +83,10 @@ style' = """
 }
 
 .rubric-insert input {
-  width: 25px;
-  height: 25px;
+  width: 20px;
+  height: 20px;
+  background:url(/images/add-button.png) no-repeat;
+  border:0px;
 }
 
 div.rubric-insert-item {

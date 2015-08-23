@@ -50,7 +50,7 @@ rotate direction activate wrap item =
       next = (item.selected + direction) % len
       item' = {item | selected <- next}
   in Html.input [ Attributes.type' "button"
-                , Attributes.class "item-button"
+                , Attributes.class "next-button item-button"
                 , Attributes.title "Change item type"
                 , activate (flip Events.onClick (\m -> wrap item' m)) ] []
 
@@ -101,9 +101,8 @@ style' = """
 }
 
 .item-button {
-  width: 25px;
-  height: 25px;
-  margin: 5px 0 5px 0;
+  width: 20px;
+  height: 20px;
 }
 
 .item-body {

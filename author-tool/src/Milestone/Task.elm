@@ -48,8 +48,8 @@ renderSelected activate wrap controls task =
        Just (ControlledReview review) -> ControlledReview.render activate (wrap' ControlledReview) controls' review
        Just (Survey survey) -> Survey.render activate (wrap' Survey) controls' survey
 
-nextTask = updateSelected "task-control task-next" "Next Task" 1
-prevTask = updateSelected "task-control task-prev" "Prev Task" (-1)
+nextTask = updateSelected "small-button next-button" "Next Task" 1
+prevTask = updateSelected "small-button prev-button" "Prev Task" (-1)
 
 updateSelected : String -> String -> Int -> Activator m -> Wrapper Type m -> Type -> Html
 updateSelected class tip diff activate wrap task =
@@ -61,24 +61,6 @@ updateSelected class tip diff activate wrap task =
                 , activate (flip Events.onClick (\m -> wrap task' m))
                 ] []
 
-style = """
-.task-control  {
-  width: 20px;
-  height: 20px;
-  float: right;
-}
-"""
-
-style' = PeerReview.style ++
-         ControlledReview.style ++
-         Survey.style ++
-         style
-
-update n m = n m
-
-view address model = Html.div [] [ Html.node "script" [] [ Html.text Rubric.script ], Html.node "style" [] [ Html.text style' ], render (\event -> event address) (\t m -> t) [] model ]
-
-main = StartApp.start { model = new, update = update, view = view }
-
-
-
+style = PeerReview.style ++
+        ControlledReview.style ++
+        Survey.style 

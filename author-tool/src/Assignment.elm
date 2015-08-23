@@ -86,14 +86,14 @@ renderIx activate wrap assignment ix milestone =
   let len = Array.length assignment.milestones
       delete = if | len > 1 -> deleteButton activate wrap assignment ix
                   | otherwise -> Html.div [] []
-      controls = [ delete, insertButton "assignment-button assignment-insert" activate wrap ix assignment ]
+      controls = [ delete, insertButton "small-button add-button" activate wrap ix assignment ]
       wrap' = (\milestone m -> wrap { assignment | milestones <- Array.set ix milestone assignment.milestones } m)
   in [ Milestone.render activate wrap' controls milestone ] |>
      Html.div [ Attributes.class "assignment-milestone" ]
 
 deleteButton : Activator m -> Wrapper Type m -> Type -> Int -> Html
 deleteButton activate wrap assignment ix =
-  Html.input [ Attributes.class "assignment-delete assignment-button" 
+  Html.input [ Attributes.class "delete-button small-button" 
              , Attributes.type' "button"
              , Attributes.title "Remove this milestone"
              , activate <| flip Events.onClick (\m -> wrap { assignment | milestones <- Array.Extra.removeAt ix assignment.milestones } m)
@@ -102,15 +102,44 @@ deleteButton activate wrap assignment ix =
 
 style = """
 
-.assignment-insert-last {
+input.assignment-insert-last {
   width: 300px;
+  min-height:20px;
+  border:0px;
+  background: url(/images/add-button.png) no-repeat;
 }
 
-input.assignment-button  {
+input.small-button  {
   width: 20px;
   height: 20px;
   float: right;
+  opacity:0.8;
 }
+
+input.small-button:hover {
+  opacity:1.0;
+}
+
+input.delete-button {
+  background:url(/images/close-button.png) no-repeat;
+  border:0px;
+}
+
+input.add-button {
+  background:url(/images/add-button.png) no-repeat;
+  border:0px;
+}
+
+input.next-button {
+  background:url(/images/next-button.png) no-repeat;
+  border:0px;
+}
+
+input.prev-button {
+  background:url(/images/prev-button.png) no-repeat;
+  border:0px;
+}
+
 
 h1.assignment-title {
   font-weight: bold;

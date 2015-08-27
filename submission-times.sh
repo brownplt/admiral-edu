@@ -1,8 +1,9 @@
 #/bin/bash
-file="$(pwd)/submission-times-$1.csv"
+file="$(pwd)/submission-times-$1-$2.csv"
 cmd="SELECT user_id, last_modified "
 cmd="$cmd FROM submission"
 cmd="$cmd WHERE assignment_id='$1'"
+cmd="$cmd AND step_id='$2'"
 cmd="$cmd AND user_id NOT LIKE 'default%'"
 cmd="$cmd ORDER BY last_modified ASC"
 cmd="$cmd INTO OUTFILE '$file'"

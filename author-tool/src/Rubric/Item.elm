@@ -13,6 +13,7 @@ import Signal exposing (Address)
 
 import Rubric.Item.Checkbox as Checkbox
 import Rubric.Item.FreeForm as FreeForm
+import Rubric.Item.Instruction as Instruction
 import Rubric.Item.Likert as Likert
 import Rubric.Item.Select as Select
 import Rubric.Item.Utils as Utils
@@ -25,15 +26,15 @@ type alias Type = { types : Array Item
 
 new : Type
 new = { types = Array.fromList [ FreeForm FreeForm.new
-                               , Checkbox Checkbox.new
                                , Likert Likert.new
-                               , Select Select.new
+                               , Instruction Instruction.new
                                ]
       , selected = 0
       }
 
 type Item = Checkbox Checkbox.Type
           | FreeForm FreeForm.Type
+          | Instruction Instruction.Type
           | Likert Likert.Type
           | Select Select.Type
 
@@ -64,6 +65,7 @@ renderSelected activate wrap item =
     Just (FreeForm freeform) -> FreeForm.render activate (wrap' FreeForm) freeform
     Just (Select select) -> Select.render activate (wrap' Select) select
     Just (Likert likert) -> Likert.render activate (wrap' Likert) likert
+    Just (Instruction instruction) -> Instruction.render activate (wrap' Instruction) instruction
 
 
 style = style' ++
@@ -71,6 +73,7 @@ style = style' ++
         FreeForm.style ++ 
         Likert.style ++
         Select.style ++
+        Instruction.style ++
         Utils.style
 
 style' = """

@@ -22,6 +22,15 @@ new : Type
 new = { rubric = editable Rubric.new
       }
 
+toYAML : String -> Int -> Type -> String
+toYAML id indent review =
+  let indent' = String.repeat indent " "
+      rubric = Rubric.toYAML (indent + 4) review.rubric.value
+  in indent' ++ "- instructor-solution:\n" ++
+     indent' ++ "    id: " ++ id ++ "\n" ++
+     rubric
+  
+  
 render : Activator m -> Wrapper Type m -> List Html -> Type -> Html
 render activate wrap controls review =
   let content = if | review.rubric.editing -> Html.div [ Attributes.class "controlled-review-body" ] [rubric activate wrap review]

@@ -19,17 +19,45 @@ import Rubric.Item.Utils as Utils
 
 import StartApp
 
+import String
+
 type alias Type = { title : Editable String
                   , text : Editable String
                   , tasks : Array Task.Type
                   }
 
-new :Type
+new : Type
 new = { title = Editable.new ""
       , text = Editable.new ""
       , tasks = Array.empty
       }
 
+toYAML : Int -> Type -> String
+toYAML indent milestone =
+  let indent' = String.repeat indent " "
+      id = String.split " " milestone.title.value |>
+           String.join "-" |>
+           String.toLower
+      text = Utils.sanitize milestone.text.value
+      tasks = if | Array.isEmpty milestone.tasks -> ""
+                 | otherwise -> yamlTasks (indent + 2) milestone.tasks
+  in indent' ++ "- id: " ++ id ++ "\n"  ++
+     indent' ++ "  instructions: \"" ++ text ++ "\"\n" ++
+     tasks
+
+yamlTasks : Int -> Array Task.Type -> String
+yamlTasks indent tasks =
+  let indent' = String.repeat indent " "
+      tasks' = Array.indexedMap (yamlTasks' (indent + 2)) tasks |>
+               Array.toList |>
+               String.join "\n"
+  in indent' ++ "reviews:\n" ++
+     tasks'
+
+yamlTasks' : Int -> Int -> Task.Type -> String
+yamlTasks' indent ix task =
+  let id = "task-" ++ (toString ix)
+  in Task.toYAML id indent task
 
 render : Activator m -> Wrapper Type m -> List Html -> Type -> Html
 render activate wrap controls milestone =

@@ -1,4 +1,4 @@
-module Rubric.Item (Type, new, render, style, script) where
+module Rubric.Item (Type, new, render, style, script, toYAML) where
 import Common exposing (..)
 
 import Array
@@ -28,9 +28,18 @@ new : Type
 new = { types = Array.fromList [ FreeForm FreeForm.new
                                , Likert Likert.new
                                , Instruction Instruction.new
+--                               , Checkbox Checkbox.new
+--                               , Select Select.new
                                ]
       , selected = 0
       }
+
+toYAML : Int -> Type -> String
+toYAML indent item =
+  case (Array.get item.selected item.types) of
+    Just (FreeForm freeform) -> FreeForm.toYAML indent freeform
+    Just (Likert likert) -> Likert.toYAML indent likert
+    Just (Instruction instruction) -> Instruction.toYAML indent instruction
 
 type Item = Checkbox Checkbox.Type
           | FreeForm FreeForm.Type

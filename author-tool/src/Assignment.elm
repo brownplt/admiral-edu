@@ -19,18 +19,41 @@ import Rubric
 
 import StartApp
 
+import String
+
 import Rubric.Item.Utils as Utils
 
 type alias Type = { title : Editable String
                   , instructions : Editable String
                   , milestones : Array Milestone.Type
+                  , doExport : Bool
                   }
 
 new : Type
 new = { title = Editable.new ""
       , instructions = Editable.new ""
       , milestones = Array.fromList [ Milestone.new ]
+      , doExport = False
       }
+
+toYAML : Int -> Type -> String
+toYAML indent assignment =
+  let indent' = String.repeat indent " "
+      id = String.split "\"" assignment.title.value |>
+           String.join "" |>
+           String.split " " |>
+           String.join "-" |>
+           String.toLower
+      description = Utils.sanitize assignment.instructions.value
+      milestones = Array.map (Milestone.toYAML (indent + 2)) assignment.milestones |>
+                   Array.toList |>
+                   String.join "\n"
+  in indent' ++ "name: \"" ++ (Utils.sanitize assignment.title.value) ++ "\"\n" ++
+     indent' ++ "id: " ++ id ++ "\n" ++
+     indent' ++ "description: \"" ++ description ++ "\"\n" ++
+     indent' ++ "steps:\n" ++
+     milestones
+
 
 render : Activator m -> Wrapper Type m -> List Html -> Type -> Html
 render activate wrap controls assignment =
@@ -38,7 +61,18 @@ render activate wrap controls assignment =
               , Html.div [ Attributes.class "assignment-body" ]
                          [ instructions activate wrap assignment
                          , milestones activate wrap assignment ]
+              , Html.div [ Attributes.class "export-hack" ]
+                         [ Html.textarea [ Attributes.disabled True ] [ toYAML 0 assignment |> Html.text ] ]
               ]
+
+exportButton : Activator m -> Wrapper Type m -> List Html -> Type -> Html
+exportButton activate wrap controls assignment =
+  let assignment' = { assignment | doExport <- not assignment.doExport }
+  in
+  Html.input [ Attributes.type' "button",
+               Attributes.value "Export",
+               activate (flip Events.onClick (\m -> wrap assignment' m))
+             ] []
 
 title : Activator m -> Wrapper Type m -> List Html -> Type -> Html
 title activate wrap controls assignment =
@@ -173,7 +207,12 @@ h1.assignment-title {
 .assignment-milestones {
   padding: 5px;
 }
-           
+
+.export-hack textarea {
+  width: 500px;
+  height: 500px;         
+}
+  
 """
 
 style' = Milestone.style' ++

@@ -1,4 +1,4 @@
-module Rubric.Item.Utils (textbox, textarea, style, script, markdown) where
+module Rubric.Item.Utils (textbox, textarea, sanitize, style, script, markdown) where
 
 import String
 import Signal exposing (Address)
@@ -9,6 +9,13 @@ import Html.Attributes as Attributes
 import Editable exposing (..)
 
 import Markdown
+
+sanitize : String -> String
+sanitize s =
+  let s' = String.join "\\n" (String.split "\n" s)
+      s'' = String.join "\\\"" (String.split "\"" s')
+  in s''
+
 
 textbox : ((Address a -> Attribute) -> Attribute) -> (Editable String -> a) -> Editable String -> String -> Html
 textbox activate wrap text default = 
@@ -88,7 +95,10 @@ script = """
 var insertListener = function(event){
  if (event.animationName == "set-focus") {
    event.target.focus();
- }               
+ } 
+ if (event.animationName == "set-export-hack") {
+   alert("test")
+ }
 }
 document.addEventListener("animationstart", insertListener, false); // standard + firefox
 document.addEventListener("MSAnimationStart", insertListener, false); // IE

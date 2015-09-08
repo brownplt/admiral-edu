@@ -1,7 +1,7 @@
 module Rubric.Item.FreeForm (..) where
 import Common exposing (..)
 
-import Rubric.Item.Utils exposing (textbox, textarea)
+import Rubric.Item.Utils exposing (textbox, textarea, sanitize)
 import Rubric.Item.Utils as Utils
 import Editable exposing (..)
 import Html
@@ -17,6 +17,18 @@ type alias Type = { id : Editable String
                   , text : Editable String
                   }
 
+toYAML : Int -> Type -> String
+toYAML indent freeform =
+  let indent' = String.repeat indent " "
+      id = String.split " " freeform.text.value |>
+           String.join "-" |>
+           String.toLower
+      text = sanitize freeform.text.value
+  in indent' ++ "- free-form:\n" ++
+     indent' ++ "    id: " ++ id ++ "\n" ++
+     indent' ++ "    text: \"" ++ text ++ "\""
+
+                
 new : Type
 new = { id = editable "", text = editable "" }
 

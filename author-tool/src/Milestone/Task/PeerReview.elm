@@ -8,10 +8,11 @@ import Html exposing (Html, Attribute)
 import Html.Attributes as Attributes
 import Html.Events as Events
 
-
 import Rubric
 
 import StartApp
+
+import String
 
 type alias Type = { amount : Int
                   , rubric : Editable Rubric.Type
@@ -22,6 +23,16 @@ new = { amount = 3
       , rubric = editable Rubric.new
       }
 
+toYAML : String -> Int -> Type -> String
+toYAML id indent review =
+  let indent' = String.repeat indent " "
+      amount = toString review.amount
+      rubric = Rubric.toYAML (indent + 4) review.rubric.value
+  in indent' ++ "- student-submission:\n" ++
+     indent' ++ "    amount: " ++ amount ++ "\n" ++
+     indent' ++ "    id: " ++ id ++ "\n" ++
+     rubric
+     
 render : Activator m -> Wrapper Type m -> List Html -> Type -> Html
 render activate wrap controls review =
   let content = if | review.rubric.editing -> Html.div [ Attributes.class "peer-review-body" ] 

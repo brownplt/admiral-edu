@@ -28,11 +28,18 @@ type Task = PeerReview PeerReview.Type
 new : Type
 new = { types = Array.fromList [ PeerReview PeerReview.new
                                , ControlledReview ControlledReview.new
-                               , Survey Survey.new
+--                               , Survey Survey.new
                                ]
       , selected = 0
       }
 
+toYAML : String -> Int -> Type -> String
+toYAML id indent task =
+  case (Array.get task.selected task.types) of
+    Just (PeerReview review) -> PeerReview.toYAML id indent review
+    Just (ControlledReview review) -> ControlledReview.toYAML id indent review
+--    Just (Survey survey) -> Survey.toYAML id indent survey
+      
 render : Activator m -> Wrapper Type m -> List Html -> Type -> Html
 render activate wrap controls task =
   Html.div [  ]

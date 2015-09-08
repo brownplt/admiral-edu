@@ -1,7 +1,7 @@
 module Rubric.Item.Likert (..) where
 import Common exposing (..)
 
-import Rubric.Item.Utils exposing (textbox, textarea)
+import Rubric.Item.Utils exposing (textbox, textarea, sanitize)
 import Rubric.Item.Utils as Utils
 import Rubric.Item.Utils exposing (..)
 import Editable exposing (..)
@@ -21,6 +21,27 @@ type alias Type = { id : Editable String
                   , granularity : Editable Int
                   }
 
+
+toYAML : Int -> Type -> String
+toYAML indent likert =
+  let indent' = String.repeat indent " "
+      id = String.split " " likert.text.value |> 
+           String.join "-" |>
+           String.toLower
+      text = sanitize likert.text.value
+      minLabel = sanitize likert.minLabel.value
+      maxLabel = sanitize likert.maxLabel.value
+      granularity = toString likert.granularity.value |> sanitize
+  in indent' ++ "- likert:\n" ++
+     indent' ++ "    id: " ++ id ++ "\n" ++
+     indent' ++ "    text: \"" ++ text ++ "\"\n" ++
+     indent' ++ "    min-label: \"" ++ minLabel ++ "\"\n" ++
+     indent' ++ "    max-label: \"" ++ maxLabel ++ "\"\n" ++
+     indent' ++ "    granularity: " ++ granularity
+
+
+
+                
 new : Type
 new = { id = editable ""
       , text = editable ""

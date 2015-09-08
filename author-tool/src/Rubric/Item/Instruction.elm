@@ -1,7 +1,7 @@
 module Rubric.Item.Instruction (..) where
 import Common exposing (..)
 
-import Rubric.Item.Utils exposing (textbox, textarea)
+import Rubric.Item.Utils exposing (textbox, textarea, sanitize)
 import Rubric.Item.Utils as Utils
 import Editable exposing (..)
 import Html
@@ -17,6 +17,11 @@ type alias Type = { label : Editable String }
 
 new : Type
 new = { label = editable "" }
+
+toYAML : Int -> Type -> String
+toYAML indent instruction =
+  let indent' = String.repeat indent " "
+  in indent' ++ "- instruction: \"" ++ (sanitize instruction.label.value) ++ "\""
 
 render : Activator m -> Wrapper Type m -> Type -> Html
 render activate wrap instruction =

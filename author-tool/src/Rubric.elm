@@ -1,4 +1,4 @@
-module Rubric(Type, new, render, script, style) where
+module Rubric(Type, new, render, script, style, toYAML) where
 import Common exposing (..)
 
 import Array
@@ -12,12 +12,22 @@ import List
 
 import Signal exposing (Address)
 
+import String
+
 import Rubric.Item as Item
 
 import StartApp
 
 type alias Type = { items : Array Item.Type }
 
+toYAML : Int -> Type -> String
+toYAML indent rubric =
+  let indent' = String.repeat indent " "
+      items = Array.map (Item.toYAML (indent+2)) rubric.items |>
+              Array.toList |>
+              String.join "\n"
+  in indent' ++ "rubric:\n" ++ items
+                
 render : Activator m -> Wrapper Type m -> Type -> Html
 render activate wrap rubric =
   let len = Array.length rubric.items in

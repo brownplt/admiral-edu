@@ -148,6 +148,7 @@
     (retrieve-file-bytes file-path)))
 
 ;; class-id -> assignment-id user-id step-id
+(provide submission-path)
 (: submission-path (String String String String -> String))
 (define (submission-path class-id assignment-id user-id step-id)
   (string-append class-id "/" assignment-id "/" user-id "/" step-id "/"))

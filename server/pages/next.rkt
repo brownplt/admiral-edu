@@ -9,7 +9,8 @@
 
 (require "../base.rkt"
          (prefix-in error: "errors.rkt")
-         "../authoring/assignment.rkt")
+         "../authoring/assignment.rkt"
+         "../storage/storage.rkt")
 
 (define (repeat val n)
   (cond
@@ -28,32 +29,38 @@
                (assignment (car rest))     
                (do-next (next-step assignment-id uid)))
           (cond 
-            [(MustSubmitNext? do-next) (handle-submit-next assignment user-id do-next start-url)]
+            [(MustSubmitNext? do-next) (handle-submit-next session assignment user-id do-next start-url)]
             [(MustReviewNext? do-next) (handle-review-next do-next start-url)]
             [(eq? #t do-next) (assignment-completed)]
             [else (error "Unknown next-action.")])))))
 
-(define (handle-submit-next assignment-id user-id action start-url)
+(define (handle-submit-next session assignment-id user-id action start-url)
   (let* ((step (MustSubmitNext-step action))
          (instruction (Step-instructions step))
          (step-id (Step-id step))
          (exists (submission:exists? assignment-id class-name step-id user-id)))
-    (cond [exists (view-publish step-id instruction start-url assignment-id)]
+    (cond [exists (view-publish session step-id instruction start-url assignment-id)]
           [else (view-upload step-id instruction start-url assignment-id)])))
 
-(define (view-publish step-id instruction start-url assignment-id)
-  (let ((submit-url (string-append start-url "../../submit/" assignment-id  "/" step-id "/"))
-        (browse-url (string-append start-url "../../browse/" assignment-id "/" step-id "/")))
+(define (view-publish session step-id instruction start-url assignment-id)
+  (let* ((submit-url (string-append start-url "../../submit/" assignment-id  "/" step-id "/"))
+         (browse-url (string-append start-url "../../browse/" assignment-id "/" step-id "/"))
+         (class (ct-session-class session))
+         (user-id (ct-session-uid session))
+         (the-path (submission-path class assignment-id user-id step-id))
+         (publish-okay (> (length (list-files the-path)) 0)))
     (string-append "<p>Below is your current submission to '" step-id "'. It has not yet been published. You may make changes until you are ready to publish.</p>"
                    "<iframe width='800px' height='600px' style='border: none;' src='" browse-url "' scrolling='no'></iframe>"
                    "<h3>Publish Current Submission</h3>"
                    "<p><b>Warning:</b> After publishing, you may not make any changes to this submission step. "
                    "Make sure all files you would like to submit for this step are present in the preview above "
                    "before clicking the button below.</p>"
-                   "<form action='" submit-url "' method='post'>"
-                   "<input type='hidden' name='action' value='submit'>"
-                   "<input type='submit' value='Publish Submission'>"
-                   "</form>"
+                   (if publish-okay (string-append
+                                     "<form action='" submit-url "' method='post'>"
+                                     "<input type='hidden' name='action' value='submit'>"
+                                     "<input type='submit' value='Publish Submission'>"
+                                     "</form>")
+                       "<p>Your submission contains no files. Please upload a new submission before publishing this one.</p>")
                    "<h3>Upload new submission</h3>"
                    "<p><b>Warning:</b> This will over write your current submission.</p>"
                    "<form action='" submit-url "' method='post' enctype='multipart/form-data'>"

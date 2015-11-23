@@ -1,0 +1,55 @@
+
+body {
+    background: #ffffcc;
+}
+
+#main {
+    width: 960px;
+    padding: 5px;
+    margin: -10px auto 20px auto;
+    background: white;
+    border: 1px solid;
+}
+
+p {
+    margin-left: 10px;
+    margin-right: 10px;
+    line-height: 1.5em;
+}
+
+li {
+    line-height: 1.5em;
+    margin-top: 10px;
+}
+    
+
+h1 {
+    font-family:sans-serif;
+    font-size:28px;
+    margin: 0;
+    margin-left: 10px;
+}
+
+h2 {
+    font-family:sans-serif;
+    font-size:20px;
+    margin: 0;
+    margin-left: 10px;
+}
+
+#assignment_creation {
+    width: 800px;
+    margin: auto;
+}
+
+#left_image {
+    float: left;
+}
+
+#right_image {
+    float: right;
+}
+
+#assignment_creation {
+    height: 550px;
+}

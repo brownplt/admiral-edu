@@ -33,9 +33,9 @@
 
 (provide time-stamp time-stamp-type time-stamp-type-1)
 (define time-stamp "time_stamp")
-(define time-stamp-type "TIMESTAMP DEFAULT 0")
+(define time-stamp-type "TIMESTAMP DEFAULT '1970-01-01 00:00:01'")
 (define time-stamp-type-0 "TIMESTAMP")
-(define time-stamp-type-1 "TIMESTAMP DEFAULT 0")
+(define time-stamp-type-1 "TIMESTAMP DEFAULT '1970-01-01 00:00:01'")
 
 (provide feedback-viewed-time-stamp
          feedback-viewed-time-stamp-type

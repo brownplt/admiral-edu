@@ -131,3 +131,7 @@ input[type=submit]:hover {
 	background: #aaa;
 	color: #000;
 }
+
+.submit-button.hidden {
+    display: none;
+}

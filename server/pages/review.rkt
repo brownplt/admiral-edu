@@ -42,7 +42,7 @@
          (completed (review:Record-completed review))
          (updir (apply string-append (repeat "../" (+ (length rest) 1))))
          (root-url updir)
-         [no-modifications (if completed "<p>This review has already been submitted. Modifications will not be saved.</p>" "")]
+         [no-modifications (if completed "This review has already been submitted. Modifications will not be saved." "")]
          [submit-hidden (if completed "hidden" "")]
          [submit-url (if completed "#" (string-append start-url root-url "review/submit/" r-hash "/"))]
          (updir-rubric (apply string-append (repeat "../" (- (length rest) 1))))

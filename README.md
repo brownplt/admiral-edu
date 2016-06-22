@@ -1,36 +1,36 @@
-# Launching Docker Instance
+# Captain Teach
 
-### Configuring OpenID Connect with Google
+This repository contains the implementation of Captain Teach. Yes, the repo is
+named admiral-edu.
 
-1. Create a project on the [Google Developer Console](https://console.developers.google.com/)
+You might be interested in running Captain Teach. If so, take a look at the
+instructions in the file Run.md, which show how to set up a project, download
+the images for MySQL and Captain Teach, and start the server.
 
-2. Once you are on the project page, in the side menu select APIs & auth > Credentials.
-  * Click Create a New Client ID
-  * Add https://localhost/redirect to the AUTHORIZED REDIRECT URI section
-  * Click Create Client ID
+## Building Captain Teach
 
-3. Create a `config` file based on `config.sample`:
+If you're interested in building Captain Teach, rather than simply running it,
+you'll need to do the following:
 
-     $ cp config.sample config
+1) Install docker on your platform.
+2) Add yourself to the docker group.
+3) run
 
-4. Copy the Client ID, Client Secret, values from the
-   Google Developers Console into the `config` file you created above.
+`make all`
 
-   Edit other settings in `config`, such as the hostname. These are obvious.
+Please note that step (2) has rather frightening security consequences; the
+members of the docker group are essentially root-equivalent. One alternative
+is to run the makefile as root, which doesn't sound better to me. As far as
+I know, this is a baked-in limitation of Docker. I suppose you could run the
+whole build process in a VM, which really seems like one VM too many.....
 
-5. In the Google Developers Console, you must have a `Redirect URIs` to
-   `BaseUri`/ct/redirect. For example, if `BaseUri = https://localhost`
-   I would add `https://localhost/ct/redirect`.
-   
+## Running after Building
 
+Okay, so you built it, and now you want to run it.
 
-### Configuring Service
-
-You will need to modify the `initialize` function in `server/config.rkt` to construct your initial class.
-
-### Launch Docker
-
-You should now be able to run the service in a docker container:
-
-    make run
+1) Follow all of the steps in the Run.md script up until the step labeled
+"Start Captain Teach".
+2) Take a look at the Makefile, and tweak the path to your configuration
+directory, if necessary.
+3) Run `make run`, or `make bash`, or `make debug`, as you wish.
 

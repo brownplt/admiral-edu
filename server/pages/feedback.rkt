@@ -84,7 +84,7 @@
 
 (define (gen-review-feedback reviews start-url)
   (let* ((feedback (gen-reviews reviews start-url))
-         (message (if (empty? reviews) "You have not received any feedback for this assignment"
+         (message (if (empty? reviews) "You have not received any feedback for this assignment."
                       "The links below are to reviews completed on your submissions.")))
     (string-append "<h2>Review Feedback</h2><p>" message "</p>" feedback)))
 

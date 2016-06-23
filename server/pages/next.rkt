@@ -76,7 +76,7 @@
                    "}"
                    "}"
                    "</script>"
-                   "<p><input id='verify' type='checkbox' onchange='enableUpload()' value='understand'>I understand that I am overwritting my current submission.</p>"
+                   "<p><input id='verify' type='checkbox' onchange='enableUpload()' value='understand'>I understand that I am overwriting my current submission.</p>"
                    "<p><input id='upload' type='submit' disabled=true value='Upload'></p>"
                    "</form>"
                    )))

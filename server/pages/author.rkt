@@ -44,14 +44,14 @@
 (define (edit session role rest [message '()])
   (if (< (length rest) 1) (error:error "Invalid URL. Expected /author/edit/assignment-id/")
       (let ((assignment-id (car rest)))
-        (if (not (assignment:exists? assignment-id class-name)) (error:error (string-append "No such assignment: " assignment-id))
-            (let* ((contents (retrieve-assignment-description class-name assignment-id)))
+        (if (not (assignment:exists? assignment-id (class-name))) (error:error (string-append "No such assignment: " assignment-id))
+            (let* ((contents (retrieve-assignment-description (class-name) assignment-id)))
               (page session role rest message contents (string-append "'" VALIDATE-AND-SAVE-ACTION "'") "test"))))))
 
 (define (page session role rest message contents validate load)
   (let* ([save-url validate]
          [load-url load]
-         [class-name class-name])
+         [class-name (class-name)])
     (string-append (include-template "html/authoring-header.html")
                    contents
                    (include-template "html/authoring-footer.html"))))

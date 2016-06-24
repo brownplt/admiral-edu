@@ -23,7 +23,7 @@
         [else (Failure "The system has not migrated to version 1.")]))
 
 (define (do-migrate)
-  (let* ((conn (connect))
+  (let* ((conn (make-sql-conn))
          (handler (lambda (exn) (Failure (format "An exception was raised: ~a." (raise exn)))))
          (result (with-handlers ([exn? handler]) (make-changes conn))))
     (disconnect conn)

@@ -85,7 +85,7 @@
   (let* ((uid (review:Record-reviewee-id review))
          [assignment-id (review:Record-assignment-id review)]
          [step-id (review:Record-step-id review)]
-         [access-url (string-append "https://" sub-domain server-name "/" class-name "/feedback/" assignment-id "/")]
+         [access-url (string-append "https://" sub-domain server-name "/" (class-name) "/feedback/" assignment-id "/")]
          (message (include-template "../email/templates/review-ready.txt")))
     (send-email uid "Someone has completed a review of your work." message)))
     

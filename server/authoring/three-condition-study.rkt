@@ -50,8 +50,8 @@
         (step (first steps))
         (tail (rest steps)))
     (let* ((step-id (Step-id step))
-           (has-published (and (submission:exists? assignment-id class-name step-id uid)
-                               (submission:published? assignment-id class-name step-id uid)))
+           (has-published (and (submission:exists? assignment-id (class-name) step-id uid)
+                               (submission:published? assignment-id (class-name) step-id uid)))
            (result (cond 
                      [(not has-published) (MustSubmitNext step (Step-instructions step))]
                      [(eq? group 'no-reviews) (default:next-action (three-check-reviewed group) three-ensure-assigned-review assignment tail uid)]
@@ -103,7 +103,7 @@
     (map (three-ensure-assigned-review assignment-id uid step) reviews)
     ;; Filter out completed reviews. If the list is empty, there are no reviews left
     (cond [(null? (filter check-review reviews)) #t]
-          [else (MustReviewNext step (review:select-assigned-reviews assignment-id class-name step-id uid))])))
+          [else (MustReviewNext step (review:select-assigned-reviews assignment-id (class-name) step-id uid))])))
 
 (provide three-do-submit-step)
 ; If file-name or data is false, we don't upload anything
@@ -113,10 +113,10 @@
         (step-id (Step-id step)))
     
     ; ensure a submission record exists
-    (when (not (submission:exists? assignment-id class-name step-id uid))
-      (submission:create assignment-id class-name step-id uid))
+    (when (not (submission:exists? assignment-id (class-name) step-id uid))
+      (submission:create assignment-id (class-name) step-id uid))
     
-    (submission:publish assignment-id class-name step-id uid)
+    (submission:publish assignment-id (class-name) step-id uid)
     
     (let* ((group (lookup-group assignment-id uid))
            (extra-message (cond [(eq? group 'gets-reviewed) "You don't need to do any reviewing.  But, you will receive reviews, so you can wait for feedback if you want before you submit your final implementation and tests."]
@@ -163,13 +163,13 @@
                      "SET" review:reviewee-id "=?"
                      "WHERE" review:hash "=?"))
            (result (query-exec q uid hash)))
-      (submission:increment-reviewed assignment-id class-name step-id uid)
+      (submission:increment-reviewed assignment-id (class-name) step-id uid)
       (send-email reviewer "Captain Teach: A review is ready." 
                   (string-join 
                    (list "A review has been assigned to you."
                          (string-append "Assignment-id: " assignment-id)
                          "You can access the review at the following URL:"
-                         (string-append "https://" (assert sub-domain string?) (assert server-name string?) "/" class-name "/next/" assignment-id "/"))
+                         (string-append "https://" (assert sub-domain string?) (assert server-name string?) "/" (class-name) "/next/" assignment-id "/"))
                    "\n"))
       result)))
 
@@ -185,7 +185,7 @@
                        "ORDER BY" "C DESC,"
                        review:time-stamp "ASC"
                        "LIMIT ?"))
-         (result (query-rows q assignment-id class-name step-id amount)))
+         (result (query-rows q assignment-id (class-name) step-id amount)))
     (printf "results of query: ~a\n" result)
     (cast result (Listof (Vector String Integer)))))
 
@@ -215,7 +215,7 @@
            (review-id (Review-id review))
            (expected (student-submission-amount review))
            (rubric (student-submission-rubric review))
-           (actual  (review:count-assigned-reviews class-name assignment-id uid step-id review-id))
+           (actual  (review:count-assigned-reviews (class-name) assignment-id uid step-id review-id))
            (diff (max 0 (- expected actual))))
       (student-submission review-id diff rubric))))
 
@@ -229,7 +229,7 @@
            (user-group (symbol->string (lookup-group assignment-id uid)))
            (review-id (Review-id review))
            (rubric (instructor-solution-rubric review))
-           (count (review:count-assigned-reviews class-name assignment-id uid step-id review-id)))
+           (count (review:count-assigned-reviews (class-name) assignment-id uid step-id review-id)))
       ;; If the user-group matches the review-id, assign them to the review
       (cond [(string=? user-group review-id) (if (> count 0) #f review)]
             [else #f]))))
@@ -244,8 +244,8 @@
   (lambda (review)
     (let ((review-id (Review-id review))
           (amount (Review-amount review)))
-      (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id class-name step-id (dependency-submission-name review-id 1) uid review-id)]
-            [(student-submission? review) (assign-student-reviews assignment-id class-name step-id uid review-id amount)]))))
+      (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id (class-name) step-id (dependency-submission-name review-id 1) uid review-id)]
+            [(student-submission? review) (assign-student-reviews assignment-id (class-name) step-id uid review-id amount)]))))
 
 
 (: gets-reviewed-list (String String -> (Listof String)))
@@ -297,7 +297,7 @@
 (provide dependency-file-name)
 (: dependency-file-name (String -> String))
 (define (dependency-file-name assignment-id)
-  (string-append class-name "/" assignment-id "/three-condition-config.yaml"))
+  (string-append (class-name) "/" assignment-id "/three-condition-config.yaml"))
 
 (: three-get-deps (Assignment -> (Listof Dependency)))
 (define (three-get-deps assignment)

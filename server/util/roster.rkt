@@ -22,10 +22,10 @@
     (cond [(not okay) (Failure (format "Received '~a' but User IDs may not contain spaces." uid))]
           [else (begin
                   (when (not (user:exists? uid)) (user:create uid))
-                  (let ((registered (role:exists? class-name uid)))
+                  (let ((registered (role:exists? (class-name) uid)))
                     (cond [registered (Failure (format "Received '~a' but User ID is already registered in the class." uid))]
                           [else (begin
-                                  (role:associate class-name uid student-role)
+                                  (role:associate (class-name) uid student-role)
                                   (Success uid))])))])))
 
 ; String -> Either Success Failure
@@ -33,7 +33,7 @@
 (provide drop-uid)
 (define (drop-uid uid)
   (let ((do-action (lambda (clean-uid)
-                     (role:delete class-name uid)
+                     (role:delete (class-name) uid)
                      (Success uid))))
     (is-registered->run uid do-action)))
 
@@ -41,9 +41,9 @@
 (provide change-role)
 (define (change-role uid new-role)
   (let ((do-action (lambda (clean-uid)
-                     (let ((action (cond [(eq? new-role 'instructor-role) (role:set-role class-name uid instructor-role)]
-                                         [(eq? new-role 'student-role) (role:set-role class-name uid student-role)]
-                                         [(eq? new-role 'ta-role) (role:set-role class-name uid ta-role)]
+                     (let ((action (cond [(eq? new-role 'instructor-role) (role:set-role (class-name) uid instructor-role)]
+                                         [(eq? new-role 'student-role) (role:set-role (class-name) uid student-role)]
+                                         [(eq? new-role 'ta-role) (role:set-role (class-name) uid ta-role)]
                                          [else #f])))
                        (if (not action) (Failure (format "Could not change role of '~a' to '~a': No such role" uid new-role))
                            (Success uid))))))
@@ -54,6 +54,6 @@
 ; UserId -> (Function: (UserId . Rest) -> Either Success Failure) -> Rest -> Either Success Failure
 (define (is-registered->run uid f . args)
   (let* ((clean (string-trim uid))
-         (exists? (role:exists? class-name clean)))
+         (exists? (role:exists? (class-name) clean)))
     (cond [(not exists?) (Failure (format "The User ID '~a' is not registered in the class." uid))]
           [else (apply f (cons clean args))])))

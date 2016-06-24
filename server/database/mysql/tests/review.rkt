@@ -5,6 +5,8 @@
          "../../../base.rkt"
          rackunit)
 
+;; FIXME: set good testing configuration
+(/ 1 0)
 (set-db-address! "localhost")
 
 (define test-class "test-class")
@@ -33,7 +35,7 @@
 
 (define (make-student id)
     (user:create id)
-    (role:associate class-name id student-role))
+    (role:associate (class-name) id student-role))
 
 
 (define (init-tests)

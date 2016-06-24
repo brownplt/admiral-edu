@@ -10,7 +10,7 @@
 (provide load)
 (: load (->* (ct-session (Listof String) (U XExpr #f)) (Boolean) (Listof (U XExpr Void))))
 (define (load session url message [post #f])
-      (match (assignment:list class-name)
+      (match (assignment:list (class-name))
         ['no-such-class '((h2 "No such class found."))]
         [records
          (let*: ((assign-list (cast records (Listof assignment:Record)))
@@ -20,7 +20,7 @@
                  [closed-xexpr : XExpr (cons 'ul (map record->html closed-assignments))])
            `((h1 "Assignments")
              ,(when message message)
-             (p () (a ((href ,(string-append "/" class-name "/author/"))) "New Assignment"))
+             (p () (a ((href ,(string-append "/" (class-name) "/author/"))) "New Assignment"))
              (h2 "Open Assignments")
              ,open-xexpr
              (h2 "Closed Assignments")

@@ -27,10 +27,10 @@
 
 
 (define (connect)
-  (let ((new-conn (mysql-connect #:user db-user-name
-                                 #:database db-name
-                                 #:password db-password
-                                 #:server (get-db-address))))
+  (let ((new-conn (mysql-connect #:user (db-user-name)
+                                 #:database (db-name)
+                                 #:password (db-password)
+                                 #:server (db-address))))
     new-conn))
 
 (provide run)

@@ -38,7 +38,7 @@
            (bindings (request-bindings req))
            (post-data (request-post-data/raw req))
            (clean-path (filter (lambda (x) (not (equal? "" x))) path))
-           (start-rel-url (ensure-trailing-slash (string-append "/" class-name "/" (string-join path "/"))))
+           (start-rel-url (ensure-trailing-slash (string-append "/" (class-name) "/" (string-join path "/"))))
            (session (get-session req (make-table start-rel-url bindings)))
            (result (with-handlers ([any? error:exception-occurred]) (handlerPrime post post-data session bindings raw-bindings clean-path))))
       result)))
@@ -62,20 +62,40 @@
                                         [(and (> (length rest) 1)
                                               (string=? "download" (list-ref rest (- (length rest) 2)))) (render-any session review:check-download rest)]
                                         [(render-html session review:file-container rest)])]
-    [(cons "su" (cons uid rest)) (with-sudo post post-data uid session bindings raw-bindings rest)]
-    [(cons "author" rest) (if post (author:post->validate session post-data rest) (render-html session author:load rest))]
+    [(cons "su" (cons uid rest))
+     (with-sudo post post-data uid session bindings raw-bindings rest)]
+    [(cons "author" rest)
+     (if post
+         (author:post->validate session post-data rest)
+         (render-html session author:load rest))]
     [(cons "next" rest) (render-html session next rest)]
-    [(cons "dependencies" rest) (if post (dep:post session rest bindings raw-bindings) (render-html session dep:dependencies rest))]
-    [(cons "submit" rest) (if post (submit:submit session role rest bindings raw-bindings) (error:response-error 
-                                                                                            (error:error (string-append "<p>You've accessed this page in an invalid way.</p>"
-                                                                                                                  "<p>Try returning to <a href='https://" sub-domain server-name "/" class-name "/'>Class Home</a> and trying again.</p>"))))]
-    [(cons "feedback" rest) (if post (feedback:post session role rest bindings post-data) (render-html session feedback:load rest))]
+    [(cons "dependencies" rest)
+     (if post
+         (dep:post session rest bindings raw-bindings)
+         (render-html session dep:dependencies rest))]
+    [(cons "submit" rest)
+     (if post
+         (submit:submit session role rest bindings raw-bindings)
+         (error:response-error 
+          (error:error (string-append "<p>You've accessed this page in an invalid way.</p>"
+                                      "<p>Try returning to <a href='https://"
+                                      sub-domain server-name "/" (class-name)
+                                      "/'>Class Home</a> and trying again.</p>"))))]
+    [(cons "feedback" rest)
+     (if post
+         (feedback:post session role rest bindings post-data)
+         (render-html session feedback:load rest))]
     [(cons "export" rest) (export:load session (role session) rest)]
     [(cons "exception" rest) (error "Test an exception occurring.")]
-    [(cons "roster" rest) (if post (render-html session (roster:post post-data bindings) rest) (render-html session roster:load rest))]
-    [(cons "browse" rest) (cond [(and (> (length rest) 1)
-                                      (string=? "download" (list-ref rest (- (length rest) 2)))) (render-any session browse:download rest)]
-                                [else (render-html session browse:load rest)])]
+    [(cons "roster" rest)
+     (if post
+         (render-html session (roster:post post-data bindings) rest)
+         (render-html session roster:load rest))]
+    [(cons "browse" rest)
+     (cond [(and (> (length rest) 1)
+                 (string=? "download" (list-ref rest (- (length rest) 2))))
+            (render-any session browse:download rest)]
+           [else (render-html session browse:load rest)])]
     [else (typed:handlerPrime post post-data session bindings raw-bindings path)]))
 
 (define (require-auth session f)
@@ -98,7 +118,7 @@
 ;; Defines how a session is created
 ;; request -> ct-session
 (define (get-session req trailing-slash)
-  (ct-session class-name (req->uid req) trailing-slash))
+  (ct-session (class-name) (req->uid req) trailing-slash))
 
 ;; Returns #f if the session is not valid
 ;; otherwise returns a role-record

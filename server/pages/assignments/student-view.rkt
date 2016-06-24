@@ -20,7 +20,7 @@
 ; string-url -> (listof xexpr? void?)
 (: list-open-assignments (String -> (Listof XExpr)))
 (define (list-open-assignments start-url)
-  (let*: ([assignments : (U 'no-such-class (Listof assignment:Record)) (assignment:list class-name)]
+  (let*: ([assignments : (U 'no-such-class (Listof assignment:Record)) (assignment:list (class-name))]
           (open-assignments (filter assignment:Record-open (cast assignments (Listof assignment:Record)))))
     (cond [(empty? open-assignments) '((p "There are currently no open assignments."))]
           [else (map (open-assignment-element start-url) open-assignments)])))
@@ -39,7 +39,7 @@
 (: list-closed-assignments (ct-session String -> (Listof XExpr)))
 (define (list-closed-assignments session start-url)
     (let*: ((uid (ct-session-uid session))
-            [assignment-list : (U 'no-such-class (Listof assignment:Record)) (assignment:list class-name)]
+            [assignment-list : (U 'no-such-class (Listof assignment:Record)) (assignment:list (class-name))]
             (closed-assignments (filter (show-closed? uid) (cast assignment-list (Listof assignment:Record)))))
       (cond [(empty? closed-assignments) '((p "There are currently no closed assignments."))]
             [else (map (closed-assignment-element start-url) closed-assignments)])))
@@ -51,7 +51,7 @@
   (lambda (record)
     (let* ((assignment-id (assignment:Record-id record))
            (closed (not (assignment:Record-open record)))
-           (has-submitted (submission:has-submitted? assignment-id class-name uid)))
+           (has-submitted (submission:has-submitted? assignment-id (class-name) uid)))
       (and closed has-submitted))))
 
 

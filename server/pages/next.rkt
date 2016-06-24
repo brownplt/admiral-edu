@@ -20,7 +20,7 @@
 (provide next)
 (define (next session role rest [message '()])
   (let* ((assignment-id (car rest))
-         (assignment-record (assignment:select class-name assignment-id))
+         (assignment-record (assignment:select (class-name) assignment-id))
          (is-open (assignment:Record-open assignment-record))
          (start-url (hash-ref (ct-session-table session) 'start-url))
          (user-id (ct-session-uid session)))
@@ -38,7 +38,7 @@
   (let* ((step (MustSubmitNext-step action))
          (instruction (Step-instructions step))
          (step-id (Step-id step))
-         (exists (submission:exists? assignment-id class-name step-id user-id)))
+         (exists (submission:exists? assignment-id (class-name) step-id user-id)))
     (cond [exists (view-publish session step-id instruction start-url assignment-id)]
           [else (view-upload step-id instruction start-url assignment-id)])))
 

@@ -9,7 +9,7 @@
 
 (define (make-student id)
     (user:create id)
-    (role:associate class-name id student-role))
+    (role:associate (class-name) id student-role))
 
 (define ACE "ace")
 (define AMY "amy")
@@ -27,6 +27,8 @@
 (define SUE "sue")
 (define SID "sid")
 
+;; FIXME... parameterize with legitimate configuration
+(/ 1 0)
 (set-db-address! "localhost")
 
 (define (init-tests)
@@ -64,22 +66,22 @@
 
 (define (test-met-dependencies)
   (init-tests)  
-  (submission:create-instructor-solution (Assignment-id test-assignment) class-name "tests" (dependency-submission-name "poor-tests" 1))
+  (submission:create-instructor-solution (Assignment-id test-assignment) (class-name) "tests" (dependency-submission-name "poor-tests" 1))
   (check-test-assignment #t #f #f #f #f #f)
   
-  (submission:create-instructor-solution (Assignment-id test-assignment) class-name "tests" (dependency-submission-name "good-tests" 1)) 
+  (submission:create-instructor-solution (Assignment-id test-assignment) (class-name) "tests" (dependency-submission-name "good-tests" 1)) 
   (check-test-assignment #t #t #f #f #f #f)
   
-  (submission:create-instructor-solution (Assignment-id test-assignment) class-name "tests" (dependency-submission-name "student-review" 1)) 
+  (submission:create-instructor-solution (Assignment-id test-assignment) (class-name) "tests" (dependency-submission-name "student-review" 1)) 
   (check-test-assignment #t #t #t #f #f #f)
   
-  (submission:create-instructor-solution (Assignment-id test-assignment) class-name "implementation" (dependency-submission-name "poor-impl" 1)) 
+  (submission:create-instructor-solution (Assignment-id test-assignment) (class-name) "implementation" (dependency-submission-name "poor-impl" 1)) 
   (check-test-assignment #t #t #t #t #f #f)
   
-  (submission:create-instructor-solution (Assignment-id test-assignment) class-name "implementation" (dependency-submission-name "good-impl" 1))  
+  (submission:create-instructor-solution (Assignment-id test-assignment) (class-name) "implementation" (dependency-submission-name "good-impl" 1))  
   (check-test-assignment #t #t #t #t #t #f)
   
-  (submission:create-instructor-solution (Assignment-id test-assignment) class-name "implementation" (dependency-submission-name "student-review" 1)) 
+  (submission:create-instructor-solution (Assignment-id test-assignment) (class-name) "implementation" (dependency-submission-name "student-review" 1)) 
   (check-test-assignment #t #t #t #t #t #t))
 
 

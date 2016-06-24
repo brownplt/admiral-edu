@@ -17,13 +17,13 @@
 (define (do-submit-step assignment step uid file-name data steps)
   (let ((assignment-id (Assignment-id assignment))
         (step-id (Step-id step)))
-    (let* ((assignment-record (assignment:select class-name assignment-id))
+    (let* ((assignment-record (assignment:select (class-name) assignment-id))
            (is-open (assignment:Record-open assignment-record)))
       (if (not is-open) (Failure "This assignment is currently closed.")
           (begin
-            (when (not (submission:exists? assignment-id class-name step-id uid))
-              (submission:create assignment-id class-name step-id uid))
-            (submission:publish assignment-id class-name step-id uid)
+            (when (not (submission:exists? assignment-id (class-name) step-id uid))
+              (submission:create assignment-id (class-name) step-id uid))
+            (submission:publish assignment-id (class-name) step-id uid)
             ;; Assign reviews to the student if applicable
             (let ((next (default-next-action assignment steps uid)))
               (cond
@@ -71,8 +71,8 @@
                String -> (U MustSubmitNext MustReviewNext #t)))
 (define (check-step check-reviewed ensure-assigned-review assignment-id step uid)
   (let* ((step-id (Step-id step))
-         (has-published (and (submission:exists? assignment-id class-name step-id uid)
-                             (submission:published? assignment-id class-name step-id uid))))
+         (has-published (and (submission:exists? assignment-id (class-name) step-id uid)
+                             (submission:published? assignment-id (class-name) step-id uid))))
     (cond 
       [(not has-published) (MustSubmitNext step (Step-instructions step))]
       [else (check-reviews check-reviewed ensure-assigned-review assignment-id step (Step-reviews step) uid)])))
@@ -103,12 +103,12 @@
 (define (get-reviews ensure-assigned-review assignment-id uid step)
   (let* ((reviews (Step-reviews step)))         
     (map (ensure-assigned-review assignment-id uid step) reviews)
-    (review:select-assigned-reviews assignment-id class-name (Step-id step) uid)))
+    (review:select-assigned-reviews assignment-id (class-name) (Step-id step) uid)))
 
 (: default-ensure-assigned-review (String String Step -> (Review -> Void)))
 (define (default-ensure-assigned-review assignment-id uid step)
   (lambda (review)
-    (let* ((assigned-amount (review:count-assigned-reviews class-name assignment-id uid (Step-id step) (Review-id review)))
+    (let* ((assigned-amount (review:count-assigned-reviews (class-name) assignment-id uid (Step-id step) (Review-id review)))
            (expected-amount (Review-amount review))
            (diff (max 0 (- expected-amount assigned-amount))))
     (assign-n-reviews diff assignment-id (Step-id step) uid review))))
@@ -123,8 +123,8 @@
 (: assign-single-review (String String String Review -> Void))
 (define (assign-single-review assignment-id step-id uid review)
   (let ((review-id (Review-id review)))
-  (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id class-name step-id (dependency-submission-name review-id 1) uid review-id)]
-        [(student-submission? review) (review:assign-student-reviews assignment-id class-name step-id uid review-id 1)])))
+  (cond [(instructor-solution? review) (review:assign-instructor-solution assignment-id (class-name) step-id (dependency-submission-name review-id 1) uid review-id)]
+        [(student-submission? review) (review:assign-student-reviews assignment-id (class-name) step-id uid review-id 1)])))
 
 ; Returns #t if the review has been completed and #f otherwise
 ; assignment-id -> step -> review -> user-id -> bool?
@@ -139,13 +139,13 @@
 (: check-instructor-solution (String Step instructor-solution String -> Boolean))
 (define (check-instructor-solution assignment-id step instructor-solution uid)
   (let* ((review-id (instructor-solution-id instructor-solution))
-         (count (review:completed? assignment-id class-name (Step-id step) uid review-id)))
+         (count (review:completed? assignment-id (class-name) (Step-id step) uid review-id)))
     count))
 
 (: check-student-submission (String Step student-submission String -> Boolean))
 (define (check-student-submission assignment-id step student-submission uid) 
   (let* ((id (student-submission-id student-submission))
-         (count (review:count-completed assignment-id class-name (Step-id step) uid id))
+         (count (review:count-completed assignment-id (class-name) (Step-id step) uid id))
          (required-reviews (student-submission-amount student-submission)))
     (>= count required-reviews)))
 
@@ -176,7 +176,7 @@
 (: check-upload (String String String Exact-Nonnegative-Integer -> Boolean))
 (define (check-upload assignment-id step-id review-id n)
   (cond [(<= n 0) #t]
-        [(not (submission:exists? assignment-id class-name step-id (dependency-submission-name review-id n))) #f]
+        [(not (submission:exists? assignment-id (class-name) step-id (dependency-submission-name review-id n))) #f]
         [else (check-upload assignment-id step-id review-id (- n 1))]))
 
 
@@ -185,8 +185,8 @@
 (define (default-take-dependency assignment-id dependency bindings raw-bindings)
   (let ((review-id (review-dependency-review-id (assert dependency review-dependency?)))
         (step-id (review-dependency-step-id (assert dependency review-dependency?))))
-  (cond [(instructor-solution-dependency? dependency) (run-submissions class-name assignment-id step-id review-id bindings raw-bindings 1)]
-        [(student-submission-dependency? dependency) (run-submissions class-name assignment-id step-id review-id bindings raw-bindings (student-submission-dependency-amount dependency))]
+  (cond [(instructor-solution-dependency? dependency) (run-submissions (class-name) assignment-id step-id review-id bindings raw-bindings 1)]
+        [(student-submission-dependency? dependency) (run-submissions (class-name) assignment-id step-id review-id bindings raw-bindings (student-submission-dependency-amount dependency))]
         [else (raise (format "Unknown dependency: ~a" dependency))])))
 
 

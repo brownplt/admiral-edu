@@ -10,7 +10,7 @@
 (define (load session role rest)
   (let ((assignment-id (car rest)))
     (if (not (roles:Record-can-edit role)) (fail-auth)
-        (let ((data (export-assignment class-name assignment-id)))
+        (let ((data (export-assignment (class-name) assignment-id)))
           (response/full
            200 #"Okay"
            (current-seconds) #"application/octet-stream; charset=ISO-8859-1"

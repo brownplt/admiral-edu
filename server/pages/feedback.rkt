@@ -58,8 +58,8 @@
   (let* ((uid (ct-session-uid session))
          (start-url (hash-ref (ct-session-table session) 'start-url))
          (assignment (car rest))
-         (reviews (review:select-feedback class-name assignment uid))
-         (submissions (submission:select-from-assignment assignment class-name uid))
+         (reviews (review:select-feedback (class-name) assignment uid))
+         (submissions (submission:select-from-assignment assignment (class-name) uid))
          (results 
           (string-append (gen-status assignment uid start-url)
                          (gen-submissions submissions start-url)
@@ -89,7 +89,7 @@
     (string-append "<h2>Review Feedback</h2><p>" message "</p>" feedback)))
 
 (define (gen-pending-reviews assignment uid start-url)
-  (let* ((reviews (review:select-pending assignment class-name uid))
+  (let* ((reviews (review:select-pending assignment (class-name) uid))
          (pending (map (gen-pending-review start-url) reviews))
          (message (if (empty? pending) "No pending reviews."
                       (string-append "The links below are to reviews that you have not yet completed. "
@@ -110,7 +110,7 @@
             [else `(li (a ((href ,(string-append start-url "../../review/" hash "/"))) "Pending Review for '" ,step "'"))]))))
 
 (define (gen-completed-reviews assignment uid start-url)
-  (let* ((reviews (review:select-completed assignment class-name uid))
+  (let* ((reviews (review:select-completed assignment (class-name) uid))
          (completed (map (gen-completed-review start-url) reviews))
          (message (if (empty? completed) "You have not completed any reviews." 
                       "The links below are to reviews that you have already completed.")))

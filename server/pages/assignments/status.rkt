@@ -31,7 +31,7 @@
 (: header (String (U XExpr #f) -> (Listof (U XExpr Void))))
 (define (header assignment-id message)
   (let* ((assignment (assignment-id->assignment assignment-id))
-         (record (assignment:select class-name assignment-id))
+         (record (assignment:select (class-name) assignment-id))
          (open (assignment:Record-open record))
          (ready (assignment:Record-ready record))
          (status (if ready (if open "Open" "Closed") "Missing Dependencies")))
@@ -46,8 +46,8 @@
          (order (get-order session))
          (sort-by (submission:get-sort-by session))
          (next-order (opposite-order order))
-         (count (number->string (submission:count-step assignment-id class-name step-id)))
-         (submission-records (submission:select-all assignment-id class-name step-id sort-by order)))
+         (count (number->string (submission:count-step assignment-id (class-name) step-id)))
+         (submission-records (submission:select-all assignment-id (class-name) step-id sort-by order)))
   (append (header assignment-id message)
           `((h4 (),step-id)
             (p () "Submissions : " ,count)
@@ -69,7 +69,7 @@
 
 (: list-no-submissions (String String -> (Listof (U XExpr Void))))
 (define (list-no-submissions assignment-id step-id)
-  (let ((no-submission (submission:select-no-submissions assignment-id class-name step-id)))
+  (let ((no-submission (submission:select-no-submissions assignment-id (class-name) step-id)))
     (cond [(empty? no-submission) '((p "No pending submissions."))]
           [else (let: ([f : (String -> XExpr) (lambda (uid) `(li () ,uid))])
                   (map f no-submission))])))
@@ -126,7 +126,7 @@
   (let ((user (submission:Record-user record))
         (assignment (submission:Record-assignment record))
         (step (submission:Record-step record)))
-  `(a ((href ,(string-append "/" class-name "/su/" user "/browse/" assignment "/" step "/"))) ,user-id)))
+  `(a ((href ,(string-append "/" (class-name) "/su/" user "/browse/" assignment "/" step "/"))) ,user-id)))
 
 
 
@@ -175,12 +175,12 @@
 (: display-review (ct-session String String String (U XExpr #f) Boolean -> (Listof (U XExpr Void))))
 (define (display-review session assignment-id step-id review-id message post)
   (let* ((message (if post (check-for-action assignment-id step-id session) #f))
-         (assigned (number->string (review:count-all-assigned-reviews assignment-id class-name step-id review-id)))
-         (completed (number->string (review:count-completed-reviews assignment-id class-name step-id review-id)))
+         (assigned (number->string (review:count-all-assigned-reviews assignment-id (class-name) step-id review-id)))
+         (completed (number->string (review:count-completed-reviews assignment-id (class-name) step-id review-id)))
          (sort-by (review:get-sort-by session))
          (order (get-order session))
          (next-order (opposite-order order))
-         (review-records (review:select-all assignment-id class-name step-id review-id sort-by order))
+         (review-records (review:select-all assignment-id (class-name) step-id review-id sort-by order))
          (reviews (apply append (map review-record->xexpr review-records))))
     (append (header assignment-id message)
             `((h4 () ,step-id " > " ,review-id)
@@ -258,31 +258,31 @@
 
 (: do-publish-all (String String -> XExpr))
 (define (do-publish-all assignment-id step-id)
-  (let* ((unpublished (submission:select-all-unpublished assignment-id class-name step-id))
+  (let* ((unpublished (submission:select-all-unpublished assignment-id (class-name) step-id))
          (do-submit (lambda: ([user-id : String]) (submit-step assignment-id step-id user-id)))
-         (assignment-record (assignment:select class-name assignment-id))
+         (assignment-record (assignment:select (class-name) assignment-id))
          ;; Ensure the assignment is open so submissions can be processed
-         (dont-care (when (not (assignment:Record-open assignment-record)) (assignment:open assignment-id class-name)))
+         (dont-care (when (not (assignment:Record-open assignment-record)) (assignment:open assignment-id (class-name))))
          (results (filter Failure? (map do-submit unpublished)))
          ;; Close the assignment if it was open
-         (dont-care (when (not (assignment:Record-open assignment-record)) (assignment:close assignment-id class-name))))
+         (dont-care (when (not (assignment:Record-open assignment-record)) (assignment:close assignment-id (class-name)))))
     (cond [(empty? results) '(p (b "All Submissions Published."))]
           [else '(p (b ((style "color:red;")) "Some submissions could not be published."))])))
 
 (: do-unpublish-all (String String -> XExpr))
 (define (do-unpublish-all assignment-id step-id)
-  (submission:unpublish-all assignment-id class-name step-id)
+  (submission:unpublish-all assignment-id (class-name) step-id)
   '(p (b "All Submissions Unpublished.")))
 
 (: do-publish (String String ct-session -> XExpr))
 (define (do-publish assignment-id step-id session)
   (let ((user-id (get-binding 'user-id session))
-        (assignment-record (assignment:select class-name assignment-id)))
+        (assignment-record (assignment:select (class-name) assignment-id)))
     (cond [(Failure? user-id) `(p () (b () ,(Failure-message user-id)))]
           [else (begin
-                  (when (not (assignment:Record-open assignment-record)) (assignment:open assignment-id class-name))
+                  (when (not (assignment:Record-open assignment-record)) (assignment:open assignment-id (class-name)))
                   (submit-step assignment-id step-id (Success-result user-id))
-                  (when (not (assignment:Record-open assignment-record)) (assignment:close assignment-id class-name))
+                  (when (not (assignment:Record-open assignment-record)) (assignment:close assignment-id (class-name)))
                   '(p (b "Submission published.")))])))
 
 (: do-unpublish (String String ct-session -> XExpr))
@@ -290,7 +290,7 @@
   (let ((user-id (get-binding 'user-id session)))
     (cond [(Failure? user-id) `(p () (b () ,(Failure-message user-id)))]
           [else (begin
-                  (submission:unpublish assignment-id class-name step-id (Success-result user-id))
+                  (submission:unpublish assignment-id (class-name) step-id (Success-result user-id))
                   '(p (b "Submission unpublished.")))])))
 
 
@@ -316,14 +316,14 @@
 (define (view-review-action record context)
   (let ((hash (review:Record-hash record))
         (reviewer (review:Record-reviewer-id record)))
-    (cond [(role:exists? class-name reviewer) `(a ((href ,(string-append "/" class-name "/su/" reviewer "/review/" hash "/"))) ,context)]
+    (cond [(role:exists? (class-name) reviewer) `(a ((href ,(string-append "/" (class-name) "/su/" reviewer "/review/" hash "/"))) ,context)]
           [else `(p () ,context)])))
 
 (: view-feedback-action (review:Record XExpr -> XExpr))
 (define (view-feedback-action record context)
   (let ((hash (review:Record-hash record))
         (reviewee (review:Record-reviewee-id record)))
-    (cond [(role:exists? class-name reviewee)  `(a ((href ,(string-append "/" class-name "/su/" reviewee "/feedback/view/" hash "/"))) ,context)]
+    (cond [(role:exists? (class-name) reviewee)  `(a ((href ,(string-append "/" (class-name) "/su/" reviewee "/feedback/view/" hash "/"))) ,context)]
           [else `(p () ,context)])))
 
 
@@ -331,7 +331,7 @@
 (define (step->statistic assignment-id)
   (lambda (step)
     (let*: ((step-id (Step-id step))
-            (submissions (number->string (submission:count-step assignment-id class-name step-id)))
+            (submissions (number->string (submission:count-step assignment-id (class-name) step-id)))
             [reviews : (Listof XExpr) (apply append (map (review->statistic assignment-id step-id) (Step-reviews step)))])
       `((li () "Step : " ,(action:step-status assignment-id step-id step-id))
         ,(append-xexpr `(ul () 
@@ -343,8 +343,8 @@
 (define (review->statistic assignment-id step-id)
   (lambda (review)
     (let* ((review-id (Review-id review))
-           (completed (number->string (review:count-completed-reviews assignment-id class-name step-id review-id)))
-           (assigned (number->string (review:count-all-assigned-reviews assignment-id class-name step-id review-id))))
+           (completed (number->string (review:count-completed-reviews assignment-id (class-name) step-id review-id)))
+           (assigned (number->string (review:count-all-assigned-reviews assignment-id (class-name) step-id review-id))))
       `((li () "Reviews : " ,(action:review-status assignment-id step-id review-id review-id))
         (ul () 
          (li () "Completed: " ,completed)

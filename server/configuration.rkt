@@ -4,90 +4,108 @@
 
 (provide (all-defined-out))
 
-(: set-db-address! (String -> Void))
-(define (set-db-address! address)
-  (set! db-address address))
 
-(: db-address (U 'nil String))
-(define db-address 'nil)
+;; a configuration is a hash table with the required fields
+;; (specified below)
+(: current-configuration (Parameterof (HashTable String String)))
+(define current-configuration
+  (make-parameter (ann (hash) (HashTable String String))
+                  (λ ([t : (HashTable String String)])
+                    (check-conf-hash t))))
 
-(: get-db-address (-> (U 'nil String)))
-(define (get-db-address)
-  db-address)
+;; given a spec (sadly must appear below macro definition),
+;; define a structure containing the specified fields,
+;; and a function to read those values from a given file.
+(define-syntax define-configuration-file
+  (syntax-rules ()
+    [(_ checker [field ty] ...)
+     (begin
+       (begin
+         (: field (-> ty))
+         (define (field)
+           (maybe-convert
+            (hash-ref (current-configuration)
+                      (symbol->string (quote field)))
+            ty)))
+       ...
+       (: checker ((HashTable String String) -> (HashTable String String)))
+       (define (checker table)
+         (let ([field-str (symbol->string (quote field))])
+           (unless (hash-has-key? table field-str)
+             (error 'check-conf-hash
+                    "configuration missing required field: ~v"
+                    field-str))
+           (define field-val (hash-ref table field-str))
+           (unless (check-ty field-val ty)
+             (error 'check-configuration
+                    "expected value for key ~v convertible to ~a, got: ~v"
+                    field-str (quote ty) field-val)))
+         ...
+         table))]))
 
-(: db-user-name (U 'nil String))
-(define db-user-name 'nil)
+(define-syntax maybe-convert
+  (syntax-rules (String Natural)
+    [(_ v String) v]
+    [(_ v Natural) (cast (string->number v) Natural)]))
 
-(: db-password (U 'nil String))
-(define db-password 'nil)
+(define-syntax check-ty
+  (syntax-rules (String Natural)
+    [(_ v String) #t]
+    [(_ v Natural) (exact-nonnegative-integer?
+                    (string->number v))]))
 
-(: db-name (U 'nil String))
-(define db-name 'nil)
-
-(: server-name (U 'nil String))
-(define server-name 'nil)
-
-(: sub-domain (U 'nil String))
-(define sub-domain 'nil)
-
-(: mail-server (U 'nil String))
-(define mail-server 'nil)
-
-(: mail-port (U 'nil Integer))
-(define mail-port 'nil)
-
-(: mail-username (U 'nil String))
-(define mail-username 'nil)
-
-(: mail-password (U 'nil String))
-(define mail-password 'nil)
-
-(: storage-mode (U 'nil String))
-(define storage-mode 'nil)
-
-(: bucket (U 'nil String))
-(define bucket 'nil)
-
-(: cloud-access-key-id (U 'nil String))
-(define cloud-access-key-id 'nil)
-
-(: cloud-secret-key (U 'nil String))
-(define cloud-secret-key 'nil)
-
-(: cloud-host (U 'nil String))
-(define cloud-host 'nil)
-
-(: class-name String)
-(define class-name "")
-
-(: ct-port (U 'nil Integer))
-(define ct-port 'nil)
-
-(: master-user String)
-(define master-user "")
-
-(: configuration-file Path-String)
-(define configuration-file "/conf/captain-teach.config")
+(define-configuration-file
+  check-conf-hash
+  [db-address String]
+  [db-user-name String]
+  [db-password String]
+  [db-name String]
+  [server-name String]
+  [sub-domain String]
+  [mail-server String]
+  [mail-port Natural]
+  [mail-username String]
+  [mail-password String]
+  [storage-mode String]
+  [bucket String]
+  [cloud-access-key-id String]
+  [cloud-secret-key String]
+  [cloud-host String]
+  [class-name String]
+  [ct-port Natural]
+  [master-user String])
 
 
-(let*: ([conf : (HashTable String String) (read-conf configuration-file)]
-        [ref : (String -> String) (lambda (key) (hash-ref conf key))])
-  (set! db-address (ref "db-address"))
-  (set! server-name (ref "server-name"))
-  (set! sub-domain (ref "sub-domain"))
-  (set! mail-server (ref "mail-server"))
-  (set! mail-port (assert (string->number (ref "mail-port")) exact-integer?))
-  (set! mail-username (ref "mail-username"))
-  (set! mail-password (ref "mail-password"))
-  (set! class-name (ref "class-name"))
-  (set! ct-port (assert (string->number (ref "ct-port")) exact-integer?))
-  (set! bucket (ref "bucket"))
-  (set! cloud-access-key-id (ref "cloud-access-key-id"))
-  (set! cloud-secret-key (ref "cloud-secret-key"))
-  (set! cloud-host (ref "cloud-host"))
-  (set! storage-mode (ref "storage-mode"))
-  (set! db-name (ref "db-name"))
-  (set! db-user-name (ref "db-user-name"))
-  (set! db-password (ref "db-password"))
-  (set! master-user (ref "master-user")))
+(module+ test
+  (require typed/rackunit
+           racket/runtime-path)
+
+  
+  
+  ;; a simple regression test: make sure we can parse
+  ;; the given example configuration. If this test gets
+  ;; out of sync, just paste the new value in.
+  (define-runtime-path example-conf "../conf/")
+
+  (define test-conf
+    '#hash(("ct-port" . "8080")
+           ("mail-port" . "2525")
+           ("mail-server" . "smtp.sendgrid.net")
+           ("server-name" . "yoursite.com")
+           ("cloud-access-key-id" . "YOUR-ACCESS-ID")
+           ("cloud-host" . "storage.googleapis.com")
+           ("mail-username" . "username")
+           ("bucket" . "some-bucket-name/")
+           ("class-name" . "test-class")
+           ("storage-mode" . "cloud-storage")
+           ("db-user-name" . "captain_teach")
+           ("cloud-secret-key" . "YOUR-SECRET-KEY")
+           ("db-password" . "captain_teach")
+           ("sub-domain" . "www.")
+           ("mail-password" . "password")
+           ("db-name" . "captain_teach")
+           ("master-user" . "youremail@domain.com")
+           ("db-address" . "localhost")))
+  
+  (check-equal? (check-conf-hash test-conf) test-conf))
 

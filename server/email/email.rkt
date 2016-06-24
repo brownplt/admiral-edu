@@ -39,21 +39,21 @@
 (provide send-email)
 (: send-email (String String String -> Boolean))
 (define (send-email uid subject message)
-  (let* ((from (string-append "tech@" (assert server-name string?)))
+  (let* ((from (string-append "tech@" (server-name)))
          (to (list uid))
          (header (standard-message-header from to '() '() subject))
          (split-message (lines message)))
     (cond [(email-okay uid) (begin
                               (smtp-send-message 
-                               (assert mail-server string?)
+                               (mail-server)
                                from 
                                to 
                                header 
                                split-message
-                               #:auth-user (assert mail-username string?)
-                               #:auth-passwd (assert mail-password string?)
+                               #:auth-user (mail-username)
+                               #:auth-passwd (mail-password)
                                #:tls-encode ports->ssl-ports
-                               #:port-no (assert mail-port integer?))
+                               #:port-no (mail-port))
                               #t)]
           [else #f])))
 

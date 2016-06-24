@@ -2,6 +2,7 @@
 
 (require "database/mysql.rkt"
          "configuration.rkt"
+         "util/config-file-reader.rkt"
          "ct-session.rkt"
          "util/basic-types.rkt")
 
@@ -24,6 +25,8 @@
 (provide initialize)
 (: initialize (-> (Result Void)))
 (define (initialize)
+  (current-configuration
+   (read-conf "/conf/captain-teach.config"))
   (if (init-db?) #t
       (force-initialize))
   (migrate:check-migrated))
@@ -31,12 +34,14 @@
 (provide force-initialize)
 (: force-initialize (-> Void))
 (define (force-initialize)
-   (init-db)
-  (class:create class-name)
-  (user:create master-user)
+  (current-configuration
+   (read-conf "/conf/captain-teach.config"))
+  (init-db)
+  (class:create (class-name))
+  (user:create (master-user))
   (roles:create instructor-role "Instructor" 1)
   (roles:create ta-role "Teaching Assistant" 1)
   (roles:create student-role "Student" 0)
-  (role:associate class-name master-user instructor-role)
+  (role:associate (class-name) (master-user) instructor-role)
   (void))
       

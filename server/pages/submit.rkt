@@ -44,7 +44,7 @@
 
 
 (define (preview-upload session role rest uid assignment step filename data)
-  (let ((result  (upload-submission class-name uid assignment step filename data))
+  (let ((result  (upload-submission (class-name) uid assignment step filename data))
         (start-url (hash-ref (ct-session-table session) 'start-url)))
     (cond [(Success? result) 
            ;; We have uploaded the file successfully, we now have a browser and a confirm submission button

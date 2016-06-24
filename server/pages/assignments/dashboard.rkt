@@ -11,7 +11,7 @@
 (define (load session url message [post #f])
   (let ((assignment-id (first url)))
     (check-ready assignment-id)
-    (let* ((assignment (assignment:select class-name assignment-id))
+    (let* ((assignment (assignment:select (class-name) assignment-id))
            (open (assignment:Record-open assignment))
            (ready (assignment:Record-ready assignment))
            (status (if ready (if open "Open" "Closed") "Missing Dependencies")))
@@ -31,7 +31,7 @@
 (: open (->* (ct-session (Listof String) (U XExpr #f)) (Boolean) (Listof (U XExpr Void))))
 (define (open session url message [post #f])
   (let ((assignment-id (first url)))
-    (assignment:open assignment-id class-name)
+    (assignment:open assignment-id (class-name))
     (load session url message)))
 
 
@@ -39,7 +39,7 @@
 (: close (->* (ct-session (Listof String) (U XExpr #f)) (Boolean) (Listof (U XExpr Void))))
 (define (close session url message [post #f])
   (let ((assignment-id (first url)))
-    (assignment:close assignment-id class-name)
+    (assignment:close assignment-id (class-name))
     (load session url message)))
 
 (provide delete)
@@ -51,7 +51,7 @@
            `((h1 () ,(action:assignments "Assignments"))
              (h2 () ,(action:dashboard assignment-id assignment-id))
              (p (b "You are about to delete this assignment. This action is irreversible. Click the submit button below to proceed."))
-             (form ((action ,(string-append "/" class-name "/assignments/delete/" assignment-id "/"))
+             (form ((action ,(string-append "/" (class-name) "/assignments/delete/" assignment-id "/"))
                     (method "POST"))
                    (input ((type "submit")))))])))
 

@@ -13,23 +13,23 @@
   (import)
   (export file-system^)  
   
-  (s3-host cloud-host)
-  (public-key cloud-access-key-id)
-  (private-key cloud-secret-key)
+  (s3-host (cloud-host))
+  (public-key (cloud-access-key-id))
+  (private-key (cloud-secret-key))
   
   ; If the file exists locally, it returns it. Otherwise, it fetches it from the cloud and then returns it
   (define (retrieve-file path)
     (let* ((info (local:path-info path)))
       (local:ensure-path-exists path)
-      (when (eq? info 'does-not-exist) (get/file (string-append bucket path) (string->path path))))
+      (when (eq? info 'does-not-exist) (get/file (string-append (bucket) path) (string->path path))))
     (local:retrieve-file path))
   
   (define (retrieve-file-bytes path)
     (let* ((info (local:path-info path)))
       (local:ensure-path-exists path)
       (when (eq? info 'does-not-exist) 
-        (begin (printf "Syncing: ~a\n" (string-append bucket path))
-               (get/file (string-append bucket path) (string->path path))
+        (begin (printf "Syncing: ~a\n" (string-append (bucket) path))
+               (get/file (string-append (bucket) path) (string->path path))
                (printf "Done.\n"))))
     (local:retrieve-file-bytes path))
     
@@ -38,7 +38,7 @@
   (define (write-file path contents)
     (let ((clean-path (clean path)))
       (local:write-file clean-path contents)
-      (let ((bucket+path (string-append bucket clean-path))
+      (let ((bucket+path (string-append (bucket) clean-path))
             (pathname (string->path clean-path)))
         (put/file bucket+path pathname))
     (void)))
@@ -55,8 +55,8 @@
   
   ; Deletes the local copy and the remote copy
   (define (delete-path path)
-    (let* ((files (ls (string-append bucket path)))
-           (delete-f (lambda (p) (delete (string-append bucket p)))))
+    (let* ((files (ls (string-append (bucket) path)))
+           (delete-f (lambda (p) (delete (string-append (bucket) p)))))
       (map delete-f files))
     (local:delete-path path))
   
@@ -67,7 +67,7 @@
           [else 'directory]))
   
   (define (file-exists-in-cloud? path)
-    (let* ((files (ls (string-append bucket path)))
+    (let* ((files (ls (string-append (bucket) path)))
            (member? (filter (lambda (x) (equal? path x)) files)))
       (= (length member?) 1)))
   
@@ -75,7 +75,7 @@
   ; Returns all files that are at the specified path.
   (define (list-files path)
     (printf "Listing files at ~a\n" path)
-    (let* ((files (ls (string-append bucket path)))
+    (let* ((files (ls (string-append (bucket) path)))
            (split-path (string-split path "/"))
            (split (lambda (x) (string-split x "/")))
            (split-files (map split files))
@@ -94,7 +94,7 @@
       result))
   
   (define (list-path path)
-    (let* ((files (ls (string-append bucket path)))
+    (let* ((files (ls (string-append (bucket) path)))
            (split-path (string-split path "/"))
            (split (lambda (x) (string-split x "/")))
            (split-files (map split files))
@@ -112,6 +112,6 @@
   ; (path -> (listof path))
   ; Returns all files that are at the specified path recursively adding all sub directories
   (define (list-sub-files path)
-    (ls (string-append bucket path)))
+    (ls (string-append (bucket) path)))
   
   )

@@ -14,7 +14,7 @@
 
 (define THREE-STUDY-ACTION "three-study")
 (define LIST-DEPENDENCIES "list-dependencies")
-(define base-url (string-append "/" class-name "/dependencies/"))
+(define (base-url) (string-append "/" (class-name) "/dependencies/"))
 
 (define (repeat val n)
   (cond
@@ -29,12 +29,12 @@
           [(> len 2) (dependencies-form (car rest) (cadr rest) (caddr rest) rest)])))
 
 (define (assignment-dependencies assignment-id [message ""])
-  (cond [(not (assignment:exists? assignment-id class-name)) (error:error-page "The assignment id '" assignment-id "' was not found.")]
+  (cond [(not (assignment:exists? assignment-id (class-name))) (error:error-page "The assignment id '" assignment-id "' was not found.")]
         [else (let* ((deps (assign:assignment-id->assignment-dependencies assignment-id))
-                     [header (string-append "<a href='/" class-name "/assignments/'>Assignments</a>")]
+                     [header (string-append "<a href='/" (class-name) "/assignments/'>Assignments</a>")]
                      (dependency-list (string-append (string-join (map (dep->html assignment-id) deps) "\n")))
                      [extra-message ""]
-                     [body (string-append "<h2><a href='/" class-name "/assignments/dashboard/" assignment-id "/'>" assignment-id "</a></h2>"
+                     [body (string-append "<h2><a href='/" (class-name) "/assignments/dashboard/" assignment-id "/'>" assignment-id "</a></h2>"
                                           "<p>" message "</p>"
                                           "<p>The links below allow you to preview each rubric and upload file dependencies.</p>"
                                           "<ul>" dependency-list "</ul>"
@@ -42,7 +42,7 @@
                 (include-template "html/basic.html"))]))
 
 (define (three-study-form assignment-id [message #f])
-  (cond [(not (assignment:exists? assignment-id class-name)) (error:error-page "The assignment id '" assignment-id "' was not found.")]
+  (cond [(not (assignment:exists? assignment-id (class-name))) (error:error-page "The assignment id '" assignment-id "' was not found.")]
         [else 
          (let* ([header assignment-id]
                 [extra-message ""]
@@ -51,7 +51,7 @@
 
 (define (render-three-study-form assignment-id)
   (string-append "<p>You are uploading the 3 condition study yaml file.</p>"
-                 "<form method='post' action='" base-url assignment-id "/" THREE-STUDY-ACTION "/" "' enctype='multipart/form-data'>"
+                 "<form method='post' action='" (base-url) assignment-id "/" THREE-STUDY-ACTION "/" "' enctype='multipart/form-data'>"
                  "<input type='file' name='three-condition-file'>"
                  "<input type='submit' value='Upload'>"
                  "</form>"))
@@ -63,7 +63,7 @@
                                       (let* ((sid (assign:review-dependency-step-id dep))
                                              (rid (assign:review-dependency-review-id dep))
                                              (inst (if (assign:instructor-solution-dependency? dep) " - <b>Instructor Solution</b>" ""))
-                                             (a-start (string-append "<a href=\"" base-url assignment-id "/" sid "/" rid "/\">"))
+                                             (a-start (string-append "<a href=\"" (base-url) assignment-id "/" sid "/" rid "/\">"))
                                              (a-end (if (assign:dependency-met dep) " - Ready" " - Dependencies Missing")))
                                         (string-append "<li>" 
                                                        a-start
@@ -73,7 +73,7 @@
           [(assign:three-study-config-dependency? dep) (begin
                                                          (let ((ready (if (assign:dependency-met dep) " - Ready" " - Dependency Missing")))
                                                            (string-append "<li>"
-                                                                          "<a href='" base-url assignment-id "/" THREE-STUDY-ACTION "/'>"
+                                                                          "<a href='" (base-url) assignment-id "/" THREE-STUDY-ACTION "/'>"
                                                                           "Three Study Configuration File" ready
                                                                           "</a>"
                                                                           "</li>")))]
@@ -83,13 +83,13 @@
 (define (dependencies-form assignment step review-id rest)
   (let* ((dep (car (assign:find-dependencies assignment step review-id)))
          (met (assign:dependency-met dep))
-         [load-url (xexpr->string (string-append "\"" base-url (string-join rest "/") "/load\""))]
+         [load-url (xexpr->string (string-append "\"" (base-url) (string-join rest "/") "/load\""))]
          [dependency-form (generate-dependency-form assignment step review-id)]) ;;(if met (dependency-met assignment step review-id) (generate-dependency-form assignment step review-id))])
     (include-template "html/dependency.html")))
 
 (provide post)
 (define (post session rest bindings raw-bindings)
-  (let* ((class class-name)
+  (let* ((class (class-name))
          (assignment (car rest))
          (action (last rest)))
     (cond [(equal? action "load") (let ((stepName (cadr rest))

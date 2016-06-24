@@ -18,8 +18,8 @@
 (provide delete-assignment)
 (: delete-assignment (String -> Void))
 (define (delete-assignment assignment-id)
-  (database:delete-assignment class-name assignment-id)
-  (delete-path (string-append class-name "/" assignment-id)))
+  (database:delete-assignment (class-name) assignment-id)
+  (delete-path (string-append (class-name) "/" assignment-id)))
 
 
 (: repeat-id? (All (A B) ((A -> B) -> ((Listof A) -> (U B #f)))))
@@ -63,7 +63,7 @@
 (: validate-assignment (Assignment Boolean -> (U String #f)))
 (define (validate-assignment assignment override)
   (cond [(not (Assignment? assignment)) (raise-argument-error 'validate-assignment "Assignment" assignment)]
-        [(and (not override) (assignment:exists? (Assignment-id assignment) class-name)) (string-append "The specified assignment id '" (Assignment-id assignment) "' already exists.")]
+        [(and (not override) (assignment:exists? (Assignment-id assignment) (class-name))) (string-append "The specified assignment id '" (Assignment-id assignment) "' already exists.")]
         [else (let* ((check-steps ((repeat-id? Step-id) (Assignment-steps assignment)))
                      ; FIXME: this filter should reduce (Listof (U String #f)) to just (Listof String) but the type checker
                      ; is unable to confirm this.
@@ -92,7 +92,7 @@
             [else (let ((assignment (with-handlers ([exn:fail? invalid-yaml]) (yaml->assignment yaml))))
                     (cond [(Failure? assignment) (Failure-message assignment)]
                           [else (let ((result (create-assignment assignment)))                                  
-                                  (cond [(eq? #t result) (save-assignment-description class-name (Assignment-id assignment) yaml-string) "Success"]
+                                  (cond [(eq? #t result) (save-assignment-description (class-name) (Assignment-id assignment) yaml-string) "Success"]
                                         [else result]))]))]))))
 
 
@@ -105,7 +105,7 @@
             [else (let ((assignment (with-handlers ([exn:fail? invalid-yaml]) (yaml->assignment yaml))))
                     (cond [(Failure? assignment) (Failure-message assignment)]
                           [else (let ((result (save-assignment assignment)))                                  
-                                  (cond [(eq? #t result) (save-assignment-description class-name (Assignment-id assignment) yaml-string) "Success"]
+                                  (cond [(eq? #t result) (save-assignment-description (class-name) (Assignment-id assignment) yaml-string) "Success"]
                                         [else result]))]))]))))
 
 
@@ -138,7 +138,7 @@
 (define (check-no-reviews assignment)
   (let ((no-reviews (null? (filter no-reviews? (Assignment-steps assignment))))
         (assignment-id (Assignment-id assignment)))
-    (if no-reviews (assignment:mark-ready assignment-id class-name) (assignment:mark-not-ready assignment-id class-name))))
+    (if no-reviews (assignment:mark-ready assignment-id (class-name)) (assignment:mark-not-ready assignment-id (class-name)))))
 
 
 (: no-reviews? (Step -> Boolean))
@@ -148,12 +148,12 @@
 (: create-database-entries (Assignment -> (U #t 'no-such-class 'duplicate-assignment)))
 (define (create-database-entries assignment)
   (let ((id (Assignment-id assignment)))
-    (assignment:create id class-name)))
+    (assignment:create id (class-name))))
 
 
 (: create-base-rubrics (Assignment -> Void))
 (define (create-base-rubrics assignment)
-  (let* ((class class-name)
+  (let* ((class (class-name))
          (assign (Assignment-id assignment))
          (steps (Assignment-steps assignment))
          (create (lambda ([step : Step]) 
@@ -170,7 +170,7 @@
 (provide next-step)
 (: next-step (String String -> (U MustReviewNext MustSubmitNext #t)))
 (define (next-step assignment-id uid)
-  (let* ((assignment (yaml->assignment (string->yaml (retrieve-assignment-description class-name assignment-id))))
+  (let* ((assignment (yaml->assignment (string->yaml (retrieve-assignment-description (class-name) assignment-id))))
          (handler (Assignment-assignment-handler assignment))
          (next-action (AssignmentHandler-next-action handler)))
     (next-action assignment (Assignment-steps assignment) uid)))
@@ -184,8 +184,8 @@
 (define (submit-step assignment-id step-id uid [file-name #f] [data #f])
   ;; Assignment must exist
   (cond 
-    [(not (assignment:exists? assignment-id class-name)) (failure "The specified assignment '" assignment-id "' does not exists.")]
-    [else (let* ((assignment (yaml->assignment (string->yaml (retrieve-assignment-description class-name assignment-id))))
+    [(not (assignment:exists? assignment-id (class-name))) (failure "The specified assignment '" assignment-id "' does not exists.")]
+    [else (let* ((assignment (yaml->assignment (string->yaml (retrieve-assignment-description (class-name) assignment-id))))
                  (steps (Assignment-steps assignment))
                  (handler (Assignment-assignment-handler assignment))
                  (next-action (AssignmentHandler-next-action handler)) 
@@ -238,13 +238,13 @@
 (define (check-ready assignment-id)
   (let ((deps (assignment-id->assignment-dependencies assignment-id))
         (filter-function (lambda ([dep : Dependency]) (not (dependency-met dep)))))
-    (if (null? (filter filter-function deps)) (assignment:mark-ready assignment-id class-name) #f)))
+    (if (null? (filter filter-function deps)) (assignment:mark-ready assignment-id (class-name)) #f)))
 
 
 (: assignment-id->assignment (String -> Assignment))
 (provide assignment-id->assignment)
 (define (assignment-id->assignment id)
-  (yaml->assignment (string->yaml (retrieve-assignment-description class-name id))))
+  (yaml->assignment (string->yaml (retrieve-assignment-description (class-name) id))))
 
 
 (: step-id->step (String String -> Step))

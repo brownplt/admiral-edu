@@ -61,7 +61,7 @@
          (action (if (null? rest) RENDER-ROSTER (car rest)))
          [extra-message (if (null? message) "" message)]
          [body (select-body action rest start-url)]
-         [header (string-append class-name " - Roster")])
+         [header (string-append (class-name) " - Roster")])
     (include-template "html/basic.html")))
 
 (define (select-body action rest start-url)
@@ -114,7 +114,7 @@
                  "</form>\n"))
 
 (define (render-roster start-url)
-  (let ((records (role:all class-name)))
+  (let ((records (role:all (class-name))))
     (string-append "<p><a href='" start-url UPLOAD-ROSTER "/'>Upload Roster</a></p>\n"
                    "<p><a href='" start-url NEW-STUDENT "/'>New User</a></p>\n"
                    (render-instructors records start-url)

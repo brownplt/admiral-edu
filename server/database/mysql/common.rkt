@@ -12,30 +12,23 @@
 (define (merge . strings)
   (string-join strings " "))
 
-(provide make-sql-conn)
-(define (make-sql-conn)
-  (connect))
-
 (provide release)
 (define (release conn)
-  
   (if (connected? conn) 
       (begin
         (disconnect conn))
       #f))
 
-(provide connect)
-(define (connect)
-  (let ((new-conn (mysql-connect #:user db-user-name
-                                 #:database db-name
-                                 #:password db-password
-                                 #:server (get-db-address))))
-
-    new-conn))
+(provide make-sql-conn)
+(define (make-sql-conn)
+  (mysql-connect #:user (db-user-name)
+                 #:database (db-name)
+                 #:password (db-password)
+                 #:server (db-address)))
 
 (provide run)
 (define (run query-func q . args)
-  (let* ((conn (virtual-connection connect))
+  (let* ((conn (virtual-connection make-sql-conn))
          (query-args (prepare-statement conn q args))
          (result (apply query-func query-args)))
     (release conn)

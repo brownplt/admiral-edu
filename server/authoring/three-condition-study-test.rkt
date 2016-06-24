@@ -13,7 +13,7 @@
 
 (define (make-student id)
     (user:create id)
-    (role:associate class-name id student-role))
+    (role:associate (class-name) id student-role))
 
 ;; Gets Reviews
 (define ACE "ace")
@@ -43,7 +43,7 @@
 
 (define (init-tests)
   (init-db)
-  (class:create class-name)
+  (class:create (class-name))
   
   (roles:create instructor-role "Instructor" 1)
   (roles:create ta-role "Teaching Assistant" 1)
@@ -52,11 +52,11 @@
   (map make-student (list ACE AMY ART ALF JOE JAN JIM JON SAL SAM STU SUE SID))
   (create-assignment three-test-assignment)
   (write-file (dependency-file-name "test-assignment") (file->string "sample-yaml/test-assignment.yaml"))
-  (save-assignment-description class-name "test-assignment" (file->string "sample-yaml/test-assignment-description.yaml")))
+  (save-assignment-description (class-name) "test-assignment" (file->string "sample-yaml/test-assignment-description.yaml")))
 
 (define (init-tests2)
   (init-db)
-  (class:create class-name)
+  (class:create (class-name))
   
   (roles:create instructor-role "Instructor" 1)
   (roles:create ta-role "Teaching Assistant" 1)
@@ -65,7 +65,7 @@
   (map make-student (list ACE AMY ART ALF JOE JAN JIM JON SAL SAM STU SUE SID))
   (create-assignment three-test-assignment2)
   (write-file (dependency-file-name "test-assignment2") (file->string "sample-yaml/test-assignment2.yaml"))
-  (save-assignment-description class-name "test-assignment2" (file->string "sample-yaml/test-assignment-description2.yaml")))
+  (save-assignment-description (class-name) "test-assignment2" (file->string "sample-yaml/test-assignment-description2.yaml")))
 
 (define three-test-assignment (yaml->assignment (string->yaml (file->string "sample-yaml/test-assignment-description.yaml"))))
 (define three-test-assignment-tests-step
@@ -408,7 +408,7 @@
 
 (define (check-review-exists review-id-expected)
   (lambda (user)
-    (let* ((hashes (review:select-assigned-reviews "test-assignment" class-name "implementation" user))
+    (let* ((hashes (review:select-assigned-reviews "test-assignment" (class-name) "implementation" user))
            (reviews (map review:select-by-hash hashes))
            (assigned-expected 1))
       (check-equal? (list user review-id-expected (length reviews)) (list user review-id-expected assigned-expected))
@@ -416,7 +416,7 @@
 
 (define (test-reflection-assigned-submit-reviews step-id)
   (lambda (user)
-    (let ((review-hashes (review:select-assigned-reviews "test-assignment" class-name step-id user)))
+    (let ((review-hashes (review:select-assigned-reviews "test-assignment" (class-name) step-id user)))
       (map review:mark-complete review-hashes))))
 
 (define (test-reflection-assigned-submit-tests user)

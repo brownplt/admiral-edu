@@ -42,11 +42,9 @@ RUN a2enmod ssl
 # Install Racket
 #
 
-RUN wget http://mirror.racket-lang.org/installers/6.1/racket-6.1-x86_64-linux-ubuntu-precise.sh
+RUN wget https://mirror.racket-lang.org/installers/6.5/racket-6.5-x86_64-linux.sh
 
-RUN chmod a+x racket-6.1-x86_64-linux-ubuntu-precise.sh
-
-RUN ./racket-6.1-x86_64-linux-ubuntu-precise.sh
+RUN sh ./racket-6.5-x86_64-linux.sh
 
 RUN ln -s /usr/racket/bin/racket /usr/local/bin/racket
 RUN ln -s /usr/racket/bin/raco /usr/local/bin/raco

@@ -2,7 +2,6 @@
 
 (require "database/mysql.rkt"
          "configuration.rkt"
-         "util/config-file-reader.rkt"
          "ct-session.rkt"
          "util/basic-types.rkt")
 
@@ -22,25 +21,21 @@
 (define ta-role 1)
 (define student-role 2)
 
-
 ;; ( -> Result void?)
 ;; Initializes the database, creating tables and migrating if necessary.
 (provide initialize)
 (: initialize (-> (Result Void)))
 (define (initialize)
-  (current-configuration
-   (read-conf "/conf/captain-teach.config"))
   (storage-init)
-  (if (init-db?) #t
-      (force-initialize))
+  (unless (db-has-a-table?)
+    (db-init))
   (migrate:check-migrated))
 
-(provide force-initialize)
-(: force-initialize (-> Void))
-(define (force-initialize)
-  (current-configuration
-   (read-conf "/conf/captain-teach.config"))
-  (init-db)
+;; create tables, populate with class, instructor, and roles
+(provide db-init)
+(: db-init (-> Void))
+(define (db-init)
+  (db-init-tables)
   (class:create (class-name))
   (user:create (master-user))
   (roles:create instructor-role "Instructor" 1)

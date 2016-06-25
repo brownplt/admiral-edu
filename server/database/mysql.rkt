@@ -39,10 +39,10 @@
 (provide (all-from-out "mysql/migrate.rkt"))
 
 
-;; Initializes the database.
-(provide init-db)
-(: init-db (-> Void))
-(define (init-db)
+;; Drops and re-creates tables
+(provide db-init-tables)
+(: db-init-tables (-> Void))
+(define (db-init-tables)
   (user:init)
   (class:init)
   (role:init)
@@ -52,16 +52,18 @@
   (review:init)
   (system:init))
 
-;; Returns #t if init-db has been called and #f otherwise
-(provide init-db?)
-(: init-db? (-> Boolean))
-(define (init-db?)
+;; is there at least one table in the captain_teach database?
+;; (this isn't really a good way to check whether it's been
+;; initialized)
+(provide db-has-a-table?)
+(: db-has-a-table? (-> Boolean))
+(define (db-has-a-table?)
   (let* ((query (merge "SELECT COUNT(*)"
                        "FROM information_schema.tables "
                        "WHERE table_schema = 'captain_teach'"
                        "AND table_name = ?;"))
          (result (query-value query review:table)))
-    (> (cast result Exact-Nonnegative-Integer) 0)))
+    (> (cast result Natural) 0)))
 
 ;; Permanently removes all references to an assignment from the database
 (provide database:delete-assignment)

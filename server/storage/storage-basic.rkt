@@ -18,13 +18,14 @@
                 [else (error (format "Unrecognized storage mode: ~a" (storage-mode)))]))
             ...)]))
 
-(setup [retrieve-file c:retrieve-file l:retrieve-file]
-       [write-file c:write-file l:write-file]
-       [delete-path c:delete-path l:delete-path]
-       [path-info c:path-info l:path-info]
-       [list-files c:list-files l:list-files]
-       [list-sub-files c:list-sub-files l:list-sub-files]
-       [list-dirs c:list-dirs l:list-dirs])
+(setup [retrieve-file       c:retrieve-file       l:retrieve-file]
+       [retrieve-file-bytes c:retrieve-file-bytes l:retrieve-file-bytes]
+       [write-file          c:write-file          l:write-file]
+       [delete-path         c:delete-path         l:delete-path]
+       [path-info           c:path-info           l:path-info]
+       [list-files          c:list-files          l:list-files]
+       [list-sub-files      c:list-sub-files      l:list-sub-files]
+       [list-dirs           c:list-dirs           l:list-dirs])
 
 ; retrieve-file: (path -> string)
 ; Given the path to a file, returns the contents of the retrieved file

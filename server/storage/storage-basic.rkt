@@ -3,84 +3,51 @@
 ;; NOTE: This module is not typeable because it uses Units
 
 (require "../configuration.rkt"
-         "cloud-storage-unit.rkt"
-         "local-storage-unit.rkt")
+         (prefix-in c: "cloud-storage.rkt")
+         (prefix-in l: "local-storage.rkt"))
 
-(provide storage-init)
-
-;; signal an error, must call (storage-init) first...
-(define ((storage-not-initialized proc) . any)
-  (error proc
-         "must call (storage-init) before using storage functions"))
-
-
-(define-syntax fun-maker
+(define-syntax setup
   (syntax-rules ()
-    [(_ name)
+    [(_ [name c-version l-version] ...)
      (begin (provide name)
-            (define name (storage-not-initialized (quote name))))]))
+            ...
+            (define (name . args)
+              (cond
+                [(string=? (storage-mode) "cloud-storage") (apply c-version args)]
+                [(string=? (storage-mode) "local") (apply l-version args)]
+                [else (error (format "Unrecognized storage mode: ~a" (storage-mode)))]))
+            ...)]))
 
-; (path -> string)
+(setup [retrieve-file c:retrieve-file l:retrieve-file]
+       [write-file c:write-file l:write-file]
+       [delete-path c:delete-path l:delete-path]
+       [path-info c:path-info l:path-info]
+       [list-files c:list-files l:list-files]
+       [list-sub-files c:list-sub-files l:list-sub-files]
+       [list-dirs c:list-dirs l:list-dirs])
+
+; retrieve-file: (path -> string)
 ; Given the path to a file, returns the contents of the retrieved file
 ; Otherwise retures Failure with a message.
-(fun-maker retrieve-file)
-(fun-maker retrieve-file-bytes)
 
-; (path -> string -> ())
+; write-file: (path -> string -> ())
 ; Given a path and the contents to a file, writes that file (over writing any existing file).
-(fun-maker write-file)
 
-; (path -> ())
+; delete-path: (path -> ())
 ; Deletes the specified path. If it is a file, removes the specified file. If it is a directory
 ; removes the directory recursively deleting all files
-(fun-maker delete-path)
 
-; (path -> Either 'file 'directory 'does-not-exist)
+; path-info: (path -> Either 'file 'directory 'does-not-exist)
 ; Returns a symbol representing if the path is a file, directory, or does not exist
-(fun-maker path-info)
 
-; (path -> (listof path))
+; list-files: (path -> (listof path))
 ; Returns all files that are at the specified path.
-(fun-maker list-files)
 
-; (path -> (listof path))
+; list-sub-files: (path -> (listof path))
 ; Returns all files that are at the specified path recursively adding all files in sub directories
-(fun-maker list-sub-files)
 
-; (path -> (listof path))
+; list-dirs: (path -> (listof path))
 ; Returns all directories that are at the specified path.
-(fun-maker list-dirs)
-
-; Loads cloud-storage bindings
-(define (invoke-cloud-storage)
-  (define-values/invoke-unit/infer cloud-storage@)
-  (set! retrieve-file Uretrieve-file)
-  (set! retrieve-file-bytes Uretrieve-file-bytes)
-  (set! write-file Uwrite-file)
-  (set! delete-path Udelete-path)
-  (set! path-info Upath-info)
-  (set! list-files Ulist-files)
-  (set! list-sub-files Ulist-sub-files)
-  (set! list-dirs Ulist-dirs))
-
-; Loads local storage bindings
-(define (invoke-local-storage)
-  (printf "using local storage\n")
-  (define-values/invoke-unit/infer local-storage@)
-  (set! retrieve-file Uretrieve-file)
-  (set! retrieve-file-bytes Uretrieve-file-bytes)
-  (set! write-file Uwrite-file)
-  (set! delete-path Udelete-path)
-  (set! path-info Upath-info)
-  (set! list-files Ulist-files)
-  (set! list-sub-files Ulist-sub-files)
-  (set! list-dirs Ulist-dirs))
 
 
-;; load the appropriate set of functions into the
-;; exported functions (yuck, yuck).
-(define (storage-init)
-  (cond
-    [(string=? (storage-mode) "cloud-storage") (invoke-cloud-storage)]
-    [(string=? (storage-mode) "local") (invoke-local-storage)]
-    [else (error (format "Could not load storage mode: ~a" (storage-mode)))]))
+

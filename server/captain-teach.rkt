@@ -6,8 +6,7 @@
          "storage/storage-basic.rkt"
          "util/config-file-reader.rkt")
 
-(define DEFAULT-CONFIG-PATH
-  "/conf/captain-teach.config")
+(define DEFAULT-CONFIG-PATH "/conf/captain-teach.config")
 
 (current-configuration (read-conf DEFAULT-CONFIG-PATH))
 

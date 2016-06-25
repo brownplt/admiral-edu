@@ -5,9 +5,6 @@
          "ct-session.rkt"
          "util/basic-types.rkt")
 
-(require/typed "storage/storage-basic.rkt"
-               [storage-init (-> Void)])
-
 (provide (all-from-out "configuration.rkt"))
 (provide (all-from-out "database/mysql.rkt"))
 (provide (all-from-out "ct-session.rkt"))
@@ -26,7 +23,6 @@
 (provide initialize)
 (: initialize (-> (Result Void)))
 (define (initialize)
-  (storage-init)
   (unless (db-has-a-table?)
     (db-init))
   (migrate:check-migrated))

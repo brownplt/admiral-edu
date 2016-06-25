@@ -5,42 +5,48 @@
          "../configuration.rkt"
          (prefix-in local: "local-storage.rkt"))
 
-(provide cloud-storage@)
-(define-unit cloud-storage@
-  ; The following loads this unit
-  ; (invoke-unit cloud-storage@)
-  ; (define-values/invoke-unit/infer cloud-storage@)
-  (import)
-  (export file-system^)  
-  
-  (s3-host (cloud-host))
-  (public-key (cloud-access-key-id))
-  (private-key (cloud-secret-key))
-  
-  ; If the file exists locally, it returns it. Otherwise, it fetches it from the cloud and then returns it
-  (define (Uretrieve-file path)
-    (let* ((info (local:path-info path)))
-      (local:ensure-path-exists path)
-      (when (eq? info 'does-not-exist) (get/file (string-append (bucket) path) (string->path path))))
-    (local:retrieve-file path))
-  
-  (define (Uretrieve-file-bytes path)
-    (let* ((info (local:path-info path)))
-      (local:ensure-path-exists path)
-      (when (eq? info 'does-not-exist) 
-        (begin (printf "Syncing: ~a\n" (string-append (bucket) path))
-               (get/file (string-append (bucket) path) (string->path path))
-               (printf "Done.\n"))))
-    (local:retrieve-file-bytes path))
-    
+(provide run-with-aws-parameters
+         retrieve-file
+         retrieve-file-bytes
+         write-file
+         delete-path
+         path-info
+         list-files
+         list-dirs
+         list-sub-files)
 
-  ; Writes the local file (over writing if necessary). Then, pushes the local file to the cloud.
-  (define (Uwrite-file path contents)
-    (let ((clean-path (clean path)))
-      (local:write-file clean-path contents)
-      (let ((bucket+path (string-append (bucket) clean-path))
-            (pathname (string->path clean-path)))
-        (put/file bucket+path pathname))
+;; set the aws parameters before running:
+(define (run-with-aws-parameters thunk)
+  (parameterize ([s3-host (cloud-host)]
+                 [public-key (cloud-access-key-id)]
+                 [private-key (cloud-secret-key)])
+    (thunk)))
+
+
+; If the file exists locally, it returns it. Otherwise, it fetches it from the cloud and then returns it
+(define (retrieve-file path)
+  (let* ((info (local:path-info path)))
+    (local:ensure-path-exists path)
+    (when (eq? info 'does-not-exist) (get/file (string-append (bucket) path) (string->path path))))
+  (local:retrieve-file path))
+
+(define (retrieve-file-bytes path)
+  (let* ((info (local:path-info path)))
+    (local:ensure-path-exists path)
+    (when (eq? info 'does-not-exist) 
+      (begin (printf "Syncing: ~a\n" (string-append (bucket) path))
+             (get/file (string-append (bucket) path) (string->path path))
+             (printf "Done.\n"))))
+  (local:retrieve-file-bytes path))
+
+
+; Writes the local file (over writing if necessary). Then, pushes the local file to the cloud.
+(define (write-file path contents)
+  (let ((clean-path (clean path)))
+    (local:write-file clean-path contents)
+    (let ((bucket+path (string-append (bucket) clean-path))
+          (pathname (string->path clean-path)))
+      (put/file bucket+path pathname))
     (void)))
 
   ;; Conversts all spaces to underscores. This is a hack but the (put/file API
@@ -54,7 +60,7 @@
   
   
   ; Deletes the local copy and the remote copy
-  (define (Udelete-path path)
+  (define (delete-path path)
     (let* ((files (ls (string-append (bucket) path)))
            (delete-f (lambda (p) (delete (string-append (bucket) p)))))
       (map delete-f files))
@@ -62,7 +68,7 @@
   
   ; (path -> Either 'file 'directory 'does-not-exist)
   ; Returns a symbol representing if the path is a file, directory, or does not exist
-  (define (Upath-info path)
+  (define (path-info path)
     (cond [(file-exists-in-cloud? path) 'file]
           [else 'directory]))
   
@@ -73,7 +79,7 @@
   
   ; (path -> (listof path))
   ; Returns all files that are at the specified path.
-  (define (Ulist-files path)
+  (define (list-files path)
     (printf "Listing files at ~a\n" path)
     (let* ((files (ls (string-append (bucket) path)))
            (split-path (string-split path "/"))
@@ -86,7 +92,7 @@
   
   ; (path -> (listof path))
   ; Returns all directories that are at the specified path.
-  (define (Ulist-dirs path)
+  (define (list-dirs path)
     (let* ((len (string-length path))
            (lc (if (= len 0) "" (string-ref path (- len 1))))
            (pathPrime (if (eq? #\/ lc) path (string-append path "/")))
@@ -107,11 +113,11 @@
           [else ls]))
   
   (define (is-directory? path)
-    (eq? 'directory (Upath-info path)))
+    (eq? 'directory (path-info path)))
   
   ; (path -> (listof path))
   ; Returns all files that are at the specified path recursively adding all sub directories
-  (define (Ulist-sub-files path)
+  (define (list-sub-files path)
     (ls (string-append (bucket) path)))
   
-  )
+

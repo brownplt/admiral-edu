@@ -18,13 +18,13 @@
   (private-key (cloud-secret-key))
   
   ; If the file exists locally, it returns it. Otherwise, it fetches it from the cloud and then returns it
-  (define (retrieve-file path)
+  (define (Uretrieve-file path)
     (let* ((info (local:path-info path)))
       (local:ensure-path-exists path)
       (when (eq? info 'does-not-exist) (get/file (string-append (bucket) path) (string->path path))))
     (local:retrieve-file path))
   
-  (define (retrieve-file-bytes path)
+  (define (Uretrieve-file-bytes path)
     (let* ((info (local:path-info path)))
       (local:ensure-path-exists path)
       (when (eq? info 'does-not-exist) 
@@ -35,7 +35,7 @@
     
 
   ; Writes the local file (over writing if necessary). Then, pushes the local file to the cloud.
-  (define (write-file path contents)
+  (define (Uwrite-file path contents)
     (let ((clean-path (clean path)))
       (local:write-file clean-path contents)
       (let ((bucket+path (string-append (bucket) clean-path))
@@ -54,7 +54,7 @@
   
   
   ; Deletes the local copy and the remote copy
-  (define (delete-path path)
+  (define (Udelete-path path)
     (let* ((files (ls (string-append (bucket) path)))
            (delete-f (lambda (p) (delete (string-append (bucket) p)))))
       (map delete-f files))
@@ -62,7 +62,7 @@
   
   ; (path -> Either 'file 'directory 'does-not-exist)
   ; Returns a symbol representing if the path is a file, directory, or does not exist
-  (define (path-info path)
+  (define (Upath-info path)
     (cond [(file-exists-in-cloud? path) 'file]
           [else 'directory]))
   
@@ -73,7 +73,7 @@
   
   ; (path -> (listof path))
   ; Returns all files that are at the specified path.
-  (define (list-files path)
+  (define (Ulist-files path)
     (printf "Listing files at ~a\n" path)
     (let* ((files (ls (string-append (bucket) path)))
            (split-path (string-split path "/"))
@@ -86,7 +86,7 @@
   
   ; (path -> (listof path))
   ; Returns all directories that are at the specified path.
-  (define (list-dirs path)
+  (define (Ulist-dirs path)
     (let* ((len (string-length path))
            (lc (if (= len 0) "" (string-ref path (- len 1))))
            (pathPrime (if (eq? #\/ lc) path (string-append path "/")))
@@ -107,11 +107,11 @@
           [else ls]))
   
   (define (is-directory? path)
-    (eq? 'directory (path-info path)))
+    (eq? 'directory (Upath-info path)))
   
   ; (path -> (listof path))
   ; Returns all files that are at the specified path recursively adding all sub directories
-  (define (list-sub-files path)
+  (define (Ulist-sub-files path)
     (ls (string-append (bucket) path)))
   
   )

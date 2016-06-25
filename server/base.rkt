@@ -6,6 +6,9 @@
          "ct-session.rkt"
          "util/basic-types.rkt")
 
+(require/typed "storage/storage-basic.rkt"
+               [storage-init (-> Void)])
+
 (provide (all-from-out "configuration.rkt"))
 (provide (all-from-out "database/mysql.rkt"))
 (provide (all-from-out "ct-session.rkt"))
@@ -27,6 +30,7 @@
 (define (initialize)
   (current-configuration
    (read-conf "/conf/captain-teach.config"))
+  (storage-init)
   (if (init-db?) #t
       (force-initialize))
   (migrate:check-migrated))

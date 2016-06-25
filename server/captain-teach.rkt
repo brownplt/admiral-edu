@@ -8,8 +8,6 @@
 (let ((result (initialize)))
   (when (Failure? result) (error (format "Could not initialize system: ~a\n"))))
 
-(storage-init)
-
 (define stop
   (serve #:dispatch (dispatch/servlet ct-rules)
          #:port (ct-port)))

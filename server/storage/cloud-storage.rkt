@@ -1,7 +1,6 @@
 #lang racket
 
-(require "file-system-sig.rkt"
-         aws
+(require aws
          "../configuration.rkt"
          (prefix-in local: "local-storage.rkt"))
 

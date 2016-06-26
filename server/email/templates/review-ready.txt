@@ -1,8 +1,0 @@
-Someone has completed a review of your work.
-
-Assignment Id: @assignment-id
-Step Id: @step-id
-
-You can access reviews of your work for this assignment at the following URL:
-
-@access-url

@@ -53,9 +53,8 @@ RUN ln -s /usr/racket/bin/raco /usr/local/bin/raco
 # Create User
 RUN adduser --disabled-password --gecos "" admiraledu
 
-# Install Captain Teach Dependencies
-RUN raco pkg install --auto aws
-RUN raco pkg install --auto yaml
+# Install Captain Teach Server
+RUN raco pkg install --auto admiral-edu-server
 
 #
 # Install supervisord
@@ -112,11 +111,6 @@ RUN chmod +x /root/debug.sh
 #
 ADD rubrics/implementation-rubric.json /home/admiraledu/reviews/cmpsci220/clock/implementation/rubric.json
 ADD rubrics/tests-rubric.json /home/admiraledu/reviews/cmpsci220/clock/tests/rubric.json
-
-#
-# Copy AdmiralEdu to container
-#
-ADD server /home/admiraledu/server
 
 ADD html/index.html /var/www/html/index.html
 

@@ -12,6 +12,7 @@ server-name=yoursite.com
 sub-domain=www.
 
 # Mail Server information for sending email
+mail-enable=true
 mail-server=smtp.sendgrid.net
 mail-port=2525
 mail-username=username

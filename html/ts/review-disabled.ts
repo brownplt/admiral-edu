@@ -1,3 +1,7 @@
+// This file duplicates nearly all of the code
+// from review.ts. It certainly appears that
+// they should be combined.
+
 /// <reference path="CodeMirrorBuilder.ts" />
 declare function load(callback) : string;
 
@@ -59,13 +63,13 @@ module CaptainTeach {
 	    this.removeEditor(line)
 	}
 	
-	attach(attach, cm : CodeMirrorBuilder){
+	attach(textarea, contentStr : string, cm : CodeMirrorBuilder){
 	    
 	    if(this.instance != null){
 		throw "Cannot attach multiple CodeMirrors";
 	    }
 	    
-	    this.instance = cm.build(attach);
+	    this.instance = cm.build(textarea, contentStr);
 	    this.instance.on("gutterClick", this.handleClick(this));
 	    
 	    
@@ -178,10 +182,10 @@ module CaptainTeach {
 	var builder : CodeMirrorBuilder = new CodeMirrorBuilder();
 	builder.mode("text/x-scala").readOnly(true);
 
-	var callback = function (data) {
-	    var review : ReviewFile = ReviewFile.fromJson(data);
-	    var file = document.getElementById('file');
-	    var cm = review.attach(file, builder);
+	var callback = function (commentData, fileStr) {
+	    var review : ReviewFile = ReviewFile.fromJson(commentData);
+	    var textarea = document.getElementById('file');
+	    var cm = review.attach(textarea, fileStr, builder);
 	    cm.className += " file";
 	}
 	load(callback);

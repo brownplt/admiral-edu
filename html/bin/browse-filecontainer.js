@@ -6,5 +6,11 @@ function save(json, callback){
 }
 
 function load(callback){
-  callback("{ \"comments\" : {} }");
+  if (maybeFileUrl) {
+    $.get(maybeFileUrl,
+          function(data,type) {
+            callback("{ \"comments\" : {} }",data);
+          },
+          "text")
+  }
 }

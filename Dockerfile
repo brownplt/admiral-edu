@@ -56,7 +56,10 @@ RUN ln -s /usr/racket/bin/raco /usr/local/bin/raco
 RUN adduser --disabled-password --gecos "" admiraledu
 
 # Install Captain Teach Server
-RUN raco pkg install --auto admiral-edu-server
+## NOTE: switching away from catalog lookup temporarily...
+RUN echo "hiya578ff200"
+RUN raco pkg install --auto git://github.com/jbclements/admiral-edu-server#master
+# RUN raco pkg install --auto admiral-edu-server
 
 #
 # Install supervisord

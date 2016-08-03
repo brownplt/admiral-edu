@@ -27,8 +27,7 @@ module CaptainTeach {
 	    this.autosave = null;
 	}
 
-	static fromJson(json : string){
-	    var comments = JSON.parse(json).comments;
+	static fromJson(comments : {[key: number]: string; }){
 	    var rf = new ReviewFile();
 	    rf.comments = comments;
 	    return rf;
@@ -44,6 +43,8 @@ module CaptainTeach {
 	    return output;
 	}
 
+        // FIXME why not just use built-in JSON conversion?
+        // confused.
 	toJSON(){
 	    var json = "{\n\t\"comments\" :\n\t{\n"
 	    var size = Object.keys(this.comments).length;

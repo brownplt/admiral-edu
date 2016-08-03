@@ -11,14 +11,17 @@ function save(json, callback){
 }
 
 function load(callback){
-        
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", loadURL, true);
-  xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-  xhr.send();
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState == 4) {
-      callback(xhr.responseText);
-    };
-  }; 
+  // FIXME check 'type' variable? jquery docs
+  // not so great here.
+  if (maybeFileUrl) {
+    $.get(maybeFileUrl,
+          function(contentStr,type1) {
+            $.post(loadURL,
+                   function(comments,type2) {
+                     callback(comments,contentStr);
+                   },
+                   "json");
+          },
+          "text");
+  };
 }

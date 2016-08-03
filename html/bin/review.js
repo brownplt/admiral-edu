@@ -131,8 +131,7 @@ var CaptainTeach;
             this.instance = null;
             this.autosave = null;
         }
-        ReviewFile.fromJson = function (json) {
-            var comments = JSON.parse(json).comments;
+        ReviewFile.fromJson = function (comments) {
             var rf = new ReviewFile();
             rf.comments = comments;
             return rf;

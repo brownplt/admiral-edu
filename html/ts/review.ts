@@ -27,9 +27,9 @@ module CaptainTeach {
 	    this.autosave = null;
 	}
 
-	static fromJson(comments : {[key: number]: string; }){
+	static fromJson(comments : {comments: {[key: number]: string; }}){
 	    var rf = new ReviewFile();
-	    rf.comments = comments;
+	    rf.comments = comments.comments;
 	    return rf;
 	}
 

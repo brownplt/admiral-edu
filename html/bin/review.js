@@ -133,7 +133,7 @@ var CaptainTeach;
         }
         ReviewFile.fromJson = function (comments) {
             var rf = new ReviewFile();
-            rf.comments = comments;
+            rf.comments = comments.comments;
             return rf;
         };
         ReviewFile.prototype.escape = function (input) {
@@ -147,6 +147,8 @@ var CaptainTeach;
             }
             return output;
         };
+        // FIXME why not just use built-in JSON conversion?
+        // confused.
         ReviewFile.prototype.toJSON = function () {
             var json = "{\n\t\"comments\" :\n\t{\n";
             var size = Object.keys(this.comments).length;

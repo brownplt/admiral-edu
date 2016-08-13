@@ -1,19 +1,14 @@
 "use strict";
 
-// contains js code extracted from file-container.html
+// contains js code extracted from feedback-file-container.html
 
 function save(json, callback){
-  // FIXME change to jquery for consistency
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", saveCommentsUrl, true);
-  xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-  xhr.send(json);
-  xhr.onloadend = callback;
 }
 
+// FIXME same function appears in feedback-filecontainer.js
+// FIXME installing top-level functions called "load" and "save"
+//  probably not such a great idea.
 function load(callback){
-  // FIXME check 'type' variable? jquery docs
-  // not so great here.
   if (maybeFileUrl) {
     $.get(maybeFileUrl,
           function(contentStr,type1) {

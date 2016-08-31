@@ -40,9 +40,9 @@ RUN a2enmod proxy_http
 # Install Racket
 #
 
-RUN wget https://mirror.racket-lang.org/installers/6.5/racket-6.5-x86_64-linux.sh
+RUN wget https://mirror.racket-lang.org/installers/6.6/racket-6.6-x86_64-linux.sh
 
-RUN sh ./racket-6.5-x86_64-linux.sh
+RUN sh ./racket-6.6-x86_64-linux.sh
 
 RUN ln -s /usr/racket/bin/racket /usr/local/bin/racket
 RUN ln -s /usr/racket/bin/raco /usr/local/bin/raco

@@ -1,5 +1,5 @@
-FROM ubuntu:14.04
-MAINTAINER Joseph Collard <josephmcollard@gmail.com>
+FROM debian:8.5
+MAINTAINER John Clements <aoeudocker@brinckerhoff.org>
 
 WORKDIR /root
 USER root
@@ -57,7 +57,7 @@ RUN adduser --disabled-password --gecos "" admiraledu
 
 # Install Captain Teach Server
 ## NOTE: switching away from catalog lookup temporarily...
-RUN echo "hiya578ff200"
+RUN echo "hiya57c8bc"
 RUN raco pkg install --auto git://github.com/jbclements/admiral-edu-server#master
 # RUN raco pkg install --auto admiral-edu-server
 

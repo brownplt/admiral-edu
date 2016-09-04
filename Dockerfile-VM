@@ -1,5 +1,5 @@
-FROM ubuntu:14.04
-MAINTAINER Joseph Collard <josephmcollard@gmail.com>
+FROM debian:8.5
+MAINTAINER John Clements <aoeudocker@brinckerhoff.org>
 
 WORKDIR /root
 USER root

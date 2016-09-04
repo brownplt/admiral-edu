@@ -2,10 +2,21 @@
 
 ## Assumptions
 
-Throughout these instructions, it will be assumed that you are setting up an instance of Captain Teach to run at `https://www.yoursite.com` and that your class is called `test-class`. You should replace each of these through out with your domain and class name. For example, if you want to run locally, you could use `https://localhost` and `local-class`.
+Throughout these instructions, it will be assumed that you are setting
+up an instance of Captain Teach to run at `https://www.yoursite.com` and
+that your class is called `test-class`. You should replace each of these
+through out with your domain and class name. For example, if you want to
+run locally, you could use `https://localhost` and `local-class`.
 
 ## Google Authentication Setup
-Captain Teach utilizes OAuth 2.0 via Google for authenticating users. This section describes how to set up a new project and generate the necessary credentials.
+
+Captain Teach utilizes OAuth 2.0 via Google for authenticating
+users. This section describes how to set up a new project and generate
+the necessary credentials.
+
+NB: Google keeps changing their interfaces; don't be surprised if the
+steps required differ somehow from the steps listed here... pull requests
+are always welcome!
 
   1. Access Google's Developers Console: https://console.developers.google.com
   2. Click the `Create Project` button
@@ -18,7 +29,10 @@ Captain Teach utilizes OAuth 2.0 via Google for authenticating users. This secti
    * In the `AUTHORIZED REDIRECT URIS` box enter `https://www.yoursite.com/authentication/redirect`
    * Click `Create Client ID`
 
-After completing the steps above, the `Credentials` page from step 3 should now contain a `Client ID for web application` area with the fields `CLIENT ID` and `CLIENT SECRET`. You will need these for your Captain Teach configuration.
+After completing the steps above, the `Credentials` page from step 3
+should now contain a `Client ID for web application` area with the
+fields `CLIENT ID` and `CLIENT SECRET`. You will need these for your
+Captain Teach configuration.
 
 ## Configuration Files
 Create a directory containing the following files:
@@ -101,9 +115,11 @@ Snake Oil Certificates are also available in the conf/ directory
 
 ## Launching Captain Teach with MySQL
 
-The following script will install a mysql docker image and the captain-teach docker image and launch both.
+The following script will install a mysql docker image and the
+captain-teach docker image and launch both.
 
-If you are using an external MySQL database, there is no need to run the MySQL portion here.
+If you are using an external MySQL database, there is no need to run the
+MySQL portion here.
 
 ```bash
 
@@ -131,7 +147,9 @@ docker run -v /path/to/local/conf:/conf \
            -d jcollard/captain-teach
 ```
 
-After running the commands above, you should now be able to access your site and see the Captain Teach landing page.
-To access your class visit https://www.yoursite.com/test-class/.
+After running the commands above, you should now be able to access your
+site and see the Captain Teach landing page.  To access your class visit
+https://www.yoursite.com/test-class/.
 
-**Note**: You may initially get a 503 Service Unavailable error if CT is still loading.
+**Note**: You may initially get a 503 Service Unavailable error if CT is
+still loading. It may take several minutes for CT to start.

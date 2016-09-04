@@ -1,5 +1,5 @@
-FROM ubuntu:14.04
-MAINTAINER Joseph Collard <josephmcollard@gmail.com>
+FROM debian:8.5
+MAINTAINER John Clements <aoeudocker@brinckerhoff.org>
 
 WORKDIR /root
 USER root
@@ -42,11 +42,9 @@ RUN a2enmod ssl
 # Install Racket
 #
 
-RUN wget http://mirror.racket-lang.org/installers/6.1/racket-6.1-x86_64-linux-ubuntu-precise.sh
+RUN wget https://mirror.racket-lang.org/installers/6.6/racket-6.6-x86_64-linux.sh
 
-RUN chmod a+x racket-6.1-x86_64-linux-ubuntu-precise.sh
-
-RUN ./racket-6.1-x86_64-linux-ubuntu-precise.sh
+RUN sh ./racket-6.6-x86_64-linux.sh
 
 RUN ln -s /usr/racket/bin/racket /usr/local/bin/racket
 RUN ln -s /usr/racket/bin/raco /usr/local/bin/raco
@@ -57,9 +55,11 @@ RUN ln -s /usr/racket/bin/raco /usr/local/bin/raco
 # Create User
 RUN adduser --disabled-password --gecos "" admiraledu
 
-# Install Captain Teach Dependencies
-RUN raco planet install gh aws.plt 1 5
-RUN raco planet install esilkensen yaml.plt 3 1
+# Install Captain Teach Server
+## NOTE: switching away from catalog lookup temporarily...
+RUN echo "hiya57c8bc"
+RUN raco pkg install --auto git://github.com/jbclements/admiral-edu-server#master
+# RUN raco pkg install --auto admiral-edu-server
 
 #
 # Install supervisord
@@ -116,11 +116,6 @@ RUN chmod +x /root/debug.sh
 #
 ADD rubrics/implementation-rubric.json /home/admiraledu/reviews/cmpsci220/clock/implementation/rubric.json
 ADD rubrics/tests-rubric.json /home/admiraledu/reviews/cmpsci220/clock/tests/rubric.json
-
-#
-# Copy AdmiralEdu to container
-#
-ADD server /home/admiraledu/server
 
 ADD html/index.html /var/www/html/index.html
 

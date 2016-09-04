@@ -12,6 +12,7 @@ server-name=yoursite.com
 sub-domain=www.
 
 # Mail Server information for sending email
+mail-enable=true
 mail-server=smtp.sendgrid.net
 mail-port=2525
 mail-username=username
@@ -41,3 +42,12 @@ cloud-host=storage.googleapis.com
 # Authentication information for cloud storage
 cloud-access-key-id=YOUR-ACCESS-ID
 cloud-secret-key=YOUR-SECRET-KEY
+
+# where to store local files
+local-storage-path=/path/to/classfile/storage
+# the location of the 'zip' binary, used to create archives
+zip-binary=/usr/bin/zip
+# the location of the 'unzip' binary, used to extract archives
+unzip-binary=/usr/bin/unzip
+# the location of the 'tar' binary, used to extract only
+tar-binary=/usr/bin/tar

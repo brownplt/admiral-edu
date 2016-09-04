@@ -1,5 +1,4 @@
 //declare function CodeMirror(element, options);
-
 var CaptainTeach;
 (function (CaptainTeach) {
     var CodeMirrorBuilder = (function () {
@@ -11,33 +10,30 @@ var CaptainTeach;
         CodeMirrorBuilder.prototype.getMode = function () {
             return this._mode;
         };
-
         CodeMirrorBuilder.prototype.getCM = function () {
             return this.cm;
         };
-
         CodeMirrorBuilder.prototype.mode = function (mode) {
             this._mode = mode;
             return this;
         };
-
         CodeMirrorBuilder.prototype.readOnly = function (readOnly) {
             this._readOnly = readOnly;
             return this;
         };
-
-        CodeMirrorBuilder.prototype.build = function (attach) {
+        CodeMirrorBuilder.prototype.build = function (attach, contentStr) {
             var cm = CodeMirror.fromTextArea(attach, {
                 lineNumbers: true,
                 lineWrapping: true,
                 gutters: ["comments"],
                 mode: this._mode,
                 readOnly: this._readOnly });
+            cm.setValue(contentStr);
             this.cm = cm;
             return cm;
         };
         return CodeMirrorBuilder;
-    })();
+    }());
     CaptainTeach.CodeMirrorBuilder = CodeMirrorBuilder;
 })(CaptainTeach || (CaptainTeach = {}));
 /// <reference path="CodeMirrorBuilder.ts" />
@@ -60,7 +56,6 @@ var CaptainTeach;
                 }
             }
         };
-
         SyntaxMenu.buildMenu = function (select, selected) {
             for (var i in SyntaxMenu.modes) {
                 var mode = SyntaxMenu.modes[i][0];
@@ -71,7 +66,6 @@ var CaptainTeach;
                 select.appendChild(option);
             }
         };
-
         SyntaxMenu.loadMode = function (mode, cm) {
             SyntaxMenu.initModeMaps();
             var js = SyntaxMenu.modeToJS[mode];
@@ -80,31 +74,26 @@ var CaptainTeach;
                 $.getScript(js, function (script, status, xhr) {
                     SyntaxMenu.setMode(mode, cm);
                 });
-            } else {
+            }
+            else {
                 SyntaxMenu.setMode(mode, cm);
             }
         };
-
         SyntaxMenu.setMode = function (mode, cm) {
             var mime = SyntaxMenu.modeToMime[mode];
             cm.setOption("mode", mime);
         };
-
         SyntaxMenu.prototype.attach = function (divElement) {
             var label = document.createElement('p');
             label.innerHTML = "Syntax Mode: ";
-
             var menu = document.createElement('select');
             var selected = this.builder.getMode();
-
             SyntaxMenu.buildMenu(menu, selected);
-
             var _this = this;
             menu.onchange = function (e) {
                 var mode = menu.value;
                 SyntaxMenu.loadMode(mode, _this.builder.getCM());
             };
-
             label.appendChild(menu);
             divElement.appendChild(label);
         };
@@ -126,15 +115,13 @@ var CaptainTeach;
             ["Scheme", "scheme/scheme.js", "text/x-scheme"],
             ["YAML", "yaml/yaml.js", "text/x-yaml"]
         ];
-
         SyntaxMenu.prefix = "https://www.captain-teach.org/mode/";
         return SyntaxMenu;
-    })();
+    }());
     CaptainTeach.SyntaxMenu = SyntaxMenu;
 })(CaptainTeach || (CaptainTeach = {}));
 /// <reference path="CodeMirrorBuilder.ts" />
 /// <reference path="SyntaxMenu.ts" />
-
 var CaptainTeach;
 (function (CaptainTeach) {
     var ReviewFile = (function () {
@@ -144,13 +131,11 @@ var CaptainTeach;
             this.instance = null;
             this.autosave = null;
         }
-        ReviewFile.fromJson = function (json) {
-            var comments = JSON.parse(json).comments;
+        ReviewFile.fromJson = function (comments) {
             var rf = new ReviewFile();
-            rf.comments = comments;
+            rf.comments = comments.comments;
             return rf;
         };
-
         ReviewFile.prototype.escape = function (input) {
             var output = "";
             for (var i = 0; i < input.length; i++) {
@@ -162,7 +147,8 @@ var CaptainTeach;
             }
             return output;
         };
-
+        // FIXME why not just use built-in JSON conversion?
+        // confused.
         ReviewFile.prototype.toJSON = function () {
             var json = "{\n\t\"comments\" :\n\t{\n";
             var size = Object.keys(this.comments).length;
@@ -172,72 +158,65 @@ var CaptainTeach;
                 var maybeComma = ++i < size ? ",\n" : "\n";
                 json += "\t\t\"" + line + "\" : \"" + this.escape(this.comments[line]) + "\"" + maybeComma;
             }
-
             json += "\t}\n}";
             return json;
         };
-
         ReviewFile.prototype.setComment = function (line, comment) {
             this.comments[line] = comment;
             this.createEditor(line);
         };
-
         ReviewFile.prototype.removeComment = function (line) {
             delete this.comments[line];
             this.removeEditor(line);
         };
-
-        ReviewFile.prototype.attach = function (attach, cm) {
+        // create a CodeMirror instance, replacing the textarea,
+        // using the given content string. Attach comments to
+        // corresponding lines.
+        ReviewFile.prototype.attach = function (textarea, contentStr, cm) {
             if (this.instance != null) {
                 throw "Cannot attach multiple CodeMirrors";
             }
-
-            this.instance = cm.build(attach);
+            this.instance = cm.build(textarea, contentStr);
             this.instance.on("gutterClick", this.handleClick(this));
-
             for (var l in this.comments) {
                 var line = parseInt(l);
                 this.createEditor(line);
             }
-
             this.instance.setSize("100%", "calc(100% - 31px)");
             return this.instance;
         };
-
         ReviewFile.prototype.handleClick = function (_this) {
             return function (instance, line, gutter, clickeEvent) {
                 _this.toggleEditor(line);
             };
         };
-
         ReviewFile.prototype.handleSave = function (line, _this, comment) {
             return function (e) {
                 var value = comment.value;
                 if (value == "") {
                     delete _this.comments[line];
                     _this.instance.setGutterMarker(line, "comments", null);
-                } else {
+                }
+                else {
                     _this.instance.setGutterMarker(line, "comments", _this.makeMarker());
                     _this.comments[line] = value;
                 }
             };
         };
-
         ReviewFile.prototype.toggleEditor = function (line) {
             if (line.toString() in this.editors) {
                 this.removeEditor(line);
-            } else {
+            }
+            else {
                 this.createEditor(line);
             }
         };
-
         ReviewFile.prototype.removeEditor = function (line) {
             if (!(line.toString() in this.editors))
                 return;
             this.editors[line].clear();
             delete this.editors[line];
         };
-
         ReviewFile.prototype.getOnChange = function (_this, editor, line) {
             return function (_) {
                 console.log("keyup");
@@ -246,8 +225,7 @@ var CaptainTeach;
                 if (_this.autosave == null) {
                     _this.autosave = function () {
                         _this.handleSave(line, _this, editor)(editor.innerHTML);
-                        var callback = function (a) {
-                        };
+                        var callback = function (a) { };
                         save(_this.toJSON(), callback);
                         _this.autosave = null;
                         console.log("Saved.");
@@ -256,64 +234,59 @@ var CaptainTeach;
                 }
             };
         };
-
+        // FIXME: badly structured code; knowledge about
+        // line numbers lives in multiple places. Just have
+        // this method create its own editors based on the comments
+        // field, or accept the comments field as an argument
+        // if you want to be functional.
+        // given a line number, find or construct the editor for
+        // editing the comment associated with that line.
         ReviewFile.prototype.createEditor = function (line) {
             if (this.instance == null)
                 return;
             if (line.toString() in this.editors)
                 return this.editors[line];
-
             var editorContainer = document.createElement('div');
             editorContainer.className = "comment-container";
-
             var close = document.createElement('div');
             close.className = "comment-close";
-
             var closeA = document.createElement('a');
             closeA.setAttribute('href', "#");
             var _this = this;
             closeA.innerHTML = "Close Form";
             closeA.onclick = function (e) {
                 _this.handleSave(line, _this, editor)(editor.innerHTML);
-                var callback = function (a) {
-                };
+                var callback = function (a) { };
                 save(_this.toJSON(), callback);
                 _this.toggleEditor(line);
             };
             close.appendChild(closeA);
-
             var editor = document.createElement('textarea');
             editor.className = "comment-box";
             editor.innerHTML = line.toString() in this.comments ? this.comments[line] : "";
             editor.onkeyup = this.getOnChange(this, editor, line);
-
             var _this = this;
-
             editorContainer.appendChild(editor);
             editorContainer.appendChild(close);
-
             this.handleSave(line, this, editor)(null);
             this.editors[line] = this.instance.addLineWidget(line, editorContainer);
             editor.style.height = "";
             editor.style.height = Math.min(editor.scrollHeight) + 5 + "px";
         };
-
         ReviewFile.prototype.makeMarker = function () {
             var marker = document.createElement("div");
             marker.className = "comment-marker";
             return marker;
         };
         return ReviewFile;
-    })();
-
+    }());
     window.onload = function () {
         var builder = new CaptainTeach.CodeMirrorBuilder();
         builder.mode(defaultMode).readOnly(true);
-
-        var callback = function (data) {
-            var review = ReviewFile.fromJson(data);
-            var file = document.getElementById('file');
-            var cm = review.attach(file, builder);
+        var callback = function (commentData, fileStr) {
+            var review = ReviewFile.fromJson(commentData);
+            var textarea = document.getElementById('file');
+            var cm = review.attach(textarea, fileStr, builder);
             cm.className += " file";
             var menu = new CaptainTeach.SyntaxMenu(builder);
             menu.attach(document.getElementById('syntax-menu'));

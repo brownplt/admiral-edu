@@ -36,13 +36,14 @@ module CaptainTeach {
 	    return this;
 	}
 	
-	build(attach){
+	build(attach, contentStr){
 	    var cm: any = CodeMirror.fromTextArea(attach, {
 		lineNumbers: true,
 		lineWrapping: true,
 		gutters: ["comments"],
 		mode: this._mode,
 		readOnly: this._readOnly});
+            cm.setValue(contentStr);
 	    this.cm = cm;
 	    return cm;
 	}

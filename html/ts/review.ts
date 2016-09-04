@@ -7,8 +7,14 @@ declare var defaultMode : string;
 module CaptainTeach {
     
     class ReviewFile {
-	
+
+        // a map from line numbers to string, representing
+        // user comments
 	comments: {[key: number]: string; };
+        // a map from line numbers to editors, representing
+        // the CodeMirror Widgets containing the comments
+        // INVARIANT: these two maps must both have the
+        // same domains (e.g., same line numbers).
 	// Line Number -> Line Widget
 	editors: {[key: number]: any;};
 	instance: any; // CodeMirror Instance
@@ -21,10 +27,9 @@ module CaptainTeach {
 	    this.autosave = null;
 	}
 
-	static fromJson(json : string){
-	    var comments = JSON.parse(json).comments;
+	static fromJson(comments : {comments: {[key: number]: string; }}){
 	    var rf = new ReviewFile();
-	    rf.comments = comments;
+	    rf.comments = comments.comments;
 	    return rf;
 	}
 
@@ -38,6 +43,8 @@ module CaptainTeach {
 	    return output;
 	}
 
+        // FIXME why not just use built-in JSON conversion?
+        // confused.
 	toJSON(){
 	    var json = "{\n\t\"comments\" :\n\t{\n"
 	    var size = Object.keys(this.comments).length;
@@ -61,14 +68,17 @@ module CaptainTeach {
 	    delete this.comments[line];
 	    this.removeEditor(line)
 	}
-	
-	attach(attach, cm : CodeMirrorBuilder){
+
+        // create a CodeMirror instance, replacing the textarea,
+        // using the given content string. Attach comments to
+        // corresponding lines.
+	attach(textarea, contentStr : string, cm : CodeMirrorBuilder){
 	    
 	    if(this.instance != null){
 		throw "Cannot attach multiple CodeMirrors";
 	    }
 	    
-	    this.instance = cm.build(attach);
+	    this.instance = cm.build(textarea, contentStr);
 	    this.instance.on("gutterClick", this.handleClick(this));
 	    
 	    
@@ -131,7 +141,15 @@ module CaptainTeach {
 		}
 	    };
 	}
-	
+
+        // FIXME: badly structured code; knowledge about
+        // line numbers lives in multiple places. Just have
+        // this method create its own editors based on the comments
+        // field, or accept the comments field as an argument
+        // if you want to be functional.
+      
+        // given a line number, find or construct the editor for
+        // editing the comment associated with that line.
 	createEditor(line : number){
 	    if(this.instance == null) return;
 	    if(line.toString() in this.editors) return this.editors[line];
@@ -184,10 +202,10 @@ module CaptainTeach {
 
 		
 
-	var callback = function (data) {
-	    var review : ReviewFile = ReviewFile.fromJson(data);
-	    var file = document.getElementById('file');
-	    var cm = review.attach(file, builder);
+	var callback = function (commentData, fileStr) {
+	    var review : ReviewFile = ReviewFile.fromJson(commentData);
+	    var textarea = document.getElementById('file');
+	    var cm = review.attach(textarea, fileStr, builder);
 	    cm.className += " file";
 	    var menu : SyntaxMenu = new SyntaxMenu(builder);
 	    menu.attach(document.getElementById('syntax-menu'));
